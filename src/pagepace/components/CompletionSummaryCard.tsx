@@ -154,7 +154,7 @@ export const CompletionSummaryCard: React.FC<CompletionSummaryCardProps> = ({
         {onClose && (
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 rounded-xl text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors"
+            className="absolute top-3 right-3 sm:top-5 sm:right-5 z-10 p-2 rounded-xl text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors"
             title="Close card"
           >
             <X className="w-5 h-5" />
@@ -162,7 +162,7 @@ export const CompletionSummaryCard: React.FC<CompletionSummaryCardProps> = ({
         )}
 
         {/* Quiet Meta Kicker (No Pill Enclosure per Frontend Design Constitution) */}
-        <div className="flex items-center gap-2 text-xs text-stone-400 mb-2 tracking-wide font-medium">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 pr-10 text-xs text-stone-400 mb-2 tracking-wide font-medium">
           <span className="uppercase text-stone-500">Completion Certificate</span>
           <span aria-hidden="true">·</span>
           <span>Finished {book.finishDate}</span>
