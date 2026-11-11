@@ -1,0 +1,630 @@
+import { BookEntry, ArchetypeId } from '../types/book';
+import { calculateElapsedDays, calculatePPD, getArchetypeByPPD, snapToPrecision01 } from './calculator';
+import { findExactOrBestMatch, getAuthorLandmarkGenre } from '../data/bookKnowledgeBase';
+import { extractGenres, formatGenresLabel, extractPrimaryGenre, MasterGenre, normalizeGenres } from './genreMapper';
+
+export interface CsvParseOptions {
+  startDateStrategy: 'infer_date_added' | 'same_day' | 'estimate_pace';
+  defaultPageCountFallback: number;
+  importShelfFilter: 'read_only' | 'all';
+}
+
+export interface NormalizedCsvRow {
+  rawTitle: string;
+  title: string;
+  author: string;
+  isbn?: string;
+  totalPages: number;
+  hasAutoFilledPages: boolean;
+  shelf: 'read' | 'currently-reading' | 'to-read' | 'other';
+  dateRead?: string; // YYYY-MM-DD
+  dateAdded?: string; // YYYY-MM-DD
+  startDate: string; // YYYY-MM-DD
+  finishDate: string; // YYYY-MM-DD
+  elapsedDays: number;
+  ppd: number;
+  archetypeId: ArchetypeId;
+  rating: number;
+  review: string;
+  genre: string;
+  publisher?: string;
+  publishedYear?: number;
+}
+
+export interface CsvAnalysisResult {
+  totalRows: number;
+  validRows: NormalizedCsvRow[];
+  skippedRows: number;
+  readCount: number;
+  currentlyReadingCount: number;
+  toReadCount: number;
+  missingPagesCount: number;
+  headersDetected: string[];
+}
+
+/**
+ * Robust RFC-4180 client-side CSV parser.
+ * Handles embedded newlines, quotes, commas, and BOM without external dependencies.
+ */
+export function parseCsvRaw(csvText: string): string[][] {
+  // Strip BOM
+  let text = csvText.replace(/^\uFEFF/, '');
+  if (!text.trim()) return [];
+
+  // Detect delimiter: check first line for comma vs semicolon vs tab
+  const firstLine = text.split(/\r\n|\n|\r/)[0] || '';
+  let delimiter = ',';
+  if (firstLine.includes(';') && !firstLine.includes(',')) {
+    delimiter = ';';
+  } else if (firstLine.includes('\t') && !firstLine.includes(',')) {
+    delimiter = '\t';
+  }
+
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentField = '';
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < text.length) {
+    const char = text[i];
+
+    if (inQuotes) {
+      if (char === '"') {
+        if (i + 1 < text.length && text[i + 1] === '"') {
+          // Escaped quote
+          currentField += '"';
+          i += 2;
+          continue;
+        } else {
+          // Closing quote
+          inQuotes = false;
+          i++;
+          continue;
+        }
+      } else {
+        currentField += char;
+        i++;
+        continue;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+        i++;
+        continue;
+      } else if (char === delimiter) {
+        currentRow.push(currentField.trim());
+        currentField = '';
+        i++;
+        continue;
+      } else if (char === '\r') {
+        if (i + 1 < text.length && text[i + 1] === '\n') {
+          i++; // Skip \n in \r\n
+        }
+        currentRow.push(currentField.trim());
+        currentField = '';
+        if (currentRow.length > 0 && currentRow.some((c) => c !== '')) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        i++;
+        continue;
+      } else if (char === '\n') {
+        currentRow.push(currentField.trim());
+        currentField = '';
+        if (currentRow.length > 0 && currentRow.some((c) => c !== '')) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        i++;
+        continue;
+      } else {
+        currentField += char;
+        i++;
+        continue;
+      }
+    }
+  }
+
+  // Push final field/row if any
+  if (currentField || currentRow.length > 0) {
+    currentRow.push(currentField.trim());
+    if (currentRow.length > 0 && currentRow.some((c) => c !== '')) {
+      rows.push(currentRow);
+    }
+  }
+
+  return rows;
+}
+
+/**
+ * Cleans Goodreads ISBN formatting, e.g. ="9780593135204" or ="" or dashes.
+ */
+export function cleanGoodreadsIsbn(raw?: string): string | undefined {
+  if (!raw) return undefined;
+  // Remove ="..." wrapper or quotes or equals
+  const clean = raw.replace(/^="?|"?$/g, '').replace(/[^0-9X]/gi, '').trim();
+  return clean.length >= 8 ? clean : undefined;
+}
+
+/**
+ * Normalizes date strings (YYYY/MM/DD, MM/DD/YYYY, YYYY-MM-DD, etc.) into ISO YYYY-MM-DD.
+ */
+export function parseDateToIso(rawDate?: string): string | undefined {
+  if (!rawDate || !rawDate.trim()) return undefined;
+  const d = rawDate.trim();
+
+  // 1. Matches YYYY/MM/DD or YYYY-MM-DD
+  const ymdMatch = d.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+  if (ymdMatch) {
+    const year = ymdMatch[1];
+    const month = ymdMatch[2].padStart(2, '0');
+    const day = ymdMatch[3].padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // 2. Matches MM/DD/YYYY
+  const mdyMatch = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mdyMatch) {
+    const year = mdyMatch[3];
+    const month = mdyMatch[1].padStart(2, '0');
+    const day = mdyMatch[2].padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // 3. Native Date parse fallback
+  const parsedTimestamp = Date.parse(d);
+  if (!isNaN(parsedTimestamp)) {
+    const dt = new Date(parsedTimestamp);
+    return dt.toISOString().split('T')[0];
+  }
+
+  return undefined;
+}
+
+/**
+ * Cleans title of extra series info like "Fourth Wing (The Empyrean, #1)"
+ */
+export function cleanTitleString(title: string): string {
+  if (!title) return 'Untitled';
+  // Strip trailing series notes if needed, but preserve main title
+  return title.trim();
+}
+
+/**
+ * Normalizes and standardizes genres to clean MacroGenre title case.
+ */
+export function normalizeStandardGenre(genre: string): string {
+  if (!genre || !genre.trim()) return 'Unassigned';
+  const primary = extractPrimaryGenre(genre);
+  return primary || 'Unassigned';
+}
+
+/**
+ * Strictly allowed shelf/genre/tag columns for genre extraction.
+ * Explicitly ignores headers, date fields, titles, reading history, and system metadata.
+ */
+export const ALLOWED_GENRE_COLUMNS = [
+  'bookshelves',
+  'bookshelves with positions',
+  'shelves',
+  'user_tags',
+  'user tags',
+  'tags',
+  'genre',
+  'genres',
+  'category',
+  'categories',
+  'subject',
+  'subjects',
+];
+
+/**
+ * Identifies strictly allowed shelf/genre/tag column indices in the CSV.
+ * Explicitly ignores CSV headers, date fields, titles, reading history, and system metadata.
+ */
+export function getGenreColumnIndices(rawHeaders: string[]): number[] {
+  const indices: number[] = [];
+  const ALLOWED_SET = new Set(ALLOWED_GENRE_COLUMNS);
+
+  const EXCLUDED_PATTERNS = [
+    /history/i,              // reading history, borrow_history, shelf_history, etc.
+    /date/i,                 // date read, date added, etc.
+    /title/i,                // title, book title
+    /author/i,               // author, creator
+    /isbn/i,                 // isbn, isbn13
+    /asin/i,                 // asin
+    /id\b/i,                 // book id
+    /rating/i,               // my rating, average rating
+    /review/i,               // my review
+    /note/i,                 // private notes
+    /page/i,                 // pages, num pages
+    /publisher/i,            // publisher
+    /year/i,                 // year published
+    /status/i,               // exclusive shelf, read status
+    /exclusive\s*shelf/i,    // exclusive shelf
+    /read\s*count/i,         // read count
+    /borrow/i,               // borrow_history
+    /purchase/i,             // purchase location
+  ];
+
+  rawHeaders.forEach((header, idx) => {
+    const clean = header.toLowerCase().trim();
+    if (!clean) return;
+
+    // Reject headers matching metadata patterns
+    if (EXCLUDED_PATTERNS.some((pat) => pat.test(clean))) {
+      return;
+    }
+
+    const normalized = clean.replace(/[-_ ]+/g, ' ');
+    if (
+      ALLOWED_SET.has(clean) ||
+      ALLOWED_SET.has(normalized) ||
+      ALLOWED_SET.has(clean.replace(/\s+/g, ''))
+    ) {
+      indices.push(idx);
+    }
+  });
+
+  return indices;
+}
+
+/**
+ * Checks incoming books against the built-in knowledge base, landmark canon, and shelf/tag columns
+ * to verify and populate standard genre tags (supporting smart intersections like Romantasy).
+ *
+ * Strict Fix: Restricts genre extraction strictly to specific shelf/category columns
+ * (bookshelves, shelves, user_tags, volumeInfo.categories). Never accepts entire raw CSV rows
+ * or metadata columns (reading history, borrow_history, etc.).
+ */
+export function verifyAndPopulateGenre(
+  title: string,
+  author?: string,
+  genreSources?: string | string[]
+): string {
+  // 1. Check internal knowledge base for verified match
+  const kbMatch = findExactOrBestMatch(title, author);
+  if (kbMatch && kbMatch.genre) {
+    const kbGenres = extractGenres(kbMatch.genre, { title, author, fallbackToUnassigned: false });
+    const nonUnassigned = kbGenres.filter((g) => g !== 'Unassigned');
+    if (nonUnassigned.length > 0) {
+      return formatGenresLabel(nonUnassigned);
+    }
+  }
+
+  // 2. Parse strictly provided genre sources (bookshelves, shelves, user_tags, etc.)
+  const sources = Array.isArray(genreSources)
+    ? genreSources.filter((s) => s && s.trim().length > 0)
+    : genreSources && genreSources.trim()
+    ? [genreSources.trim()]
+    : [];
+
+  if (sources.length > 0) {
+    const extracted = extractGenres(sources, { title, author, fallbackToUnassigned: false });
+    const nonUnassigned = extracted.filter((g) => g !== 'Unassigned');
+    if (nonUnassigned.length > 0) {
+      return formatGenresLabel(nonUnassigned);
+    }
+  }
+
+  // 3. Check author landmark recognition (e.g. Ali Hazelwood -> Romance, etc.)
+  if (author) {
+    const authorGenre = getAuthorLandmarkGenre(author);
+    if (authorGenre) {
+      return authorGenre;
+    }
+  }
+
+  // 4. If no structured match found, return 'Unassigned'
+  return 'Unassigned';
+}
+
+/**
+ * Analyzes and normalizes parsed CSV table into PagePace records.
+ */
+export function analyzeAndNormalizeCsv(
+  rows: string[][],
+  options: CsvParseOptions
+): CsvAnalysisResult {
+  if (rows.length < 2) {
+    return {
+      totalRows: 0,
+      validRows: [],
+      skippedRows: 0,
+      readCount: 0,
+      currentlyReadingCount: 0,
+      toReadCount: 0,
+      missingPagesCount: 0,
+      headersDetected: [],
+    };
+  }
+
+  const rawHeaders = rows[0].map((h) => h.toLowerCase().trim());
+  const headerMap: Record<string, number> = {};
+
+  rawHeaders.forEach((h, idx) => {
+    headerMap[h] = idx;
+  });
+
+  // Find index helper
+  const findCol = (candidates: string[]): number => {
+    for (const c of candidates) {
+      if (headerMap[c] !== undefined) return headerMap[c];
+    }
+    // Also try fuzzy contains
+    for (const c of candidates) {
+      const idx = rawHeaders.findIndex((h) => h.includes(c));
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+
+  const titleIdx = findCol(['title', 'book title', 'book_title', 'book', 'name', 'work']);
+  const authorIdx = findCol(['author', 'primary author', 'author l-f', 'writer', 'creators']);
+  const isbn13Idx = findCol(['isbn13', 'isbn 13', 'isbn_13']);
+  const isbnIdx = findCol(['isbn', 'identifier', 'asin']);
+  const pagesIdx = findCol(['number of pages', 'pages', 'page count', 'total pages', 'num_pages']);
+  // Exclusive reading status shelf (read / currently-reading / to-read)
+  // Strictly avoids bookshelves, tags, or reading history
+  const findReadingShelfCol = (): number => {
+    const priority = ['exclusive shelf', 'read status', 'status', 'shelf'];
+    for (const p of priority) {
+      const idx = rawHeaders.findIndex(
+        (h) => (h === p || h.includes(p)) && !h.includes('book') && !h.includes('history') && !h.includes('tag')
+      );
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+  const shelfIdx = findReadingShelfCol();
+  const dateReadIdx = findCol(['date read', 'date_read', 'date finished', 'read at', 'finish date', 'completed']);
+  const dateAddedIdx = findCol(['date added', 'date_added', 'added at', 'start date', 'date started', 'created']);
+  const genreColumnIndices = getGenreColumnIndices(rawHeaders);
+  const ratingIdx = findCol(['my rating', 'rating', 'star rating', 'user rating', 'stars']);
+  const reviewIdx = findCol(['my review', 'review', 'notes', 'private notes', 'comments']);
+  const publisherIdx = findCol(['publisher']);
+  const yearIdx = findCol(['year published', 'original publication year', 'publication year', 'published year']);
+
+  const validRows: NormalizedCsvRow[] = [];
+  let skippedRows = 0;
+  let readCount = 0;
+  let currentlyReadingCount = 0;
+  let toReadCount = 0;
+  let missingPagesCount = 0;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    const rawTitle = titleIdx !== -1 ? (row[titleIdx] || '').trim() : '';
+    if (!rawTitle) {
+      skippedRows++;
+      continue;
+    }
+
+    const title = cleanTitleString(rawTitle);
+    const author = authorIdx !== -1 ? (row[authorIdx] || '').trim() : 'Unknown Author';
+
+    // ISBN clean
+    const rawIsbn = isbn13Idx !== -1 ? row[isbn13Idx] : isbnIdx !== -1 ? row[isbnIdx] : undefined;
+    const isbn = cleanGoodreadsIsbn(rawIsbn);
+
+    // Shelf mapping
+    const rawShelf = shelfIdx !== -1 ? (row[shelfIdx] || '').toLowerCase().trim() : '';
+    let shelf: 'read' | 'currently-reading' | 'to-read' | 'other' = 'read';
+    if (rawShelf.includes('currently') || rawShelf === 'currently-reading') {
+      shelf = 'currently-reading';
+      currentlyReadingCount++;
+    } else if (rawShelf.includes('to-read') || rawShelf.includes('want to read') || rawShelf === 'to-read') {
+      shelf = 'to-read';
+      toReadCount++;
+    } else {
+      shelf = 'read';
+      readCount++;
+    }
+
+    // If options specify read_only and row is not read, skip or include according to option
+    if (options.importShelfFilter === 'read_only' && shelf !== 'read') {
+      skippedRows++;
+      continue;
+    }
+
+    // Page count resolution
+    let rawPages = pagesIdx !== -1 ? parseInt(row[pagesIdx], 10) : 0;
+    let totalPages = !isNaN(rawPages) && rawPages > 0 ? rawPages : 0;
+    let hasAutoFilledPages = false;
+
+    // Genre verification & normalization:
+    // Strictly target specific CSV shelf/category columns (bookshelves, shelves, user_tags).
+    // Never pass entire raw CSV row or metadata columns (reading history, borrow_history, dates, etc.)
+    const rowGenreValues: string[] = [];
+    for (const cIdx of genreColumnIndices) {
+      const val = row[cIdx];
+      if (val && typeof val === 'string' && val.trim()) {
+        rowGenreValues.push(val.trim());
+      }
+    }
+    let genre = verifyAndPopulateGenre(title, author, rowGenreValues);
+
+    // Auto-fill page count fallback via local knowledge base if 0
+    if (totalPages <= 0) {
+      const match = findExactOrBestMatch(title);
+      if (match && match.totalPages > 0) {
+        totalPages = match.totalPages;
+        if (match.genre) {
+          genre = normalizeStandardGenre(match.genre);
+        }
+        hasAutoFilledPages = true;
+      } else {
+        totalPages = options.defaultPageCountFallback || 350;
+        missingPagesCount++;
+      }
+    } else {
+      // Find verified genre from knowledge base if genre was generic 'Fiction'
+      if (genre === 'Fiction') {
+        const match = findExactOrBestMatch(title);
+        if (match?.genre) {
+          genre = normalizeStandardGenre(match.genre);
+        }
+      }
+    }
+
+    // Dates & Velocity
+    const rawDateRead = dateReadIdx !== -1 ? row[dateReadIdx] : undefined;
+    const rawDateAdded = dateAddedIdx !== -1 ? row[dateAddedIdx] : undefined;
+    const dateRead = parseDateToIso(rawDateRead);
+    const dateAdded = parseDateToIso(rawDateAdded);
+
+    // Finish Date
+    const finishDate = dateRead || dateAdded || todayStr;
+
+    // Start Date & Velocity Strategy
+    let startDate = finishDate;
+    if (options.startDateStrategy === 'infer_date_added' && dateAdded && dateAdded <= finishDate) {
+      // If date added is earlier, use it as start date!
+      startDate = dateAdded;
+    } else if (options.startDateStrategy === 'estimate_pace') {
+      // Estimate reasonable reading time based on pages (e.g. 50 PPD -> days = pages / 50)
+      const estimatedDays = Math.max(1, Math.round(totalPages / 50));
+      const finishTime = new Date(finishDate).getTime();
+      const startTime = finishTime - (estimatedDays - 1) * 24 * 60 * 60 * 1000;
+      startDate = new Date(startTime).toISOString().split('T')[0];
+    } else {
+      // Same day (fallback 1 elapsed day)
+      startDate = finishDate;
+    }
+
+    const elapsedDays = calculateElapsedDays(startDate, finishDate);
+    const ppd = calculatePPD(totalPages, elapsedDays);
+    const archetype = getArchetypeByPPD(ppd);
+
+    // Rating
+    let rawRating = ratingIdx !== -1 ? parseFloat(row[ratingIdx]) : 0;
+    let rating = 4.0;
+    if (!isNaN(rawRating) && rawRating > 0) {
+      rating = snapToPrecision01(Math.min(5.0, rawRating));
+    }
+
+    // Review
+    const review = reviewIdx !== -1 ? (row[reviewIdx] || '').trim() : '';
+
+    // Publisher & Year
+    const publisher = publisherIdx !== -1 ? (row[publisherIdx] || '').trim() : undefined;
+    let publishedYear: number | undefined;
+    if (yearIdx !== -1 && row[yearIdx]) {
+      const y = parseInt(row[yearIdx], 10);
+      if (!isNaN(y) && y > 1000 && y <= 2100) publishedYear = y;
+    }
+
+    validRows.push({
+      rawTitle,
+      title,
+      author,
+      isbn,
+      totalPages,
+      hasAutoFilledPages,
+      shelf,
+      dateRead,
+      dateAdded,
+      startDate,
+      finishDate,
+      elapsedDays,
+      ppd,
+      archetypeId: archetype.id,
+      rating,
+      review,
+      genre,
+      publisher: publisher || undefined,
+      publishedYear,
+    });
+  }
+
+  return {
+    totalRows: rows.length - 1,
+    validRows,
+    skippedRows,
+    readCount,
+    currentlyReadingCount,
+    toReadCount,
+    missingPagesCount,
+    headersDetected: rawHeaders,
+  };
+}
+
+/**
+ * Checks for duplicates against existing library books.
+ */
+export function partitionDuplicates(
+  incoming: NormalizedCsvRow[],
+  existing: BookEntry[]
+): {
+  newBooks: NormalizedCsvRow[];
+  duplicates: { incoming: NormalizedCsvRow; existingBook: BookEntry }[];
+} {
+  const existingIsbnMap = new Map<string, BookEntry>();
+  const existingTitleMap = new Map<string, BookEntry>();
+
+  existing.forEach((b) => {
+    if (b.isbn) {
+      const clean = cleanGoodreadsIsbn(b.isbn);
+      if (clean) existingIsbnMap.set(clean.toLowerCase(), b);
+    }
+    const titleKey = `${b.title.toLowerCase().trim()}:::${(b.author || '').toLowerCase().trim()}`;
+    existingTitleMap.set(titleKey, b);
+  });
+
+  const newBooks: NormalizedCsvRow[] = [];
+  const duplicates: { incoming: NormalizedCsvRow; existingBook: BookEntry }[] = [];
+
+  incoming.forEach((row) => {
+    let match: BookEntry | undefined;
+
+    if (row.isbn && existingIsbnMap.has(row.isbn.toLowerCase())) {
+      match = existingIsbnMap.get(row.isbn.toLowerCase());
+    } else {
+      const titleKey = `${row.title.toLowerCase().trim()}:::${row.author.toLowerCase().trim()}`;
+      if (existingTitleMap.has(titleKey)) {
+        match = existingTitleMap.get(titleKey);
+      }
+    }
+
+    if (match) {
+      duplicates.push({ incoming: row, existingBook: match });
+    } else {
+      newBooks.push(row);
+    }
+  });
+
+  return { newBooks, duplicates };
+}
+
+/**
+ * Converts a normalized CSV row into a persistent BookEntry.
+ */
+export function convertRowToBookEntry(row: NormalizedCsvRow, index: number): BookEntry {
+  const parsedGenres = normalizeGenres(row.genre, { fallbackToUnassigned: false });
+  const validGenres = parsedGenres.filter((g) => g !== 'Unassigned');
+
+  return {
+    id: `csv-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 6)}`,
+    title: row.title,
+    author: row.author,
+    totalPages: row.totalPages,
+    startDate: row.startDate,
+    finishDate: row.finishDate,
+    elapsedDays: row.elapsedDays,
+    ppd: row.ppd,
+    archetypeId: row.archetypeId,
+    rating: row.rating,
+    review: row.review,
+    genre: row.genre || 'Unassigned',
+    genres: validGenres.length > 0 ? validGenres : [row.genre as any || 'Unassigned'],
+    format: 'Physical',
+    coverUrl: row.isbn ? `https://covers.openlibrary.org/b/isbn/${row.isbn}-M.jpg` : undefined,
+    isbn: row.isbn,
+    publisher: row.publisher,
+    publishedYear: row.publishedYear,
+    createdAt: Date.now() - index * 1000,
+  };
+}

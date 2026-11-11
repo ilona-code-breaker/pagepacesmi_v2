@@ -1,0 +1,221 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { Sparkles } from 'lucide-react';
+import { BookEntry, MonthlyGoal } from '../types/book';
+import { GenrePieChart } from './GenrePieChart';
+import { EditBookModal } from './EditBookModal';
+import { playCelebrationChime, playSoftClick } from '../utils/sound';
+import {
+  DEFAULT_FILTERS,
+  LibraryFilterState,
+  countGenres,
+  countShelves,
+  filterAndSortBooks,
+} from '../utils/libraryFilters';
+import { useUndoDeletion } from '../hooks/useUndoDeletion';
+import { BookCard } from './library/BookCard';
+import { LibraryFilters } from './library/LibraryFilters';
+import { LibraryToolbar } from './library/LibraryToolbar';
+import { SelectionBar } from './library/SelectionBar';
+import { UndoToast } from './library/UndoToast';
+import { ClearLibraryModal } from './library/ClearLibraryModal';
+import { EmptyLibrary } from './library/EmptyLibrary';
+
+interface BookListProps {
+  books: BookEntry[];
+  goals?: Record<string, MonthlyGoal>;
+  onSelectBook: (book: BookEntry) => void;
+  onDeleteBook: (id: string) => void;
+  onDeleteBooks?: (ids: string[]) => void;
+  onClearLibrary?: () => void;
+  onRestoreBooks?: (booksToRestore: BookEntry[]) => void;
+  soundEnabled?: boolean;
+  onAddBookClick: () => void;
+  onDataImported?: (data: { books: BookEntry[]; goals: Record<string, MonthlyGoal> }) => void;
+  onOpenShareCard?: () => void;
+  onEditBook?: (updatedBook: BookEntry) => void;
+}
+
+export const BookList: React.FC<BookListProps> = ({
+  books,
+  goals = {},
+  onSelectBook,
+  onDeleteBook,
+  onDeleteBooks,
+  onClearLibrary,
+  onRestoreBooks,
+  soundEnabled = true,
+  onAddBookClick,
+  onDataImported,
+  onOpenShareCard,
+  onEditBook,
+}) => {
+  const [filters, setFilters] = useState<LibraryFilterState>(DEFAULT_FILTERS);
+  const [showGenreChart, setShowGenreChart] = useState(true);
+  const [editingBook, setEditingBook] = useState<BookEntry | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+  const [flash, setFlash] = useState<string | null>(null);
+  const undo = useUndoDeletion();
+
+  const patchFilters = (patch: Partial<LibraryFilterState>) => setFilters((f) => ({ ...f, ...patch }));
+  const libraryGenres = useMemo(() => countGenres(books), [books]);
+  const shelves = useMemo(() => countShelves(books), [books]);
+  const filtered = useMemo(() => filterAndSortBooks(books, filters), [books, filters]);
+  const click = () => soundEnabled && playSoftClick();
+
+  // Drop selections for books that no longer exist
+  useEffect(() => {
+    if (selectedIds.size === 0) return;
+    const existing = new Set(books.map((b) => b.id));
+    setSelectedIds((prev) => {
+      const next = new Set([...prev].filter((id) => existing.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [books]);
+
+  const toggleSelect = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    click();
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAllToggle = () => {
+    click();
+    setSelectedIds(
+      selectedIds.size === filtered.length && filtered.length > 0 ? new Set() : new Set(filtered.map((b) => b.id))
+    );
+  };
+
+  const deleteSingle = (book: BookEntry, e: React.MouseEvent) => {
+    e.stopPropagation();
+    click();
+    undo.start([book], `Deleted "${book.title}"`);
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(book.id);
+      return next;
+    });
+    onDeleteBook(book.id);
+  };
+
+  const deleteSelected = () => {
+    const toDelete = books.filter((b) => selectedIds.has(b.id));
+    if (toDelete.length === 0) return;
+    click();
+    undo.start(toDelete, `Deleted ${toDelete.length} ${toDelete.length === 1 ? 'book' : 'books'}`);
+    const ids = toDelete.map((b) => b.id);
+    onDeleteBooks ? onDeleteBooks(ids) : ids.forEach(onDeleteBook);
+    setSelectedIds(new Set());
+  };
+
+  const confirmClear = () => {
+    if (books.length === 0) return;
+    click();
+    undo.start([...books], `Cleared entire library (${books.length} ${books.length === 1 ? 'book' : 'books'})`);
+    if (onClearLibrary) onClearLibrary();
+    else if (onDeleteBooks) onDeleteBooks(books.map((b) => b.id));
+    else books.forEach((b) => onDeleteBook(b.id));
+    setSelectedIds(new Set());
+    setIsClearConfirmOpen(false);
+  };
+
+  const handleUndo = () => {
+    if (!undo.activeUndo) return;
+    onRestoreBooks?.(undo.activeUndo.books);
+    if (soundEnabled) playCelebrationChime();
+    const n = undo.activeUndo.books.length;
+    setFlash(`Restored ${n} ${n === 1 ? 'book' : 'books'} to library!`);
+    setTimeout(() => setFlash(null), 3500);
+    undo.dismiss();
+  };
+
+  return (
+    <div className="space-y-6">
+      <LibraryToolbar
+        books={books}
+        goals={goals}
+        showGenreChart={showGenreChart}
+        onToggleGenreChart={() => setShowGenreChart((p) => !p)}
+        onDataImported={onDataImported}
+        onOpenShareCard={onOpenShareCard}
+        onClearLibraryClick={() => setIsClearConfirmOpen(true)}
+      />
+
+      {showGenreChart && (
+        <GenrePieChart books={books} selectedGenre={filters.genre} onSelectGenre={(g) => patchFilters({ genre: g })} />
+      )}
+
+      <LibraryFilters
+        filters={filters}
+        onChange={patchFilters}
+        libraryGenres={libraryGenres}
+        shelves={shelves}
+        visibleCount={filtered.length}
+        selectedCount={selectedIds.size}
+        onSelectAllToggle={handleSelectAllToggle}
+      />
+
+      {selectedIds.size > 0 && (
+        <SelectionBar count={selectedIds.size} onCancel={() => setSelectedIds(new Set())} onDelete={deleteSelected} />
+      )}
+
+      {flash && (
+        <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-medium flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{flash}</span>
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
+        <EmptyLibrary filters={filters} onResetFilters={() => setFilters(DEFAULT_FILTERS)} onAddBookClick={onAddBookClick} />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filtered.map((book) => (
+            <BookCard
+              key={book.id}
+              book={book}
+              search={filters.search}
+              isSelected={selectedIds.has(book.id)}
+              onOpen={() => onSelectBook(book)}
+              onToggleSelect={(e) => toggleSelect(book.id, e)}
+              onEdit={() => setEditingBook(book)}
+              onDelete={(e) => deleteSingle(book, e)}
+              onGenreChange={(g) => onEditBook?.({ ...book, genre: g, genres: [g] as any })}
+              onShelfClick={(s) => patchFilters({ shelf: s })}
+            />
+          ))}
+        </div>
+      )}
+
+      {undo.activeUndo && (
+        <UndoToast
+          label={undo.activeUndo.label}
+          progress={undo.progress}
+          onUndo={handleUndo}
+          onDismiss={undo.dismiss}
+          onHoverChange={undo.setHovered}
+        />
+      )}
+
+      {isClearConfirmOpen && (
+        <ClearLibraryModal count={books.length} onCancel={() => setIsClearConfirmOpen(false)} onConfirm={confirmClear} />
+      )}
+
+      {editingBook && (
+        <EditBookModal
+          book={editingBook}
+          isOpen
+          onClose={() => setEditingBook(null)}
+          onSave={(updated) => {
+            onEditBook?.(updated);
+            setEditingBook(null);
+          }}
+        />
+      )}
+    </div>
+  );
+};
