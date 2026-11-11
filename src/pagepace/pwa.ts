@@ -33,6 +33,5 @@ export async function setupOfflineSupport() {
     await unregisterAppWorkers();
     return;
   }
-  const { registerSW } = await import('virtual:pwa-register');
-  registerSW({ immediate: true });
+  await navigator.serviceWorker.register('/' + SW_PATH, { scope: '/' });
 }
