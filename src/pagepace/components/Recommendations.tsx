@@ -4,7 +4,7 @@ import { BookEntry } from '../types/book';
 
 interface Rec { title: string; author: string; genre?: string; reason: string; basedOn?: string }
 
-const TAG: Record<string, string> = { current: 'Current read', history: 'Your history', monthly: 'Monthly pattern' };
+const SECTION = { current: 'Because you are reading now', history: 'Based on all your books', monthly: 'Based on your monthly reading' };
 
 function buildPayload(books: BookEntry[]) {
   let current: any[] = [];
@@ -55,18 +55,24 @@ export const Recommendations: React.FC<{ books: BookEntry[] }> = ({ books }) => 
         </button>
       </div>
       {error && <p className="text-sm text-slate-400">{error}</p>}
-      <ul className="space-y-2">
-        {recs.map((r, i) => (
-          <li key={i} className="rounded-xl bg-slate-800/60 p-3">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <p className="text-sm font-semibold text-slate-100">{r.title} <span className="font-normal text-slate-400">by {r.author}</span></p>
-              {r.basedOn && TAG[r.basedOn] && <span className="text-[10px] uppercase tracking-wide text-amber-400">{TAG[r.basedOn]}</span>}
-            </div>
-            {r.genre && <p className="text-[11px] text-slate-500">{r.genre}</p>}
-            <p className="text-xs text-slate-300 mt-1">{r.reason}</p>
-          </li>
-        ))}
-      </ul>
+      {(['current', 'history', 'monthly'] as const).map((g) => {
+        const list = recs.filter((r) => r.basedOn === g);
+        if (!list.length) return null;
+        return (
+          <div key={g} className="mt-4">
+            <h4 className="text-[11px] uppercase tracking-wide text-amber-400 mb-2">{SECTION[g]}</h4>
+            <ul className="space-y-2">
+              {list.map((r, i) => (
+                <li key={i} className="rounded-xl bg-slate-800/60 p-3">
+                  <p className="text-sm font-semibold text-slate-100">{r.title} <span className="font-normal text-slate-400">by {r.author}</span></p>
+                  {r.genre && <p className="text-[11px] text-slate-500">{r.genre}</p>}
+                  <p className="text-xs text-slate-300 mt-1">{r.reason}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
     </section>
   );
 };

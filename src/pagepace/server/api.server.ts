@@ -177,7 +177,7 @@ export async function recommendBooks(body: any) {
   const months: any[] = Array.isArray(body?.months) ? body.months.slice(0, 12) : [];
   if (!current.length && !history.length) return { recommendations: [] };
   const line = (b: any) => `- "${String(b.title).slice(0, 120)}" by ${String(b.author || '?').slice(0, 80)}${b.genre ? ` [${b.genre}]` : ''}${b.rating ? ` rated ${b.rating}/5` : ''}`;
-  const prompt = `You are a thoughtful book recommender. Based on this reader's data, suggest 5 real, published books they have NOT read.
+  const prompt = `You are a thoughtful book recommender. Based on this reader's data, suggest real, published books they have NOT read, in three groups: exactly 3 with basedOn "current" (similar to what they're reading now), 3 with basedOn "history" (from their overall taste, weighting high ratings), and 3 with basedOn "monthly" (from their month-by-month patterns, e.g. genres they read at this time of year or recent trends). Skip a group only if there is no data for it.
 Currently reading:
 ${current.map(line).join('\n') || '(none)'}
 Reading history (most recent first):
@@ -187,9 +187,9 @@ ${months.map((m) => `- ${m.month}: ${m.count} books, ${m.topGenre || 'mixed'}`).
 Weigh highly-rated books more, connect to the current read, and notice seasonal/monthly patterns.
 Return ONLY raw JSON (no markdown): {"recommendations":[{"title":"","author":"","genre":"","reason":"one warm sentence why, referencing their books","basedOn":"current|history|monthly"}]}`;
   try {
-    const raw = await ask(prompt, 900, 0.7, 20000);
+    const raw = await ask(prompt, 1500, 0.7, 25000);
     const parsed = JSON.parse(raw.replace(/```json/g, '').replace(/```/g, '').trim());
-    const recs = Array.isArray(parsed?.recommendations) ? parsed.recommendations.filter((r: any) => r?.title && r?.author).slice(0, 5) : [];
+    const recs = Array.isArray(parsed?.recommendations) ? parsed.recommendations.filter((r: any) => r?.title && r?.author).slice(0, 9) : [];
     return { recommendations: recs };
   } catch (error) {
     console.error('recommendBooks failed:', error);
