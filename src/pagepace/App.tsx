@@ -361,6 +361,7 @@ export default function App() {
               book={selectedBook}
               onClose={() => setSelectedBook(null)}
               onEdit={handleEditBook}
+              onDelete={handleDeleteBook}
             />
           </section>
         )}

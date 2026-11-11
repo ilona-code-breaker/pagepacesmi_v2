@@ -25,19 +25,23 @@ import {
   Armchair,
   Info,
   X,
+  Trash2,
 } from 'lucide-react';
 
 interface CompletionSummaryCardProps {
   book: BookEntry;
   onClose?: () => void;
   onEdit?: (book: BookEntry) => void;
+  onDelete?: (id: string) => void;
 }
 
 export const CompletionSummaryCard: React.FC<CompletionSummaryCardProps> = ({
   book,
   onClose,
   onEdit,
+  onDelete,
 }) => {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const archetype: ArchetypeDefinition = ARCHETYPES[book.archetypeId] || ARCHETYPES['steady-cruiser'];
   const [activeTab, setActiveTab] = useState<'summary' | 'caption' | 'visualCard'>('summary');
   const [copiedCaption, setCopiedCaption] = useState(false);
@@ -151,6 +155,17 @@ export const CompletionSummaryCard: React.FC<CompletionSummaryCardProps> = ({
     <div className={`relative bg-stone-900/95 border ${getBorderColorClass()} shadow-2xl rounded-2xl overflow-hidden backdrop-blur-md`}>
       {/* Top Banner & Header */}
       <div className="relative p-6 sm:p-8 pb-4 border-b border-stone-800">
+        {onDelete && (
+          <button
+            onClick={() => (confirmDelete ? onDelete(book.id) : setConfirmDelete(true))}
+            onBlur={() => setConfirmDelete(false)}
+            className={`absolute top-3 right-14 sm:top-5 sm:right-16 z-10 p-2 rounded-xl transition-colors flex items-center gap-1 text-xs font-semibold ${confirmDelete ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'text-stone-400 hover:text-rose-300 hover:bg-rose-500/10'}`}
+            title="Delete book"
+          >
+            <Trash2 className="w-5 h-5" />
+            {confirmDelete && <span>Delete?</span>}
+          </button>
+        )}
         {onClose && (
           <button
             onClick={onClose}
@@ -162,7 +177,7 @@ export const CompletionSummaryCard: React.FC<CompletionSummaryCardProps> = ({
         )}
 
         {/* Quiet Meta Kicker (No Pill Enclosure per Frontend Design Constitution) */}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 pr-10 text-xs text-stone-400 mb-2 tracking-wide font-medium">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 pr-24 text-xs text-stone-400 mb-2 tracking-wide font-medium">
           <span className="uppercase text-stone-500">Completion Certificate</span>
           <span aria-hidden="true">·</span>
           <span>Finished {book.finishDate}</span>
