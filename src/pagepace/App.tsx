@@ -18,6 +18,7 @@ import { DataPortabilityToolbar } from './components/DataPortabilityToolbar';
 import { CsvImportModal } from './components/CsvImportModal';
 import { StreakWidget } from './components/StreakWidget';
 import { CurrentlyReading, addCurrentRead } from './components/CurrentlyReading';
+import { Recommendations } from './components/Recommendations';
 import { YearInReview } from './components/YearInReview';
 import { getCurrentMonthKey } from './utils/goalUtils';
 import {
@@ -380,6 +381,7 @@ export default function App() {
             />
             <StreakWidget books={books} onOpenYear={() => setCurrentTab('year')} />
             <CurrentlyReading onFinish={handleBookCreated} />
+            <Recommendations books={books} />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Form Column */}
