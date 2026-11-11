@@ -28,3 +28,5 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- PagePace app lives in src/pagepace and renders client-only from the / route (data is in browser storage); its server endpoints are src/routes/api/* calling src/pagepace/server/api.server.ts, so AI and book search stay on the server.
