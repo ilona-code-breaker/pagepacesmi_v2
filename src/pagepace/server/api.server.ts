@@ -5,7 +5,7 @@ const MODEL = "google/gemini-3.8-flash" as const;
 
 async function ask(prompt: string, maxTokens: number, temperature: number, timeoutMs: number): Promise<string> {
   const res = await generateChatCompletion(
-    { model: MODEL, messages: [{ role: "user", content: prompt }], max_tokens: maxTokens, temperature },
+    { model: MODEL, messages: [{ role: "user", content: prompt }], max_tokens: maxTokens, temperature, reasoning_effort: "minimal" },
     { signal: AbortSignal.timeout(timeoutMs) },
   );
   const content = res.choices?.[0]?.message?.content;
