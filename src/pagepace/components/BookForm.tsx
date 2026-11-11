@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import type { CurrentRead } from '../utils/currentReading';
 import confetti from 'canvas-confetti';
 import { BookEntry } from '../types/book';
 import {
@@ -50,12 +51,19 @@ import { BarcodeScannerModal } from './BarcodeScannerModal';
 interface BookFormProps {
   onBookCreated: (book: BookEntry) => void;
   soundEnabled?: boolean;
+  /** 'reading' = log a book still in progress (no finish date / rating / review) */
+  mode?: 'finished' | 'reading';
+  onReadingStarted?: (r: CurrentRead) => void;
 }
 
 export const BookForm: React.FC<BookFormProps> = ({
   onBookCreated,
   soundEnabled = true,
+  mode = 'finished',
+  onReadingStarted,
 }) => {
+  const isReading = mode === 'reading';
+  const [currentPage, setCurrentPage] = useState<number | ''>('');
   // Today's date in YYYY-MM-DD
   const todayStr = new Date().toISOString().split('T')[0];
   // 5 days ago
@@ -252,6 +260,31 @@ export const BookForm: React.FC<BookFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
+
+    if (isReading) {
+      onReadingStarted?.({
+        id: 'read-' + Date.now(),
+        title: title.trim(),
+        author: author.trim() || 'Unknown Author',
+        totalPages: safePages,
+        currentPage: Math.min(safePages, Math.max(0, Number(currentPage) || 0)),
+        startDate,
+        genre,
+        format,
+        coverUrl,
+        isbn,
+        publisher,
+        publishedYear,
+      });
+      if (soundEnabled) playCelebrationChime();
+      setTitle('');
+      setAuthor('');
+      setCurrentPage('');
+      setCoverUrl(undefined);
+      setIsbn(undefined);
+      setAutoFilledBadge(null);
+      return;
+    }
 
     const celebrationMessage = generateArchetypeCelebration({
       title: title.trim(),
@@ -546,6 +579,20 @@ export const BookForm: React.FC<BookFormProps> = ({
           />
         </div>
 
+        {isReading ? (
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-stone-300">Current Page</label>
+            <input
+              type="number"
+              min={0}
+              max={safePages}
+              value={currentPage}
+              onChange={(e) => setCurrentPage(e.target.value === '' ? '' : parseInt(e.target.value, 10) || 0)}
+              placeholder="0"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 font-mono text-sm focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-colors"
+            />
+          </div>
+        ) : (
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-stone-300 flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-stone-500" />
@@ -559,21 +606,24 @@ export const BookForm: React.FC<BookFormProps> = ({
             className="w-full px-3.5 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 text-sm focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-colors"
           />
         </div>
+        )}
       </div>
 
       {/* Live 7-Tier Velocity Telemetry Bar */}
-      <VelocityTelemetryBar
+      {!isReading && <VelocityTelemetryBar
         ppd={livePpd}
         elapsedDays={elapsedDays}
         totalPages={safePages}
-      />
+      />}
 
       {/* Rating Scale: 0.1 Precision */}
-      <RatingInput
-        value={rating}
-        onChange={setRating}
-        label="Your Rating (Fine-Tuned 0.1 Precision)"
-      />
+      {!isReading && (
+        <RatingInput
+          value={rating}
+          onChange={setRating}
+          label="Your Rating (Fine-Tuned 0.1 Precision)"
+        />
+      )}
 
       {/* Format & Genre row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -614,7 +664,7 @@ export const BookForm: React.FC<BookFormProps> = ({
       </div>
 
       {/* Review / Opinion */}
-      <div className="space-y-1.5">
+      {!isReading && <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <label className="text-xs font-medium text-stone-300">
             Review & Opinion (Short Review)
@@ -628,7 +678,7 @@ export const BookForm: React.FC<BookFormProps> = ({
           placeholder="What made this memorable? Plot twists, character arcs, prose style, or emotional resonance..."
           className="w-full px-3.5 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 placeholder-stone-500 text-sm focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-colors leading-relaxed"
         />
-      </div>
+      </div>}
 
       {/* Submit Button */}
       <button
@@ -636,7 +686,7 @@ export const BookForm: React.FC<BookFormProps> = ({
         className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-amber-500/20 active:scale-[0.99] transition-all cursor-pointer"
       >
         <Sparkles className="w-5 h-5" />
-        Complete Book & Generate Archetype Card
+        {isReading ? 'Start Tracking This Book' : 'Complete Book & Generate Archetype Card'}
       </button>
     </form>
   );
