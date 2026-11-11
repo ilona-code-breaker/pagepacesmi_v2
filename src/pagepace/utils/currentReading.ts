@@ -7,6 +7,12 @@ export interface CurrentRead {
   totalPages: number;
   currentPage: number;
   startDate: string; // YYYY-MM-DD
+  genre?: string;
+  format?: 'Physical' | 'E-Reader' | 'Audiobook' | 'Hybrid';
+  coverUrl?: string;
+  isbn?: string;
+  publisher?: string;
+  publishedYear?: number;
 }
 
 export interface ReadingProgress {

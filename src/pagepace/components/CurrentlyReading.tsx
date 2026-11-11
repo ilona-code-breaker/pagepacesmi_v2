@@ -19,6 +19,11 @@ const load = (): CurrentRead[] => {
   }
 };
 
+export function addCurrentRead(r: CurrentRead) {
+  localStorage.setItem(KEY, JSON.stringify([r, ...load()]));
+  window.dispatchEvent(new Event(EVT));
+}
+
 /** Shared across every mounted instance (list + track form) via a window event. */
 function useCurrentReads() {
   const [reads, setLocal] = useState<CurrentRead[]>([]);
@@ -76,6 +81,12 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
       id: crypto.randomUUID(),
       title: r.title,
       author: r.author,
+      genre: r.genre,
+      format: r.format,
+      coverUrl: r.coverUrl,
+      isbn: r.isbn,
+      publisher: r.publisher,
+      publishedYear: r.publishedYear,
       totalPages: r.totalPages,
       startDate: r.startDate,
       finishDate: today,
@@ -134,7 +145,8 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
         return (
           <div key={r.id} className="p-3 rounded-xl bg-stone-950/60 border border-stone-800 space-y-2.5">
             <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
+              {r.coverUrl && <img src={r.coverUrl} alt="" className="w-9 h-12 object-cover rounded border border-stone-800 shrink-0" />}
+              <div className="min-w-0 flex-1">
                 <div className="text-sm font-serif font-bold text-stone-100 truncate">{r.title}</div>
                 <div className="text-[11px] text-stone-400 truncate">{r.author} · started {fmt(r.startDate)}</div>
               </div>

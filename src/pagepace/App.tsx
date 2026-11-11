@@ -17,7 +17,7 @@ import { ShareableArchetypeCardModal } from './components/ShareableArchetypeCard
 import { DataPortabilityToolbar } from './components/DataPortabilityToolbar';
 import { CsvImportModal } from './components/CsvImportModal';
 import { StreakWidget } from './components/StreakWidget';
-import { CurrentlyReading } from './components/CurrentlyReading';
+import { CurrentlyReading, addCurrentRead } from './components/CurrentlyReading';
 import { YearInReview } from './components/YearInReview';
 import { getCurrentMonthKey } from './utils/goalUtils';
 import {
@@ -407,15 +407,16 @@ export default function App() {
                   ))}
                 </div>
 
-                {trackStatus === 'finished' ? (
-                  <BookForm onBookCreated={handleBookCreated} soundEnabled={soundEnabled} />
-                ) : (
-                  <CurrentlyReading
-                    formOnly
-                    onFinish={handleBookCreated}
-                    onAdded={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  />
-                )}
+                <BookForm
+                  key={trackStatus}
+                  mode={trackStatus}
+                  onBookCreated={handleBookCreated}
+                  soundEnabled={soundEnabled}
+                  onReadingStarted={(r) => {
+                    addCurrentRead(r);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
               </div>
 
               {/* Side Column: Sample Books & Tips */}
