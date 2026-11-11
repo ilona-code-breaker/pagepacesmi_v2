@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { BookEntry } from '../types/book';
 
+const norm = (t: string) => (t || '').toLowerCase().split(/[:(]/)[0].replace(/^(the|a|an)\s+/, '').replace(/[^a-z0-9]/g, '');
+
 interface Rec { title: string; author: string; genre?: string; reason: string; basedOn?: string }
 
 const SECTION = { current: 'Because you are reading now', history: 'Based on all your books', monthly: 'Based on your monthly reading' };
@@ -38,7 +40,11 @@ export const Recommendations: React.FC<{ books: BookEntry[] }> = ({ books }) => 
       const res = await fetch('/api/recommend-books', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildPayload(books)) });
       const data = await res.json();
       if (!data.recommendations?.length) setError(data.error || 'Log a book or add a current read first, then try again.');
-      setRecs(data.recommendations || []);
+      const p = buildPayload(books);
+      const seen = new Set([...p.history, ...p.current].map((b) => norm(b.title)));
+      const fresh = (data.recommendations || []).filter((r: Rec) => !seen.has(norm(r.title)));
+      if (data.recommendations?.length && !fresh.length) setError('All picks were books you already have. Tap Refresh to try again.');
+      setRecs(fresh);
     } catch { setError('Could not get recommendations right now.'); }
     setLoading(false);
   };
