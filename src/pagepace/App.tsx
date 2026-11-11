@@ -133,6 +133,8 @@ export default function App() {
     }));
   };
 
+  const [trackStatus, setTrackStatus] = useState<'finished' | 'reading'>('finished');
+
   const handleBookCreated = (newBook: BookEntry) => {
     setBooks((prev) => [newBook, ...prev]);
     setSelectedBook(newBook);
@@ -392,10 +394,28 @@ export default function App() {
                   </p>
                 </div>
 
-                <BookForm
-                  onBookCreated={handleBookCreated}
-                  soundEnabled={soundEnabled}
-                />
+                <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-stone-950 border border-stone-800">
+                  {(['finished', 'reading'] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setTrackStatus(s)}
+                      className={`py-2 rounded-lg text-sm font-semibold transition-colors ${trackStatus === s ? 'bg-amber-500 text-stone-950' : 'text-stone-400 hover:text-stone-200'}`}
+                    >
+                      {s === 'finished' ? 'Finished' : 'Still reading'}
+                    </button>
+                  ))}
+                </div>
+
+                {trackStatus === 'finished' ? (
+                  <BookForm onBookCreated={handleBookCreated} soundEnabled={soundEnabled} />
+                ) : (
+                  <CurrentlyReading
+                    formOnly
+                    onFinish={handleBookCreated}
+                    onAdded={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  />
+                )}
               </div>
 
               {/* Side Column: Sample Books & Tips */}

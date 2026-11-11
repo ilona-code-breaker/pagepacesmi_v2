@@ -10,23 +10,41 @@ const KEY = 'pagepace_current_reads';
 const fmt = (iso: string) =>
   new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
-export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void }> = ({ onFinish }) => {
-  const [reads, setReads] = useState<CurrentRead[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [adding, setAdding] = useState(false);
+const EVT = 'pagepace-current-reads';
+const load = (): CurrentRead[] => {
+  try {
+    return JSON.parse(localStorage.getItem(KEY) || '[]');
+  } catch {
+    return [];
+  }
+};
+
+/** Shared across every mounted instance (list + track form) via a window event. */
+function useCurrentReads() {
+  const [reads, setLocal] = useState<CurrentRead[]>([]);
+  useEffect(() => {
+    setLocal(load());
+    const sync = () => setLocal(load());
+    window.addEventListener(EVT, sync);
+    return () => window.removeEventListener(EVT, sync);
+  }, []);
+  const setReads = (fn: (rs: CurrentRead[]) => CurrentRead[]) => {
+    localStorage.setItem(KEY, JSON.stringify(fn(load())));
+    window.dispatchEvent(new Event(EVT));
+  };
+  return [reads, setReads] as const;
+}
+
+export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; formOnly?: boolean; onAdded?: () => void }> = ({
+  onFinish,
+  formOnly = false,
+  onAdded,
+}) => {
+  const [reads, setReads] = useCurrentReads();
+  const [adding, setAdding] = useState(formOnly);
   const [form, setForm] = useState({ title: '', author: '', totalPages: '', currentPage: '', startDate: todayIso() });
   const today = todayIso();
 
-  useEffect(() => {
-    try {
-      const s = localStorage.getItem(KEY);
-      if (s) setReads(JSON.parse(s));
-    } catch {}
-    setLoaded(true);
-  }, []);
-  useEffect(() => {
-    if (loaded) localStorage.setItem(KEY, JSON.stringify(reads));
-  }, [reads, loaded]);
 
   const update = (id: string, patch: Partial<CurrentRead>) =>
     setReads((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -47,7 +65,8 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void }>
       ...rs,
     ]);
     setForm({ title: '', author: '', totalPages: '', currentPage: '', startDate: today });
-    setAdding(false);
+    setAdding(formOnly);
+    onAdded?.();
   };
 
   const finish = (r: CurrentRead) => {
@@ -72,6 +91,23 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void }>
 
   const input = 'w-full px-3 py-2 rounded-lg bg-stone-950 border border-stone-800 text-sm text-stone-100 focus:border-amber-500/60 outline-none';
 
+  const formEl = (
+    <form onSubmit={add} className="grid grid-cols-2 gap-2">
+      <input className={`${input} col-span-2`} placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+      <input className={`${input} col-span-2`} placeholder="Author" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} />
+      <input className={input} type="number" min={1} placeholder="Total pages" value={form.totalPages} onChange={(e) => setForm({ ...form, totalPages: e.target.value })} required />
+      <input className={input} type="number" min={0} placeholder="Current page" value={form.currentPage} onChange={(e) => setForm({ ...form, currentPage: e.target.value })} />
+      <label className="col-span-2 text-[11px] text-stone-400">
+        Started on
+        <input className={`${input} mt-1`} type="date" max={today} value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
+      </label>
+      <button type="submit" className="col-span-2 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-sm font-semibold">
+        Start tracking
+      </button>
+    </form>
+  );
+  if (formOnly) return formEl;
+
   return (
     <div className="p-4 sm:p-5 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-4">
       <div className="flex items-center justify-between gap-2">
@@ -87,21 +123,7 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void }>
         </button>
       </div>
 
-      {adding && (
-        <form onSubmit={add} className="grid grid-cols-2 gap-2">
-          <input className={`${input} col-span-2`} placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-          <input className={`${input} col-span-2`} placeholder="Author" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} />
-          <input className={input} type="number" min={1} placeholder="Total pages" value={form.totalPages} onChange={(e) => setForm({ ...form, totalPages: e.target.value })} required />
-          <input className={input} type="number" min={0} placeholder="Current page" value={form.currentPage} onChange={(e) => setForm({ ...form, currentPage: e.target.value })} />
-          <label className="col-span-2 text-[11px] text-stone-400">
-            Started on
-            <input className={`${input} mt-1`} type="date" max={today} value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
-          </label>
-          <button type="submit" className="col-span-2 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-sm font-semibold">
-            Start tracking
-          </button>
-        </form>
-      )}
+      {adding && formEl}
 
       {reads.length === 0 && !adding && (
         <p className="text-xs text-stone-500">Add a book you're reading now to see your progress and when you'll likely finish.</p>
