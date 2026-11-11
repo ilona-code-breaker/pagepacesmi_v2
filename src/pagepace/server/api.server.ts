@@ -14,7 +14,6 @@ async function ask(prompt: string, maxTokens: number, temperature: number, timeo
 
 export async function searchBooks(query: unknown) {
   if (!query || typeof query !== "string" || query.trim().length < 2) return { results: [] };
-  try {
   const clean = query.trim();
   const isIsbn = /^(97(8|9))?\d{9}(\d|X)$/i.test(clean.replace(/[-\s]/g, '')) || clean.toLowerCase().startsWith('isbn:');
   const isbnClean = clean.replace(/^(isbn:)/i, '').replace(/[-\s]/g, '');
