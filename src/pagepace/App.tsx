@@ -93,10 +93,7 @@ export default function App() {
   });
 
   const [currentTab, setCurrentTab] = useState<'track' | 'library' | 'goals' | 'year' | 'codex'>('track');
-  const [selectedBook, setSelectedBook] = useState<BookEntry | null>(() => {
-    // Default open first sample book on initial load so user immediately sees the completion card output!
-    return INITIAL_SAMPLE_BOOKS[0] || null;
-  });
+  const [selectedBook, setSelectedBook] = useState<BookEntry | null>(null);
 
   const [isShareCardOpen, setIsShareCardOpen] = useState<boolean>(false);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState<boolean>(false);
