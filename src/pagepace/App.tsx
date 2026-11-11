@@ -17,6 +17,7 @@ import { ShareableArchetypeCardModal } from './components/ShareableArchetypeCard
 import { DataPortabilityToolbar } from './components/DataPortabilityToolbar';
 import { CsvImportModal } from './components/CsvImportModal';
 import { StreakWidget } from './components/StreakWidget';
+import { CurrentlyReading } from './components/CurrentlyReading';
 import { YearInReview } from './components/YearInReview';
 import { getCurrentMonthKey } from './utils/goalUtils';
 import {
@@ -376,6 +377,7 @@ export default function App() {
               onViewGoals={() => setCurrentTab('goals')}
             />
             <StreakWidget books={books} onOpenYear={() => setCurrentTab('year')} />
+            <CurrentlyReading onFinish={handleBookCreated} />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Form Column */}
