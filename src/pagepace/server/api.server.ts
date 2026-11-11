@@ -173,7 +173,7 @@ function getFallbackCelebration(archetype: string, ppd: number, rating: number, 
 
 export async function recommendBooks(body: any) {
   const current: any[] = Array.isArray(body?.current) ? body.current.slice(0, 5) : [];
-  const history: any[] = Array.isArray(body?.history) ? body.history.slice(0, 60) : [];
+  const history: any[] = Array.isArray(body?.history) ? body.history.slice(0, 400) : [];
   const months: any[] = Array.isArray(body?.months) ? body.months.slice(0, 12) : [];
   if (!current.length && !history.length) return { recommendations: [] };
   const line = (b: any) => `- "${String(b.title).slice(0, 120)}" by ${String(b.author || '?').slice(0, 80)}${b.genre ? ` [${b.genre}]` : ''}${b.rating ? ` rated ${b.rating}/5` : ''}`;
@@ -181,7 +181,8 @@ export async function recommendBooks(body: any) {
 Currently reading:
 ${current.map(line).join('\n') || '(none)'}
 Reading history (most recent first):
-${history.map(line).join('\n') || '(none)'}
+${history.slice(0, 60).map(line).join('\n') || '(none)'}
+NEVER suggest any of these already-read or in-progress titles: ${[...current, ...history].map((b) => String(b.title).slice(0, 80)).join('; ')}
 Monthly reading pattern (month: books, top genre):
 ${months.map((m) => `- ${m.month}: ${m.count} books, ${m.topGenre || 'mixed'}`).join('\n') || '(none)'}
 Weigh highly-rated books more, connect to the current read, and notice seasonal/monthly patterns.
@@ -189,7 +190,10 @@ Return ONLY raw JSON (no markdown): {"recommendations":[{"title":"","author":"",
   try {
     const raw = await ask(prompt, 1500, 0.7, 25000);
     const parsed = JSON.parse(raw.replace(/```json/g, '').replace(/```/g, '').trim());
-    const recs = Array.isArray(parsed?.recommendations) ? parsed.recommendations.filter((r: any) => r?.title && r?.author).slice(0, 9) : [];
+    let recs = Array.isArray(parsed?.recommendations) ? parsed.recommendations.filter((r: any) => r?.title && r?.author).slice(0, 9) : [];
+    const n = (t: string) => String(t || '').toLowerCase().split(/[:(]/)[0].replace(/^(the|a|an)\s+/, '').replace(/[^a-z0-9]/g, '');
+    const seen = new Set([...current, ...history].map((b) => n(b.title)));
+    recs = recs.filter((r: any) => !seen.has(n(r.title)));
     return { recommendations: recs };
   } catch (error) {
     console.error('recommendBooks failed:', error);
