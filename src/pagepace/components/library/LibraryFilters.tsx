@@ -15,7 +15,7 @@ interface LibraryFiltersProps {
 }
 
 const selectCls =
-  'px-2.5 py-1.5 rounded-lg bg-stone-950 border border-stone-800 text-stone-300 text-xs focus:outline-none focus:border-amber-500/50';
+  'w-full min-w-0 sm:w-auto px-2.5 py-1.5 rounded-lg bg-stone-950 border border-stone-800 text-stone-300 text-xs focus:outline-none focus:border-amber-500/50';
 
 export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
   filters,
@@ -37,7 +37,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
             type="search"
             value={filters.search}
             onChange={(e) => onChange({ search: e.target.value })}
-            placeholder="Search title, author, genre, shelf, notes or quotes..."
+            placeholder="Search books, authors, notes..."
             className="w-full pl-9 pr-8 py-2 rounded-xl bg-stone-950 border border-stone-800 text-stone-200 placeholder-stone-500 text-xs sm:text-sm focus:outline-none focus:border-amber-500/60 transition-colors"
           />
           {filters.search && (
@@ -52,10 +52,10 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <label className="flex items-center gap-1.5 text-xs text-stone-500">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:flex-wrap">
+          <label className="flex flex-col items-start gap-1 min-w-0 sm:flex-row sm:items-center sm:gap-1.5 text-xs text-stone-500"><span className="flex items-center gap-1.5">
             <ArrowUpDown className="w-3 h-3" />
-            Sort:
+            Sort:</span>
             <select value={filters.sortBy} onChange={(e) => onChange({ sortBy: e.target.value as SortKey })} className={selectCls}>
               {SORT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -65,9 +65,9 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
             </select>
           </label>
 
-          <label className="flex items-center gap-1.5 text-xs text-stone-500">
+          <label className="flex flex-col items-start gap-1 min-w-0 sm:flex-row sm:items-center sm:gap-1.5 text-xs text-stone-500"><span className="flex items-center gap-1.5">
             <Library className="w-3 h-3" />
-            Shelf:
+            Shelf:</span>
             <select value={filters.shelf} onChange={(e) => onChange({ shelf: e.target.value })} className={selectCls}>
               <option value="all">All shelves</option>
               {shelves.map(([s, n]) => (
@@ -78,9 +78,9 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
             </select>
           </label>
 
-          <label className="flex items-center gap-1.5 text-xs text-stone-500">
+          <label className="flex flex-col items-start gap-1 min-w-0 sm:flex-row sm:items-center sm:gap-1.5 text-xs text-stone-500"><span className="flex items-center gap-1.5">
             <Tag className="w-3 h-3" />
-            Genre:
+            Genre:</span>
             <select value={filters.genre} onChange={(e) => onChange({ genre: e.target.value })} className={selectCls}>
               <option value="all">All genres</option>
               {libraryGenres.length > 0 && (
@@ -102,9 +102,9 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
             </select>
           </label>
 
-          <label className="flex items-center gap-1.5 text-xs text-stone-500">
+          <label className="flex flex-col items-start gap-1 min-w-0 sm:flex-row sm:items-center sm:gap-1.5 text-xs text-stone-500"><span className="flex items-center gap-1.5">
             <Filter className="w-3 h-3" />
-            Archetype:
+            Archetype:</span>
             <select value={filters.archetype} onChange={(e) => onChange({ archetype: e.target.value as any })} className={selectCls}>
               <option value="all">All archetypes</option>
               {Object.values(ARCHETYPES).map((arch) => (
@@ -119,7 +119,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
             <button
               type="button"
               onClick={onSelectAllToggle}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors border ${
+              className={`col-span-2 justify-center sm:justify-start px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors border ${
                 selectedCount > 0
                   ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
                   : 'bg-stone-950 border-stone-800 text-stone-400 hover:text-stone-200'
@@ -133,7 +133,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
       </div>
 
       {/* Quick shelf pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pt-1.5 border-t border-stone-800/40 text-xs custom-scrollbar pb-0.5">
+      <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap sm:overflow-x-auto pt-1.5 border-t border-stone-800/40 text-xs custom-scrollbar pb-0.5">
         <span className="text-[11px] text-stone-500 uppercase font-mono tracking-wider mr-1 shrink-0 flex items-center gap-1">
           <Library className="w-3 h-3" />
           Shelves:
@@ -160,7 +160,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
 
       {/* Quick genre pills */}
       {libraryGenres.length > 0 && (
-        <div className="flex items-center gap-1.5 overflow-x-auto text-xs custom-scrollbar pb-0.5">
+        <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap sm:overflow-x-auto text-xs custom-scrollbar pb-0.5">
           <span className="text-[11px] text-stone-500 uppercase font-mono tracking-wider mr-1 shrink-0 flex items-center gap-1">
             <Tag className="w-3 h-3" />
             Genres:
