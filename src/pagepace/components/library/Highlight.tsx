@@ -1,0 +1,23 @@
+import React from 'react';
+
+/** Wraps occurrences of `query` inside `text` with a highlight mark. */
+export const Highlight: React.FC<{ text?: string; query: string }> = ({ text, query }) => {
+  if (!text) return null;
+  const q = query.trim();
+  if (!q) return <>{text}</>;
+  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === q.toLowerCase() ? (
+          <mark key={i} className="bg-amber-500/30 text-amber-200 px-0.5 rounded">
+            {part}
+          </mark>
+        ) : (
+          <React.Fragment key={i}>{part}</React.Fragment>
+        )
+      )}
+    </>
+  );
+};
