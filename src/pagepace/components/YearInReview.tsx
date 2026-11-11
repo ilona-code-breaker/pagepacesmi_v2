@@ -19,6 +19,8 @@ export const YearInReview: React.FC<{ books: BookEntry[]; onSelectBook: (b: Book
   const streak = useMemo(() => computeStreaks(books), [books]);
   const [sharing, setSharing] = useState(false);
   const [shareNote, setShareNote] = useState('');
+  const [month, setMonth] = useState<number | null>(null);
+  const monthBooks = month === null ? [] : review.books.filter((b) => parseInt(b.finishDate.slice(5, 7), 10) === month + 1);
   const maxMonth = Math.max(1, ...review.booksPerMonth);
   const arch = review.topArchetype ? ARCHETYPES[review.topArchetype.id] : null;
 
@@ -122,16 +124,50 @@ export const YearInReview: React.FC<{ books: BookEntry[]; onSelectBook: (b: Book
             <div className="text-[11px] font-mono uppercase tracking-wider text-stone-500">Books per month</div>
             <div className="flex items-end gap-1.5 sm:gap-3 h-36">
               {review.booksPerMonth.map((n, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+                <button
+                  type="button"
+                  key={i}
+                  disabled={!n}
+                  onClick={() => setMonth(month === i ? null : i)}
+                  className={`flex-1 flex flex-col items-center gap-1.5 h-full justify-end ${n ? 'cursor-pointer' : 'cursor-default'} ${month === i ? 'opacity-100' : month !== null ? 'opacity-50' : ''}`}
+                >
                   <span className="text-[10px] font-mono text-stone-400">{n || ''}</span>
                   <div
                     className={`w-full rounded-md ${n ? 'bg-amber-500' : 'bg-stone-800'}`}
                     style={{ height: `${Math.max(4, (n / maxMonth) * 100)}%` }}
                   />
-                  <span className="text-[10px] font-mono text-stone-500">{MONTHS[i]}</span>
-                </div>
+                  <span className={`text-[10px] font-mono ${month === i ? 'text-amber-400' : 'text-stone-500'}`}>{MONTHS[i]}</span>
+                </button>
               ))}
             </div>
+            {month !== null && (
+              <div className="pt-3 border-t border-stone-800 space-y-2">
+                <div className="text-[11px] font-mono uppercase tracking-wider text-amber-400">
+                  {MONTHS[month]} {year} · {monthBooks.length} {monthBooks.length === 1 ? 'book' : 'books'}
+                </div>
+                {monthBooks.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => onSelectBook(b)}
+                    className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-stone-800/60 text-left transition-colors"
+                  >
+                    {b.coverUrl ? (
+                      <img src={b.coverUrl} alt="" className="w-8 h-11 object-cover rounded border border-stone-800" />
+                    ) : (
+                      <div className="w-8 h-11 rounded bg-stone-950 border border-stone-800 flex items-center justify-center">
+                        <BookOpen className="w-3.5 h-3.5 text-stone-600" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-serif font-bold text-stone-100 truncate">{b.title}</div>
+                      <div className="text-[11px] text-stone-400 truncate">{b.author} · {b.totalPages} pages</div>
+                    </div>
+                    {b.rating > 0 && <span className="text-[11px] font-mono text-amber-400">★ {b.rating.toFixed(1)}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
