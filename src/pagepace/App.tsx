@@ -165,9 +165,6 @@ export default function App() {
       const newItems = booksToRestore.filter((b) => !existingIds.has(b.id));
       return [...newItems, ...prev];
     });
-    if (booksToRestore.length > 0) {
-      setSelectedBook(booksToRestore[0]);
-    }
   };
 
   const handleEditBook = (updatedBook: BookEntry) => {
@@ -187,9 +184,7 @@ export default function App() {
     if (imported.goals && Object.keys(imported.goals).length > 0) {
       setGoals(imported.goals);
     }
-    if (imported.books.length > 0) {
-      setSelectedBook(imported.books[0]);
-    }
+    setSelectedBook(null);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(imported.books));
       if (imported.goals && Object.keys(imported.goals).length > 0) {
