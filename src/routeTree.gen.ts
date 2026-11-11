@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiArchetypeCelebrationRouteImport } from './routes/api/archetype-celebration'
 import { Route as ApiBookLookupRouteImport } from './routes/api/book-lookup'
+import { Route as ApiRecommendBooksRouteImport } from './routes/api/recommend-books'
 import { Route as ApiSearchBooksRouteImport } from './routes/api/search-books'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const ApiBookLookupRoute = ApiBookLookupRouteImport.update({
   path: '/api/book-lookup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRecommendBooksRoute = ApiRecommendBooksRouteImport.update({
+  id: '/api/recommend-books',
+  path: '/api/recommend-books',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSearchBooksRoute = ApiSearchBooksRouteImport.update({
   id: '/api/search-books',
   path: '/api/search-books',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/archetype-celebration': typeof ApiArchetypeCelebrationRoute
   '/api/book-lookup': typeof ApiBookLookupRoute
+  '/api/recommend-books': typeof ApiRecommendBooksRoute
   '/api/search-books': typeof ApiSearchBooksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/archetype-celebration': typeof ApiArchetypeCelebrationRoute
   '/api/book-lookup': typeof ApiBookLookupRoute
+  '/api/recommend-books': typeof ApiRecommendBooksRoute
   '/api/search-books': typeof ApiSearchBooksRoute
 }
 export interface FileRoutesById {
@@ -52,6 +60,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api/archetype-celebration': typeof ApiArchetypeCelebrationRoute
   '/api/book-lookup': typeof ApiBookLookupRoute
+  '/api/recommend-books': typeof ApiRecommendBooksRoute
   '/api/search-books': typeof ApiSearchBooksRoute
 }
 export interface FileRouteTypes {
@@ -60,18 +69,21 @@ export interface FileRouteTypes {
     | '/'
     | '/api/archetype-celebration'
     | '/api/book-lookup'
+    | '/api/recommend-books'
     | '/api/search-books'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/api/archetype-celebration'
     | '/api/book-lookup'
+    | '/api/recommend-books'
     | '/api/search-books'
   id:
     | '__root__'
     | '/'
     | '/api/archetype-celebration'
     | '/api/book-lookup'
+    | '/api/recommend-books'
     | '/api/search-books'
   fileRoutesById: FileRoutesById
 }
@@ -79,6 +91,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiArchetypeCelebrationRoute: typeof ApiArchetypeCelebrationRoute
   ApiBookLookupRoute: typeof ApiBookLookupRoute
+  ApiRecommendBooksRoute: typeof ApiRecommendBooksRoute
   ApiSearchBooksRoute: typeof ApiSearchBooksRoute
 }
 
@@ -105,6 +118,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBookLookupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/recommend-books': {
+      id: '/api/recommend-books'
+      path: '/api/recommend-books'
+      fullPath: '/api/recommend-books'
+      preLoaderRoute: typeof ApiRecommendBooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/search-books': {
       id: '/api/search-books'
       path: '/api/search-books'
@@ -119,6 +139,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiArchetypeCelebrationRoute: ApiArchetypeCelebrationRoute,
   ApiBookLookupRoute: ApiBookLookupRoute,
+  ApiRecommendBooksRoute: ApiRecommendBooksRoute,
   ApiSearchBooksRoute: ApiSearchBooksRoute,
 }
 export const routeTree = rootRouteImport

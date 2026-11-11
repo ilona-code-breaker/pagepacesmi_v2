@@ -170,3 +170,29 @@ function getFallbackCelebration(archetype: string, ppd: number, rating: number, 
   }
 }
 
+
+export async function recommendBooks(body: any) {
+  const current: any[] = Array.isArray(body?.current) ? body.current.slice(0, 5) : [];
+  const history: any[] = Array.isArray(body?.history) ? body.history.slice(0, 60) : [];
+  const months: any[] = Array.isArray(body?.months) ? body.months.slice(0, 12) : [];
+  if (!current.length && !history.length) return { recommendations: [] };
+  const line = (b: any) => `- "${String(b.title).slice(0, 120)}" by ${String(b.author || '?').slice(0, 80)}${b.genre ? ` [${b.genre}]` : ''}${b.rating ? ` rated ${b.rating}/5` : ''}`;
+  const prompt = `You are a thoughtful book recommender. Based on this reader's data, suggest 5 real, published books they have NOT read.
+Currently reading:
+${current.map(line).join('\n') || '(none)'}
+Reading history (most recent first):
+${history.map(line).join('\n') || '(none)'}
+Monthly reading pattern (month: books, top genre):
+${months.map((m) => `- ${m.month}: ${m.count} books, ${m.topGenre || 'mixed'}`).join('\n') || '(none)'}
+Weigh highly-rated books more, connect to the current read, and notice seasonal/monthly patterns.
+Return ONLY raw JSON (no markdown): {"recommendations":[{"title":"","author":"","genre":"","reason":"one warm sentence why, referencing their books","basedOn":"current|history|monthly"}]}`;
+  try {
+    const raw = await ask(prompt, 900, 0.7, 20000);
+    const parsed = JSON.parse(raw.replace(/```json/g, '').replace(/```/g, '').trim());
+    const recs = Array.isArray(parsed?.recommendations) ? parsed.recommendations.filter((r: any) => r?.title && r?.author).slice(0, 5) : [];
+    return { recommendations: recs };
+  } catch (error) {
+    console.error('recommendBooks failed:', error);
+    return { recommendations: [], error: 'Could not get recommendations right now.' };
+  }
+}
