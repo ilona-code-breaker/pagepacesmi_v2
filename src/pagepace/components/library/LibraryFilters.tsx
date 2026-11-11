@@ -55,7 +55,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
         <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:flex-wrap">
           <label className="flex flex-col items-start gap-1 min-w-0 sm:flex-row sm:items-center sm:gap-1.5 text-xs text-stone-500"><span className="flex items-center gap-1.5">
             <ArrowUpDown className="w-3 h-3" />
-            </span>Sort:</span>
+            Sort:</span>
             <select value={filters.sortBy} onChange={(e) => onChange({ sortBy: e.target.value as SortKey })} className={selectCls}>
               {SORT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -67,7 +67,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
 
           <label className="flex flex-col items-start gap-1 min-w-0 sm:flex-row sm:items-center sm:gap-1.5 text-xs text-stone-500"><span className="flex items-center gap-1.5">
             <Library className="w-3 h-3" />
-            </span>Shelf:</span>
+            Shelf:</span>
             <select value={filters.shelf} onChange={(e) => onChange({ shelf: e.target.value })} className={selectCls}>
               <option value="all">All shelves</option>
               {shelves.map(([s, n]) => (
@@ -80,7 +80,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
 
           <label className="flex flex-col items-start gap-1 min-w-0 sm:flex-row sm:items-center sm:gap-1.5 text-xs text-stone-500"><span className="flex items-center gap-1.5">
             <Tag className="w-3 h-3" />
-            </span>Genre:</span>
+            Genre:</span>
             <select value={filters.genre} onChange={(e) => onChange({ genre: e.target.value })} className={selectCls}>
               <option value="all">All genres</option>
               {libraryGenres.length > 0 && (
@@ -104,7 +104,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
 
           <label className="flex flex-col items-start gap-1 min-w-0 sm:flex-row sm:items-center sm:gap-1.5 text-xs text-stone-500"><span className="flex items-center gap-1.5">
             <Filter className="w-3 h-3" />
-            </span>Archetype:</span>
+            Archetype:</span>
             <select value={filters.archetype} onChange={(e) => onChange({ archetype: e.target.value as any })} className={selectCls}>
               <option value="all">All archetypes</option>
               {Object.values(ARCHETYPES).map((arch) => (
