@@ -24,6 +24,7 @@ import { filterReadingQueue, type QueuedBook } from '../utils/readingQueue';
 import { useReadingLists } from '../hooks/useReadingLists';
 import { CurrentlyReading } from './CurrentlyReading';
 import { DroppedBooks } from './DroppedBooks';
+import { GenreFillPanel } from './library/GenreFillPanel';
 import { Button } from '@/components/ui/button';
 
 interface BookListProps {
@@ -43,6 +44,7 @@ interface BookListProps {
   onDataImported?: (data: { books: BookEntry[]; goals: Record<string, MonthlyGoal> }) => void;
   onOpenShareCard?: () => void;
   onEditBook?: (updatedBook: BookEntry) => void;
+  onApplyGenres?: (picks: Record<string, string>) => void;
 }
 
 export const BookList: React.FC<BookListProps> = ({
@@ -62,6 +64,7 @@ export const BookList: React.FC<BookListProps> = ({
   onDataImported,
   onOpenShareCard,
   onEditBook,
+  onApplyGenres,
 }) => {
   const [filters, setFilters] = useState<LibraryFilterState>(DEFAULT_FILTERS);
   const [status, setStatus] = useState<'all' | 'want' | 'reading' | 'done' | 'dropped'>('all');
@@ -173,6 +176,8 @@ export const BookList: React.FC<BookListProps> = ({
         onOpenShareCard={onOpenShareCard}
         onClearLibraryClick={() => setIsClearConfirmOpen(true)}
       />
+
+      {onApplyGenres && <GenreFillPanel books={books} onApply={onApplyGenres} />}
 
       <div role="group" aria-label="Reading status" className="dark flex flex-wrap gap-2">
         {([['all', 'All', books.length + queue.length + reads.length + dropped.length], ['want', 'Want to read', queue.length], ['reading', 'In progress', reads.length], ['done', 'Done', books.length], ['dropped', 'Dropped', dropped.length]] as const).map(([value, label, count]) =>

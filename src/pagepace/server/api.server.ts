@@ -196,3 +196,24 @@ Return ONLY raw JSON (no markdown): {"recommendations":[{"title":"","author":"",
     return { recommendations: [], error: 'Could not get recommendations right now.' };
   }
 }
+
+export async function classifyGenres(body: any) {
+  const { ASSIGNABLE_GENRES, isAssignableGenre } = await import('../utils/genreFill');
+  const books = (Array.isArray(body?.books) ? body.books : []).slice(0, 40)
+    .filter((b: any) => b && typeof b.id === 'string' && typeof b.title === 'string')
+    .map((b: any) => ({ id: b.id, title: String(b.title).slice(0, 200), author: String(b.author ?? '').slice(0, 120) }));
+  if (books.length === 0) return { genres: [] };
+  const prompt = `Assign exactly one genre to each book. Allowed genres: ${ASSIGNABLE_GENRES.join(' | ')}.
+Reply ONLY with a JSON array like [{"id":"...","genre":"..."}], using the exact genre text.
+Books:
+${books.map((b: any) => `${b.id}\t${b.title}\t${b.author}`).join('\n')}`;
+  try {
+    const text = await ask(prompt, 3000, 0.1, 25000);
+    const json = text.slice(text.indexOf('['), text.lastIndexOf(']') + 1);
+    const ids = new Set(books.map((b: any) => b.id));
+    const parsed = JSON.parse(json);
+    return { genres: (Array.isArray(parsed) ? parsed : []).filter((r: any) => ids.has(r?.id) && isAssignableGenre(r?.genre)) };
+  } catch {
+    return { genres: [] };
+  }
+}

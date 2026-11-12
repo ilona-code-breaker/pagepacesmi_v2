@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiArchetypeCelebrationRouteImport } from './routes/api/archetype-celebration'
 import { Route as ApiBookLookupRouteImport } from './routes/api/book-lookup'
+import { Route as ApiClassifyGenresRouteImport } from './routes/api/classify-genres'
 import { Route as ApiRecommendBooksRouteImport } from './routes/api/recommend-books'
 import { Route as ApiSearchBooksRouteImport } from './routes/api/search-books'
 
@@ -30,6 +31,11 @@ const ApiBookLookupRoute = ApiBookLookupRouteImport.update({
   path: '/api/book-lookup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiClassifyGenresRoute = ApiClassifyGenresRouteImport.update({
+  id: '/api/classify-genres',
+  path: '/api/classify-genres',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRecommendBooksRoute = ApiRecommendBooksRouteImport.update({
   id: '/api/recommend-books',
   path: '/api/recommend-books',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/archetype-celebration': typeof ApiArchetypeCelebrationRoute
   '/api/book-lookup': typeof ApiBookLookupRoute
+  '/api/classify-genres': typeof ApiClassifyGenresRoute
   '/api/recommend-books': typeof ApiRecommendBooksRoute
   '/api/search-books': typeof ApiSearchBooksRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/archetype-celebration': typeof ApiArchetypeCelebrationRoute
   '/api/book-lookup': typeof ApiBookLookupRoute
+  '/api/classify-genres': typeof ApiClassifyGenresRoute
   '/api/recommend-books': typeof ApiRecommendBooksRoute
   '/api/search-books': typeof ApiSearchBooksRoute
 }
@@ -60,6 +68,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api/archetype-celebration': typeof ApiArchetypeCelebrationRoute
   '/api/book-lookup': typeof ApiBookLookupRoute
+  '/api/classify-genres': typeof ApiClassifyGenresRoute
   '/api/recommend-books': typeof ApiRecommendBooksRoute
   '/api/search-books': typeof ApiSearchBooksRoute
 }
@@ -69,6 +78,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api/archetype-celebration'
     | '/api/book-lookup'
+    | '/api/classify-genres'
     | '/api/recommend-books'
     | '/api/search-books'
   fileRoutesByTo: FileRoutesByTo
@@ -76,6 +86,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api/archetype-celebration'
     | '/api/book-lookup'
+    | '/api/classify-genres'
     | '/api/recommend-books'
     | '/api/search-books'
   id:
@@ -83,6 +94,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api/archetype-celebration'
     | '/api/book-lookup'
+    | '/api/classify-genres'
     | '/api/recommend-books'
     | '/api/search-books'
   fileRoutesById: FileRoutesById
@@ -91,6 +103,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiArchetypeCelebrationRoute: typeof ApiArchetypeCelebrationRoute
   ApiBookLookupRoute: typeof ApiBookLookupRoute
+  ApiClassifyGenresRoute: typeof ApiClassifyGenresRoute
   ApiRecommendBooksRoute: typeof ApiRecommendBooksRoute
   ApiSearchBooksRoute: typeof ApiSearchBooksRoute
 }
@@ -118,6 +131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBookLookupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/classify-genres': {
+      id: '/api/classify-genres'
+      path: '/api/classify-genres'
+      fullPath: '/api/classify-genres'
+      preLoaderRoute: typeof ApiClassifyGenresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/recommend-books': {
       id: '/api/recommend-books'
       path: '/api/recommend-books'
@@ -139,6 +159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiArchetypeCelebrationRoute: ApiArchetypeCelebrationRoute,
   ApiBookLookupRoute: ApiBookLookupRoute,
+  ApiClassifyGenresRoute: ApiClassifyGenresRoute,
   ApiRecommendBooksRoute: ApiRecommendBooksRoute,
   ApiSearchBooksRoute: ApiSearchBooksRoute,
 }

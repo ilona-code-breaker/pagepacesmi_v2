@@ -16,6 +16,7 @@ import { MonthlyGoalWidget } from './components/MonthlyGoalWidget';
 import { ShareableArchetypeCardModal } from './components/ShareableArchetypeCardModal';
 import { DataPortabilityToolbar } from './components/DataPortabilityToolbar';
 import { CsvImportModal } from './components/CsvImportModal';
+import { applyGenres, fetchGenres, isUnassigned } from './utils/genreFill';
 import { StreakWidget } from './components/StreakWidget';
 import { CurrentlyReading, addCurrentRead } from './components/CurrentlyReading';
 import { Recommendations } from './components/Recommendations';
@@ -211,11 +212,18 @@ export default function App() {
     }
   };
 
+  const handleApplyGenres = (picks: Record<string, string>) => {
+    setBooks((prev) => applyGenres(prev, picks));
+  };
+
   const handleDataImported = (imported: {
     books: BookEntry[];
     goals: Record<string, MonthlyGoal>;
   }) => {
     setBooks(imported.books);
+    if (imported.books.some(isUnassigned)) {
+      fetchGenres(imported.books).then(handleApplyGenres).catch(() => {});
+    }
     if (imported.goals && Object.keys(imported.goals).length > 0) {
       setGoals(imported.goals);
     }
@@ -607,6 +615,7 @@ export default function App() {
               onDataImported={handleDataImported}
               onOpenShareCard={() => setIsShareCardOpen(true)}
               onEditBook={handleEditBook}
+              onApplyGenres={handleApplyGenres}
             />
           </div>
         )}
