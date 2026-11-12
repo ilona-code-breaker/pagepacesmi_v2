@@ -1,9 +1,9 @@
 import React from 'react';
-import { BookOpen, Volume2, VolumeX, Plus, Compass, Target, Share2, CalendarHeart } from 'lucide-react';
+import { BookOpen, Volume2, VolumeX, Plus, Compass, Target, Share2, CalendarHeart, Library } from 'lucide-react';
 
 interface NavbarProps {
-  currentTab: 'track' | 'library' | 'year' | 'codex';
-  onTabChange: (tab: 'track' | 'library' | 'year' | 'codex') => void;
+  currentTab: 'track' | 'library' | 'year' | 'codex' | 'corner';
+  onTabChange: (tab: 'track' | 'library' | 'year' | 'codex' | 'corner') => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
   libraryCount: number;
@@ -110,6 +110,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <CalendarHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-400" />
+          </button>
+
+          {/* Book Corner Tab */}
+          <button
+            type="button"
+            onClick={() => onTabChange('corner')}
+            aria-label="My Book Corner"
+            title="My Book Corner"
+            className={`flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+              currentTab === 'corner'
+                ? 'bg-stone-800 text-stone-100 shadow-sm border border-stone-700'
+                : 'text-stone-300 hover:text-stone-100 hover:bg-stone-800/60'
+            }`}
+          >
+            <Library className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
+            <span className="hidden sm:inline">Corner</span>
           </button>
 
           {/* Codex Tab */}

@@ -12,3 +12,7 @@
 - [x] Connect Library statuses to current reads, completed books, and dropped books.
 - [x] Add Dropped action and remove the default Book club shelf.
 - [x] Test transitions, persistence, and mobile layout.
+# My Book Corner
+- [x] Device-local owned-books collection with read/unread from completed books.
+- [x] Book Corner page: bookcases of 100 spines, add by search, barcode, or from finished books; continuous shelf scanning.
+- [ ] Accounts + sync across devices (waiting on user decision).

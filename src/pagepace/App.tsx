@@ -26,6 +26,8 @@ import { Recommendations } from './components/Recommendations';
 import { ReadingQueue } from './components/ReadingQueue';
 import { QUEUE_KEY, saveToQueue, removeFromQueue, type QueuedBook } from './utils/readingQueue';
 import { Button } from '@/components/ui/button';
+import { BookCorner } from './components/BookCorner';
+import { OWNED_KEY, type OwnedBook } from './utils/ownedBooks';
 import { YearInReview } from './components/YearInReview';
 import { getCurrentMonthKey } from './utils/goalUtils';
 import {
@@ -101,7 +103,15 @@ export default function App() {
     }
   });
 
-  const [currentTab, setCurrentTab] = useState<'track' | 'library' | 'year' | 'codex'>('track');
+  const [owned, setOwned] = useState<OwnedBook[]>([]);
+  useEffect(() => {
+    try { setOwned(JSON.parse(localStorage.getItem(OWNED_KEY) || '[]')); } catch { /* ignore */ }
+  }, []);
+  const saveOwned = (list: OwnedBook[]) => {
+    setOwned(list);
+    localStorage.setItem(OWNED_KEY, JSON.stringify(list));
+  };
+  const [currentTab, setCurrentTab] = useState<'track' | 'library' | 'year' | 'codex' | 'corner'>('track');
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<BookEntry | null>(null);
   const [unlocked, setUnlocked] = useState<ArchetypeDefinition | null>(null);
@@ -662,6 +672,8 @@ export default function App() {
             }}
           />
         )}
+
+        {currentTab === 'corner' && <BookCorner owned={owned} onChange={saveOwned} completed={books} />}
 
         {/* TAB 4: Archetype Codex & Field Guide */}
         {currentTab === 'codex' && (

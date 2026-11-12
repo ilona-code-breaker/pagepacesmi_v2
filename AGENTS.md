@@ -34,3 +34,4 @@ use the editor.
 - Track's reading queue and Library's Want to read shelf share the same App-owned device-local queue, separate from completed books; queued starts prefill BookForm and dequeue only after current-read creation succeeds so cancelling never loses a saved book and statistics remain completed-only.
 - Current and dropped reads use one shared reading-list hook across Track and Library; dropping preserves progress in separate storage and never creates a completed entry, so goals and streaks remain completion-only.
 - Render genre legends outside the fixed-height Recharts canvas with a responsive grid so long labels never reduce or overlap the donut; chart and legend share CSS palette tokens.
+- Owned books (Book Corner) are a separate device-local collection; read/unread is derived from completed books by ISBN or title match, never stored, so it stays in sync.

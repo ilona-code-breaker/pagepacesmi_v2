@@ -199,3 +199,13 @@ body {
   --genre-10: oklch(0.65 0.22 305);
   --genre-11: oklch(0.7 0.01 60);
 }
+
+.bookcase {
+  background: linear-gradient(180deg, oklch(0.32 0.05 55), oklch(0.26 0.045 50));
+  border: 6px solid oklch(0.22 0.04 45);
+}
+.bookcase-shelf {
+  border-bottom: 8px solid oklch(0.4 0.06 60);
+  box-shadow: 0 6px 6px -4px oklch(0 0 0 / 0.5);
+  margin-bottom: 0.75rem;
+}
