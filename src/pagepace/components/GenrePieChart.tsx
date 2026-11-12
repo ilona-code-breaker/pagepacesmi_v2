@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { BookEntry } from '../types/book';
-import { PieChart as PieChartIcon, BookOpen, Layers } from 'lucide-react';
+import { PieChart as PieChartIcon, BookOpen, Layers, ChevronDown, ChevronUp } from 'lucide-react';
 import { GENRE_METADATA, MASTER_GENRES, MasterGenre, extractPrimaryGenre, isMasterGenre } from '../utils/genreMapper';
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ interface GenrePieChartProps {
   className?: string;
   selectedGenre?: string | 'all';
   onSelectGenre?: (genre: string | 'all') => void;
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
 }
 
 interface GenreDataPoint {
@@ -27,6 +29,8 @@ export const GenrePieChart: React.FC<GenrePieChartProps> = ({
   className = '',
   selectedGenre = 'all',
   onSelectGenre,
+  collapsed = false,
+  onToggleCollapsed,
 }) => {
   const { data, totalBooks, totalPages } = useMemo(() => {
     if (!books || books.length === 0) {
@@ -115,7 +119,7 @@ export const GenrePieChart: React.FC<GenrePieChartProps> = ({
   return (
     <div className={`dark p-4 sm:p-6 rounded-lg bg-card/30 border border-border space-y-4 ${className}`}>
       {/* Chart Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/80 pb-3">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${collapsed ? "" : "border-b border-border/80 pb-3"}`}>
         <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2.5">
           <div className="p-2 rounded-xl bg-secondary text-chart-3">
             <PieChartIcon className="w-4 h-4" />
@@ -158,9 +162,16 @@ export const GenrePieChart: React.FC<GenrePieChartProps> = ({
               <span className="text-muted-foreground font-normal">({data[0].percentage}%)</span>
             </div>
           )}
+          {onToggleCollapsed && (
+            <Button variant="ghost" size="sm" type="button" onClick={onToggleCollapsed}
+              aria-expanded={!collapsed} aria-label={collapsed ? 'Show genre distribution' : 'Hide genre distribution'}>
+              {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            </Button>
+          )}
         </div>
       </div>
 
+      {!collapsed && (<>
       {/* Donut Chart Visualization */}
       <div className="w-full h-52 sm:h-60 min-w-0">
         <ResponsiveContainer width="100%" height="100%">
@@ -224,6 +235,7 @@ export const GenrePieChart: React.FC<GenrePieChartProps> = ({
           {totalPages.toLocaleString()} total pages
         </span>
       </div>
+      </>)}
     </div>
   );
 };

@@ -179,8 +179,8 @@ export const BookList: React.FC<BookListProps> = ({
           <Button key={value} variant={status === value ? 'secondary' : 'ghost'} size="sm" aria-pressed={status === value} onClick={() => { setStatus(value); setFilters({ ...DEFAULT_FILTERS, search: filters.search, sortBy: filters.sortBy }); setSelectedIds(new Set()); }}>{label} ({count})</Button>
         )}
       </div>
-      {showGenreChart && (status === 'all' || status === 'done') && filters.shelf !== 'Want to read' && (
-        <GenrePieChart books={books} selectedGenre={filters.genre} onSelectGenre={(g) => patchFilters({ genre: g })} />
+      {(status === 'all' || status === 'done') && filters.shelf !== 'Want to read' && (
+        <GenrePieChart books={books} selectedGenre={filters.genre} onSelectGenre={(g) => patchFilters({ genre: g })} collapsed={!showGenreChart} onToggleCollapsed={() => setShowGenreChart((p) => !p)} />
       )}
 
       <LibraryFilters
