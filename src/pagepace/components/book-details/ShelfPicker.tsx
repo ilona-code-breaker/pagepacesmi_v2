@@ -4,7 +4,7 @@ import { DEFAULT_SHELVES } from '../../utils/libraryFilters';
 
 export const ShelfPicker: React.FC<{ value: string[]; onChange: (v: string[]) => void }> = ({ value, onChange }) => {
   const [custom, setCustom] = useState('');
-  const all = Array.from(new Set([...DEFAULT_SHELVES, ...value]));
+  const all = Array.from(new Set([...DEFAULT_SHELVES, ...value])).filter((s) => s !== 'Book club');
   const toggle = (s: string) => onChange(value.includes(s) ? value.filter((x) => x !== s) : [...value, s]);
   const addCustom = () => {
     const s = custom.trim();

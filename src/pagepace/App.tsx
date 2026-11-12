@@ -588,6 +588,7 @@ export default function App() {
             </div>
 
             <BookList
+              onFinishReading={handleBookCreated}
               queue={queue}
               onStartQueuedBook={startQueuedBook}
               onRemoveQueuedBook={removeQueuedBook}

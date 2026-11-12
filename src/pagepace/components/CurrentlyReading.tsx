@@ -1,51 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { BookOpen, Check, Plus, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookOpen, Check, Plus, Trash2, CircleStop } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useReadingLists } from '../hooks/useReadingLists';
+export { addCurrentRead } from '../hooks/useReadingLists';
 import { BookEntry } from '../types/book';
 import { CurrentRead, computeProgress } from '../utils/currentReading';
 import { calculateElapsedDays, calculatePPD, getArchetypeByPPD } from '../utils/calculator';
 import { todayIso } from '../utils/readingStats';
 
-const KEY = 'pagepace_current_reads';
 
 const fmt = (iso: string) =>
   new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
-const EVT = 'pagepace-current-reads';
-const load = (): CurrentRead[] => {
-  try {
-    return JSON.parse(localStorage.getItem(KEY) || '[]');
-  } catch {
-    return [];
-  }
-};
-
-export function addCurrentRead(r: CurrentRead) {
-  localStorage.setItem(KEY, JSON.stringify([r, ...load()]));
-  window.dispatchEvent(new Event(EVT));
-}
-
-/** Shared across every mounted instance (list + track form) via a window event. */
-function useCurrentReads() {
-  const [reads, setLocal] = useState<CurrentRead[]>([]);
-  useEffect(() => {
-    setLocal(load());
-    const sync = () => setLocal(load());
-    window.addEventListener(EVT, sync);
-    return () => window.removeEventListener(EVT, sync);
-  }, []);
-  const setReads = (fn: (rs: CurrentRead[]) => CurrentRead[]) => {
-    localStorage.setItem(KEY, JSON.stringify(fn(load())));
-    window.dispatchEvent(new Event(EVT));
-  };
-  return [reads, setReads] as const;
-}
-
-export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; formOnly?: boolean; onAdded?: () => void }> = ({
+export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; formOnly?: boolean; onAdded?: () => void; visibleIds?: string[]; libraryView?: boolean }> = ({
   onFinish,
   formOnly = false,
   onAdded,
+  visibleIds,
+  libraryView = false,
 }) => {
-  const [reads, setReads] = useCurrentReads();
+  const { reads: allReads, setReads, drop, error } = useReadingLists();
+  const reads = visibleIds ? allReads.filter((r) => visibleIds.includes(r.id)) : allReads;
   const [adding, setAdding] = useState(formOnly);
   const [form, setForm] = useState({ title: '', author: '', totalPages: '', currentPage: '', startDate: todayIso() });
   const today = todayIso();
@@ -125,16 +100,17 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
         <span className="text-xs font-mono uppercase tracking-wider text-stone-400 font-semibold flex items-center gap-1.5">
           <BookOpen className="w-4 h-4 text-amber-400" /> Currently Reading
         </span>
-        <button
+        {!libraryView && <button
           type="button"
           onClick={() => setAdding((a) => !a)}
           className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold"
         >
           <Plus className="w-3.5 h-3.5" /> {adding ? 'Cancel' : 'Add book'}
-        </button>
+        </button>}
       </div>
 
       {adding && formEl}
+      {error && <p role="alert" className="dark text-sm text-destructive">{error}</p>}
 
       {reads.length === 0 && !adding && (
         <p className="text-xs text-stone-500">Add a book you're reading now to see your progress and when you'll likely finish.</p>
@@ -183,6 +159,7 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
               <button type="button" onClick={() => finish(r)} className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold">
                 <Check className="w-3.5 h-3.5" /> Finished today
               </button>
+              <Button variant="secondary" size="sm" className="dark" aria-label={`Mark ${r.title} as Dropped`} onClick={() => drop(r.id)}><CircleStop />Dropped</Button>
             </div>
           </div>
         );

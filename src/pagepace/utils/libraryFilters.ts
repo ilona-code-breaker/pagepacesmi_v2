@@ -1,6 +1,6 @@
 import { ArchetypeId, BookEntry } from '../types/book';
 
-export const DEFAULT_SHELVES = ['Want to read', 'Re-read', 'Book club', 'Favourites'] as const;
+export const DEFAULT_SHELVES = ['Want to read', 'Re-read', 'Favourites'] as const;
 
 export type SortKey = 'date' | 'ppd' | 'rating' | 'author' | 'title' | 'genre';
 
@@ -106,6 +106,6 @@ export function countGenres(books: BookEntry[]): [string, number][] {
 export function countShelves(books: BookEntry[]): [string, number][] {
   const counts = new Map<string, number>();
   DEFAULT_SHELVES.forEach((s) => counts.set(s, 0));
-  books.forEach((b) => b.shelves?.forEach((s) => counts.set(s, (counts.get(s) || 0) + 1)));
+  books.forEach((b) => b.shelves?.forEach((s) => { if (s !== 'Book club') counts.set(s, (counts.get(s) || 0) + 1); }));
   return Array.from(counts.entries());
 }
