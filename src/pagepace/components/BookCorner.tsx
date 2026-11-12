@@ -142,19 +142,20 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
             return (
               <div key={row} className="bookcase-shelf flex items-end gap-[2px] h-28 sm:h-36 px-1">
                 {shelf.map((b) => {
-                  const h = 62 + Math.min(1, (b.totalPages || 300) / 800) * 36;
+                  const pages = Math.max(80, Math.min(1200, b.totalPages || 300));
+                  const tall = 80 + ([...b.id].reduce((a, c) => a + c.charCodeAt(0), 0) % 16);
                   return (
-                    <button key={b.id} type="button" title={`${b.title} — ${b.author}`} aria-label={`${b.title} by ${b.author}`}
+                    <button key={b.id} type="button" title={`${b.title} — ${b.author} · ${b.totalPages || '?'} pages`} aria-label={`${b.title} by ${b.author}`}
                       onClick={() => setPicked(b)}
-                      className="flex-1 max-w-[18px] min-w-0 rounded-t-sm transition-transform hover:-translate-y-1 focus-visible:-translate-y-1"
-                      style={{ height: `${h}%`, background: genreColor(b.genre), opacity: readSet.has(b.id) ? 1 : 0.45, boxShadow: 'inset -2px 0 0 color-mix(in oklab, black 25%, transparent)' }} />
+                      className="min-w-[3px] rounded-t-sm transition-transform hover:-translate-y-1 focus-visible:-translate-y-1"
+                      style={{ flex: `${pages} 1 0`, maxWidth: `${6 + pages / 22}px`, height: `${tall}%`, background: genreColor(b.genre), opacity: readSet.has(b.id) ? 1 : 0.45, boxShadow: 'inset -2px 0 0 color-mix(in oklab, black 25%, transparent)' }} />
                   );
                 })}
               </div>
             );
           })}
         </div>
-        <p className="text-xs text-muted-foreground">Bright spines are books you've read; faded ones are waiting. Colours show genre.</p>
+        <p className="text-xs text-muted-foreground">Bright spines are books you've read; faded ones are waiting. Colours show genre; thicker spines are longer books.</p>
       </section>
 
       <section className="rounded-2xl border border-border bg-card/30 p-4 space-y-3" aria-label="Books I own">
