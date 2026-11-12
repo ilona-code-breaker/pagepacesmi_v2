@@ -19,6 +19,9 @@ import { CsvImportModal } from './components/CsvImportModal';
 import { StreakWidget } from './components/StreakWidget';
 import { CurrentlyReading, addCurrentRead } from './components/CurrentlyReading';
 import { Recommendations } from './components/Recommendations';
+import { ReadingQueue } from './components/ReadingQueue';
+import { QUEUE_KEY, saveToQueue, removeFromQueue, type QueuedBook } from './utils/readingQueue';
+import { Button } from '@/components/ui/button';
 import { YearInReview } from './components/YearInReview';
 import { getCurrentMonthKey } from './utils/goalUtils';
 import {
@@ -136,6 +139,22 @@ export default function App() {
   };
 
   const [trackStatus, setTrackStatus] = useState<'finished' | 'reading'>('finished');
+  const [queue, setQueue] = useState<QueuedBook[]>([]);
+  const [queuedStart, setQueuedStart] = useState<QueuedBook | undefined>();
+  const [queueError, setQueueError] = useState('');
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+      if (Array.isArray(saved)) setQueue(saved.filter((book) => book?.id && typeof book.title === 'string' && typeof book.author === 'string'));
+    } catch { setQueueError('Could not load your saved books.'); }
+  }, []);
+  const updateQueue = (next: QueuedBook[]) => {
+    try {
+      localStorage.setItem(QUEUE_KEY, JSON.stringify(next));
+      setQueue(next);
+      setQueueError('');
+    } catch { setQueueError('Could not save your queue on this device.'); }
+  };
 
   const handleBookCreated = (newBook: BookEntry) => {
     setBooks((prev) => [newBook, ...prev]);
@@ -390,7 +409,7 @@ export default function App() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Form Column */}
-              <div className="lg:col-span-7 bg-stone-900/70 border border-stone-800 rounded-2xl p-6 sm:p-8 backdrop-blur-sm space-y-6">
+              <div id="book-tracking-form" className="lg:col-span-7 bg-stone-900/70 border border-stone-800 rounded-2xl p-6 sm:p-8 backdrop-blur-sm space-y-6">
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-100">
                     Track Book Completion
@@ -406,7 +425,7 @@ export default function App() {
                     <button
                       key={s}
                       type="button"
-                      onClick={() => setTrackStatus(s)}
+                      onClick={() => { setTrackStatus(s); setQueuedStart(undefined); }}
                       className={`py-2 rounded-lg text-sm font-semibold transition-colors ${trackStatus === s ? 'bg-amber-500 text-stone-950' : 'text-stone-400 hover:text-stone-200'}`}
                     >
                       {s === 'finished' ? 'Finished' : 'Still reading'}
@@ -414,13 +433,19 @@ export default function App() {
                   ))}
                 </div>
 
+                {queuedStart && <div className="dark flex items-center justify-between gap-2 text-sm text-muted-foreground"><span className="min-w-0 break-words">Starting {queuedStart.title}</span><Button variant="ghost" size="sm" onClick={() => setQueuedStart(undefined)}>Cancel</Button></div>}
                 <BookForm
-                  key={trackStatus}
+                  key={`${trackStatus}-${queuedStart?.id || ''}`}
+                  initialBook={queuedStart}
                   mode={trackStatus}
                   onBookCreated={handleBookCreated}
                   soundEnabled={soundEnabled}
                   onReadingStarted={(r) => {
                     addCurrentRead(r);
+                    if (queuedStart) {
+                      updateQueue(removeFromQueue(queue, queuedStart.id));
+                      setQueuedStart(undefined);
+                    }
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                 />
@@ -429,7 +454,16 @@ export default function App() {
               {/* Side Column: Sample Books & Tips */}
               <div className="lg:col-span-5 space-y-6">
                 <CurrentlyReading onFinish={handleBookCreated} />
-                <Recommendations books={books} />
+                <Recommendations books={books} queue={queue} onSave={(book) => updateQueue(saveToQueue(queue, book, crypto.randomUUID()))} />
+                {queueError && <p role="alert" className="text-sm text-destructive">{queueError}</p>}
+                <ReadingQueue queue={queue} onRemove={(id) => {
+                  updateQueue(removeFromQueue(queue, id));
+                  if (queuedStart?.id === id) setQueuedStart(undefined);
+                }} onStart={(book) => {
+                  setTrackStatus('reading');
+                  setQueuedStart(book);
+                  requestAnimationFrame(() => document.getElementById('book-tracking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+                }} />
                 {/* Quick Archetype Preview Explainer */}
                 <div className="p-6 rounded-2xl bg-stone-900/50 border border-stone-800 space-y-4">
                   <h3 className="text-sm font-mono uppercase tracking-wider text-stone-300 font-semibold flex items-center gap-2">

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { CurrentRead } from '../utils/currentReading';
+import type { QueuedBook } from '../utils/readingQueue';
+import { todayIso } from '../utils/readingStats';
 import confetti from 'canvas-confetti';
 import { BookEntry } from '../types/book';
 import {
@@ -54,6 +56,7 @@ interface BookFormProps {
   /** 'reading' = log a book still in progress (no finish date / rating / review) */
   mode?: 'finished' | 'reading';
   onReadingStarted?: (r: CurrentRead) => void;
+  initialBook?: QueuedBook;
 }
 
 export const BookForm: React.FC<BookFormProps> = ({
@@ -61,22 +64,24 @@ export const BookForm: React.FC<BookFormProps> = ({
   soundEnabled = true,
   mode = 'finished',
   onReadingStarted,
+  initialBook,
 }) => {
   const isReading = mode === 'reading';
-  const [currentPage, setCurrentPage] = useState<number | ''>('');
+  const [currentPage, setCurrentPage] = useState<number | ''>(initialBook ? 0 : '');
   // Today's date in YYYY-MM-DD
   const todayStr = new Date().toISOString().split('T')[0];
   // 5 days ago
   const defaultStart = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-  const [title, setTitle] = useState('');
-  const [author, setAuthor] = useState('');
-  const [totalPages, setTotalPages] = useState<number | ''>(384);
-  const [startDate, setStartDate] = useState(defaultStart);
+  const initialMatch = initialBook ? findExactOrBestMatch(initialBook.title) : undefined;
+  const [title, setTitle] = useState(initialBook?.title || '');
+  const [author, setAuthor] = useState(initialBook?.author || '');
+  const [totalPages, setTotalPages] = useState<number | ''>(initialBook ? initialMatch?.totalPages || '' : 384);
+  const [startDate, setStartDate] = useState(initialBook ? todayIso() : defaultStart);
   const [finishDate, setFinishDate] = useState(todayStr);
   const [rating, setRating] = useState<number>(4.4);
   const [review, setReview] = useState('');
-  const [genre, setGenre] = useState('Fantasy');
+  const [genre, setGenre] = useState<string>(initialBook ? normalizeGenre(initialBook.genre || initialMatch?.genre || '') || 'Unassigned' : 'Fantasy');
   const [format, setFormat] = useState<'Physical' | 'E-Reader' | 'Audiobook' | 'Hybrid'>('Physical');
   const [coverUrl, setCoverUrl] = useState<string | undefined>(undefined);
   const [isbn, setIsbn] = useState<string | undefined>(undefined);

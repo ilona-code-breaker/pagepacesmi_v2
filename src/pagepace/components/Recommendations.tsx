@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles, RefreshCw, BookmarkPlus, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { BookEntry } from '../types/book';
-import { selectRecommendations, type Recommendation } from '../utils/recommendations';
+import { normalizeTitle, selectRecommendations, type Recommendation } from '../utils/recommendations';
+import type { QueuedBook } from '../utils/readingQueue';
 
 const SECTION = { year: 'Based on your past 12 months', recent: 'Based on your past 3 months' };
 
@@ -15,7 +17,7 @@ function buildPayload(books: BookEntry[]) {
   };
 }
 
-export const Recommendations: React.FC<{ books: BookEntry[] }> = ({ books }) => {
+export const Recommendations: React.FC<{ books: BookEntry[]; queue: QueuedBook[]; onSave: (book: Recommendation) => void }> = ({ books, queue, onSave }) => {
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -57,6 +59,9 @@ export const Recommendations: React.FC<{ books: BookEntry[] }> = ({ books }) => 
                   <p className="text-sm font-semibold text-slate-100">{r.title} <span className="font-normal text-slate-400">by {r.author}</span></p>
                   {r.genre && <p className="text-[11px] text-slate-500">{r.genre}</p>}
                   <p className="text-xs text-slate-300 mt-1">{r.reason}</p>
+                  <Button variant="secondary" size="sm" className="dark mt-3" disabled={queue.some((book) => normalizeTitle(book.title) === normalizeTitle(r.title))} onClick={() => onSave(r)}>
+                    {queue.some((book) => normalizeTitle(book.title) === normalizeTitle(r.title)) ? <><Check />Saved</> : <><BookmarkPlus />Want to read</>}
+                  </Button>
                 </li>
               ))}
             </ul>
