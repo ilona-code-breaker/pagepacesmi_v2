@@ -201,11 +201,11 @@ export const GenrePieChart: React.FC<GenrePieChartProps> = ({
         </ResponsiveContainer>
       </div>
 
-      <div aria-label="Genre breakdown" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+      <div aria-label="Genre breakdown" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-2 gap-y-0">
         {data.map((item) => (
           <Button key={item.name} variant="ghost" aria-pressed={selectedGenre === item.name}
             onClick={() => onSelectGenre?.(selectedGenre === item.name ? 'all' : item.name)}
-            className={`h-auto min-h-10 w-full grid grid-cols-[auto_minmax(0,1fr)_auto] gap-2 px-2 py-2 text-left text-xs whitespace-normal ${selectedGenre === item.name ? 'bg-secondary text-foreground' : 'text-muted-foreground'}`}>
+            className={`h-auto min-h-0 w-full grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-2 py-1 text-left text-xs whitespace-normal ${selectedGenre === item.name ? 'bg-secondary text-foreground' : 'text-muted-foreground'}`}>
             <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
             <span className="min-w-0 break-words">{item.name}</span>
             <span className="shrink-0 font-mono text-xs">{item.percentage}%</span>
