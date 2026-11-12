@@ -58,7 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>+ Book</span>
+              <span>Add book</span>
             </button>
           </div>
         </div>
