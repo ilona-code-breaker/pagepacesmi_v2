@@ -571,6 +571,9 @@ export default function App() {
             books={books}
             goals={goals}
             goalsOpen={goalsOpen}
+            goalsSummary={
+              <MonthlyGoalWidget books={books} goals={goals} onViewGoals={() => setGoalsOpen(true)} />
+            }
             onGoalsOpenChange={setGoalsOpen}
             goalsEditor={
               <MonthlyGoalTracker

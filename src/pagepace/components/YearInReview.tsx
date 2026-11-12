@@ -14,9 +14,10 @@ export const YearInReview: React.FC<{
   onSelectBook: (b: BookEntry) => void;
   goals?: Record<string, MonthlyGoal>;
   goalsEditor?: React.ReactNode;
+  goalsSummary?: React.ReactNode;
   goalsOpen?: boolean;
   onGoalsOpenChange?: (open: boolean) => void;
-}> = ({ books, onSelectBook, goals = {}, goalsEditor, goalsOpen = false, onGoalsOpenChange }) => {
+}> = ({ books, onSelectBook, goals = {}, goalsEditor, goalsSummary, goalsOpen = false, onGoalsOpenChange }) => {
   const years = useMemo(() => {
     const ys = yearsWithBooks(books);
     const now = new Date().getFullYear();
@@ -127,7 +128,10 @@ export const YearInReview: React.FC<{
       </div>
       {shareNote && <p className="text-xs text-emerald-300">{shareNote}</p>}
 
-      <StreakWidget books={books} />
+      <div className={`grid grid-cols-1 ${goalsSummary ? 'sm:grid-cols-2' : ''} gap-4 items-stretch`}>
+        {goalsSummary}
+        <StreakWidget books={books} />
+      </div>
 
       {review.bookCount === 0 ? (
         <div className="p-10 text-center rounded-2xl bg-stone-900/40 border border-stone-800 text-stone-400 text-sm">
