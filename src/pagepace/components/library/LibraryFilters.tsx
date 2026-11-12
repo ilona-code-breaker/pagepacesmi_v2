@@ -133,7 +133,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
       </div>
 
       {/* Quick shelf pills */}
-      <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap sm:overflow-x-auto pt-1.5 border-t border-stone-800/40 text-xs custom-scrollbar pb-0.5">
+      <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-stone-800/40 text-xs custom-scrollbar pb-0.5">
         <span className="text-[11px] text-stone-500 uppercase font-mono tracking-wider mr-1 shrink-0 flex items-center gap-1">
           <Library className="w-3 h-3" />
           Shelves:
@@ -160,7 +160,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
 
       {/* Quick genre pills */}
       {libraryGenres.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap sm:overflow-x-auto text-xs custom-scrollbar pb-0.5">
+        <div className="flex items-center gap-1.5 flex-wrap text-xs custom-scrollbar pb-0.5">
           <span className="text-[11px] text-stone-500 uppercase font-mono tracking-wider mr-1 shrink-0 flex items-center gap-1">
             <Tag className="w-3 h-3" />
             Genres:
