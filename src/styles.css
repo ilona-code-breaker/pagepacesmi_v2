@@ -183,3 +183,19 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #44403c;
 }
+
+/* Shared genre-chart palette */
+:root {
+  --genre-0: oklch(0.62 0.22 290);
+  --genre-1: oklch(0.65 0.24 350);
+  --genre-2: oklch(0.7 0.16 230);
+  --genre-3: oklch(0.65 0.24 15);
+  --genre-4: oklch(0.7 0.2 320);
+  --genre-5: oklch(0.7 0.18 65);
+  --genre-6: oklch(0.82 0.17 90);
+  --genre-7: oklch(0.64 0.22 30);
+  --genre-8: oklch(0.5 0.19 25);
+  --genre-9: oklch(0.7 0.16 165);
+  --genre-10: oklch(0.65 0.22 305);
+  --genre-11: oklch(0.7 0.01 60);
+}
