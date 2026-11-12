@@ -375,13 +375,17 @@ export default function App() {
         {currentTab === 'track' && (
           <div className="space-y-6">
             {/* Compact Monthly Reading Goal Progress Widget */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
-              <MonthlyGoalWidget
-                books={books}
-                goals={goals}
-                onViewGoals={() => setCurrentTab('year')}
-              />
-              <StreakWidget books={books} onOpenYear={() => setCurrentTab('year')} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-8 items-stretch">
+              <div className="min-w-0 lg:col-span-7">
+                <MonthlyGoalWidget
+                  books={books}
+                  goals={goals}
+                  onViewGoals={() => setCurrentTab('year')}
+                />
+              </div>
+              <div className="min-w-0 lg:col-span-5">
+                <StreakWidget books={books} onOpenYear={() => setCurrentTab('year')} />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
