@@ -27,7 +27,7 @@ import { ReadingQueue } from './components/ReadingQueue';
 import { QUEUE_KEY, saveToQueue, removeFromQueue, type QueuedBook } from './utils/readingQueue';
 import { Button } from '@/components/ui/button';
 import { BookCorner } from './components/BookCorner';
-import { OWNED_KEY, addOwned, type OwnedBook } from './utils/ownedBooks';
+import { OWNED_KEY, addOwned, findOwned, toggleOwned, type OwnedBook } from './utils/ownedBooks';
 import { YearInReview } from './components/YearInReview';
 import { getCurrentMonthKey } from './utils/goalUtils';
 import {
@@ -616,6 +616,8 @@ export default function App() {
             </div>
 
             <BookList
+              isOwned={(b) => !!findOwned(owned, b)}
+              onToggleOwned={(b) => saveOwned(toggleOwned(owned, { title: b.title, author: b.author, totalPages: b.totalPages, genre: b.genre, coverUrl: b.coverUrl, isbn: b.isbn, format: b.format }, new Date().toLocaleDateString('en-CA')))}
               onFinishReading={handleBookCreated}
               queue={queue}
               onStartQueuedBook={startQueuedBook}

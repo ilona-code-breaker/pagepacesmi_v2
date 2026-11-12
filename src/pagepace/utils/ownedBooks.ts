@@ -3,6 +3,9 @@ import type { BookEntry } from '../types/book';
 export const OWNED_KEY = 'pagepace_owned_books_v1';
 export const BOOKCASE_SIZE = 100;
 
+export const OWNED_FORMATS = ['Physical', 'E-Reader', 'Audiobook', 'Hybrid'] as const;
+export type OwnedFormat = (typeof OWNED_FORMATS)[number];
+
 export interface OwnedBook {
   id: string;
   title: string;
@@ -11,6 +14,7 @@ export interface OwnedBook {
   genre?: string;
   coverUrl?: string;
   isbn?: string;
+  format?: OwnedFormat;
   addedAt: string; // YYYY-MM-DD
 }
 
@@ -51,4 +55,15 @@ export function toBookcases<T>(books: T[], size = BOOKCASE_SIZE): T[][] {
   const cases: T[][] = [];
   for (let i = 0; i < books.length; i += size) cases.push(books.slice(i, i + size));
   return cases.length ? cases : [[]];
+}
+
+/** The owned copy matching a completed book, if any. */
+export function findOwned(list: OwnedBook[], book: Pick<BookEntry, 'title' | 'author' | 'isbn'>): OwnedBook | undefined {
+  return list.find((o) => isOwnedRead(o, [book]));
+}
+
+/** Adds the book to owned books, or removes its owned copy if it is already there. */
+export function toggleOwned(list: OwnedBook[], book: Omit<OwnedBook, 'id' | 'addedAt'>, today: string): OwnedBook[] {
+  const hit = findOwned(list, book);
+  return hit ? list.filter((o) => o.id !== hit.id) : addOwned(list, [book], today).list;
 }

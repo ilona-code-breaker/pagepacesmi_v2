@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { addOwned, isOwnedRead, toBookcases } from './ownedBooks';
+import { toggleOwned, addOwned, isOwnedRead, toBookcases } from './ownedBooks';
 
 const b = (title: string, author = 'X') => ({ title, author, totalPages: 100 });
 
@@ -23,5 +23,11 @@ describe('owned books', () => {
     const [own] = addOwned([], [b('Dune', 'Frank Herbert')], '2026-11-12').list;
     expect(isOwnedRead(own, [{ title: 'Dune', author: 'Frank Herbert' }])).toBe(true);
     expect(isOwnedRead(own, [{ title: 'Emma', author: 'Austen' }])).toBe(false);
+  });
+  it('toggling own on a Library book adds it, toggling again removes it', () => {
+    const once = toggleOwned([], { ...b('Emma', 'Austen'), format: 'E-Reader' }, '2026-11-12');
+    expect(once).toHaveLength(1);
+    expect(once[0].format).toBe('E-Reader');
+    expect(toggleOwned(once, b('Emma', 'Austen'), '2026-11-12')).toHaveLength(0);
   });
 });

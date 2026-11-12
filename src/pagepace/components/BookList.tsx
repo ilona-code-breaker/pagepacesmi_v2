@@ -45,9 +45,13 @@ interface BookListProps {
   onOpenShareCard?: () => void;
   onEditBook?: (updatedBook: BookEntry) => void;
   onApplyGenres?: (picks: Record<string, string>) => void;
+  isOwned?: (book: BookEntry) => boolean;
+  onToggleOwned?: (book: BookEntry) => void;
 }
 
 export const BookList: React.FC<BookListProps> = ({
+  isOwned,
+  onToggleOwned,
   queue,
   onStartQueuedBook,
   onRemoveQueuedBook,
@@ -233,6 +237,8 @@ export const BookList: React.FC<BookListProps> = ({
               onDelete={(e) => deleteSingle(book, e)}
               onGenreChange={(g) => onEditBook?.({ ...book, genre: g, genres: [g] as any })}
               onShelfClick={(s) => patchFilters({ shelf: s })}
+              owned={isOwned?.(book)}
+              onToggleOwned={onToggleOwned ? () => onToggleOwned(book) : undefined}
             />
           ))}
         </div>

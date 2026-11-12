@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import type { BookEntry } from '../types/book';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { searchBooksUnified, type ApiBookMetadata } from '../services/bookApiService';
-import { BOOKCASE_SIZE, addOwned, isOwnedRead, toBookcases, type OwnedBook } from '../utils/ownedBooks';
+import { OWNED_FORMATS, BOOKCASE_SIZE, addOwned, isOwnedRead, toBookcases, type OwnedBook } from '../utils/ownedBooks';
 
 interface Props {
   owned: OwnedBook[];
@@ -18,7 +18,7 @@ const genreColor = (g = '') => {
   for (const c of g) h = (h * 31 + c.charCodeAt(0)) % 12;
   return `var(--genre-${g ? h : 11})`;
 };
-const fromMeta = (m: ApiBookMetadata) => ({ title: m.title, author: m.author, totalPages: m.totalPages || 0, genre: m.genre, coverUrl: m.coverUrl, isbn: m.isbn });
+const fromMeta = (m: ApiBookMetadata) => ({ format: 'Physical' as const, title: m.title, author: m.author, totalPages: m.totalPages || 0, genre: m.genre, coverUrl: m.coverUrl, isbn: m.isbn });
 
 export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
   const [query, setQuery] = useState('');
@@ -105,7 +105,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
           <label className="flex items-center gap-1.5"><input type="checkbox" checked={keepScanning} onChange={(e) => setKeepScanning(e.target.checked)} /> Scan my shelf (keep camera on after each book)</label>
           {completed.length > 0 && (
-            <button type="button" className="underline" onClick={() => add(completed.map((c) => ({ title: c.title, author: c.author, totalPages: c.totalPages, genre: c.genre, coverUrl: c.coverUrl, isbn: c.isbn })))}>
+            <button type="button" className="underline" onClick={() => add(completed.map((c) => ({ title: c.title, author: c.author, totalPages: c.totalPages, genre: c.genre, coverUrl: c.coverUrl, isbn: c.isbn, format: c.format })))}>
               Add all my finished books
             </button>
           )}
@@ -193,7 +193,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
                   <span className="w-1.5 h-8 rounded-sm shrink-0" style={{ background: genreColor(b.genre) }} />
                   <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setPicked(b)}>
                     <p className="text-sm font-semibold truncate">{b.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{b.author}{b.genre ? ` · ${b.genre}` : ''}</p>
+                    <p className="text-xs text-muted-foreground truncate">{b.author}{b.genre ? ` · ${b.genre}` : ''} · {b.format || 'Physical'}</p>
                   </button>
                   <span className={`text-xs shrink-0 ${readSet.has(b.id) ? 'text-primary' : 'text-muted-foreground'}`}>{readSet.has(b.id) ? 'Read' : 'Unread'}</span>
                 </li>
@@ -216,6 +216,16 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
               </div>
               <button type="button" aria-label="Close" onClick={() => setPicked(null)}><X className="w-4 h-4" /></button>
             </div>
+            <label className="block text-sm">
+              <span className="text-muted-foreground text-xs">Format</span>
+              <select aria-label="Format" value={picked.format || 'Physical'} onChange={(e) => {
+                const next = { ...picked, format: e.target.value as OwnedBook['format'] };
+                onChange(owned.map((o) => (o.id === picked.id ? next : o)));
+                setPicked(next);
+              }} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
+                {OWNED_FORMATS.map((f) => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </label>
             <Button variant="outline" className="w-full" onClick={() => { onChange(owned.filter((o) => o.id !== picked.id)); setPicked(null); }}>
               <Trash2 className="w-4 h-4" /> Remove from my shelves
             </Button>

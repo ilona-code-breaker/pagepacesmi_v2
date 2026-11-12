@@ -1,3 +1,4 @@
+import type { OwnedFormat } from '../utils/ownedBooks';
 import React, { useState, useEffect, useRef } from 'react';
 import type { CurrentRead } from '../utils/currentReading';
 import type { QueuedBook } from '../utils/readingQueue';
@@ -58,7 +59,7 @@ interface BookFormProps {
   onReadingStarted?: (r: CurrentRead) => void;
   initialBook?: QueuedBook;
   /** Called when "I own this book" is ticked on submit */
-  onOwn?: (b: { title: string; author: string; totalPages: number; genre?: string; coverUrl?: string; isbn?: string }) => void;
+  onOwn?: (b: { title: string; author: string; totalPages: number; genre?: string; coverUrl?: string; isbn?: string; format?: OwnedFormat }) => void;
 }
 
 export const BookForm: React.FC<BookFormProps> = ({
@@ -269,7 +270,7 @@ export const BookForm: React.FC<BookFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    if (ownIt) onOwn?.({ title: title.trim(), author: author.trim() || 'Unknown Author', totalPages: safePages, genre, coverUrl, isbn });
+    if (ownIt) onOwn?.({ title: title.trim(), author: author.trim() || 'Unknown Author', totalPages: safePages, genre, coverUrl, isbn, format });
 
     if (isReading) {
       onReadingStarted?.({

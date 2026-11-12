@@ -16,6 +16,8 @@ interface BookCardProps {
   onDelete: (e: React.MouseEvent) => void;
   onGenreChange?: (genre: string) => void;
   onShelfClick?: (shelf: string) => void;
+  owned?: boolean;
+  onToggleOwned?: () => void;
 }
 
 export const BookCard: React.FC<BookCardProps> = ({
@@ -28,6 +30,8 @@ export const BookCard: React.FC<BookCardProps> = ({
   onDelete,
   onGenreChange,
   onShelfClick,
+  owned,
+  onToggleOwned,
 }) => {
   const arch = ARCHETYPES[book.archetypeId] || ARCHETYPES['steady-cruiser'];
   const firstQuote = book.quotes?.find((q) => q.trim());
@@ -150,6 +154,17 @@ export const BookCard: React.FC<BookCardProps> = ({
             <Edit3 className="w-3 h-3 text-amber-400" />
             <span>Edit</span>
           </button>
+          {onToggleOwned && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onToggleOwned(); }}
+              aria-pressed={owned}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${owned ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-stone-800 text-stone-400 hover:text-stone-200'}`}
+              title={owned ? 'You own this book — tap to remove from My Book Corner' : 'Mark as owned (adds to My Book Corner)'}
+            >
+              {owned ? '✓ Owned' : 'I own this'}
+            </button>
+          )}
           <span className="text-amber-400 group-hover:underline font-medium">Certificate →</span>
           <button
             type="button"
