@@ -115,6 +115,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={() => onTabChange('year')}
+            aria-label="Year in review and streaks"
+            title="Year in review and streaks"
             className={`flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               currentTab === 'year'
                 ? 'bg-stone-800 text-stone-100 shadow-sm border border-stone-700'
@@ -122,7 +124,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <CalendarHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-400" />
-            <span>Year</span>
           </button>
 
           {/* Codex Tab */}

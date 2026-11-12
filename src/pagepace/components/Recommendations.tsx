@@ -44,7 +44,7 @@ export const Recommendations: React.FC<{ books: BookEntry[] }> = ({ books }) => 
       const seen = new Set([...p.history, ...p.current].map((b) => norm(b.title)));
       const fresh = (data.recommendations || []).filter((r: Rec) => !seen.has(norm(r.title)));
       if (data.recommendations?.length && !fresh.length) setError('All picks were books you already have. Tap Refresh to try again.');
-      setRecs(fresh);
+      setRecs(fresh.slice(0, 1));
     } catch { setError('Could not get recommendations right now.'); }
     setLoading(false);
   };
@@ -54,10 +54,10 @@ export const Recommendations: React.FC<{ books: BookEntry[] }> = ({ books }) => 
       <div className="flex items-center justify-between gap-3 mb-3">
         <div>
           <h3 className="font-serif text-lg text-slate-100 flex items-center gap-2"><Sparkles className="w-4 h-4 text-amber-400" />What to read next</h3>
-          <p className="text-xs text-slate-400">Picks based on your current read, past books and monthly habits.</p>
+          <p className="text-xs text-slate-400">One pick at a time. Tap again for another.</p>
         </div>
         <button onClick={run} disabled={loading} className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-60">
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />{recs.length ? 'Refresh' : 'Get picks'}
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />{recs.length ? 'Another pick' : 'Get a pick'}
         </button>
       </div>
       {error && <p className="text-sm text-slate-400">{error}</p>}

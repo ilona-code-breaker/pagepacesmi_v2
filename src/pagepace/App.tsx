@@ -374,14 +374,14 @@ export default function App() {
         {currentTab === 'track' && (
           <div className="space-y-6">
             {/* Compact Monthly Reading Goal Progress Widget */}
-            <MonthlyGoalWidget
-              books={books}
-              goals={goals}
-              onViewGoals={() => setCurrentTab('goals')}
-            />
-            <StreakWidget books={books} onOpenYear={() => setCurrentTab('year')} />
-            <CurrentlyReading onFinish={handleBookCreated} />
-            <Recommendations books={books} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
+              <MonthlyGoalWidget
+                books={books}
+                goals={goals}
+                onViewGoals={() => setCurrentTab('goals')}
+              />
+              <StreakWidget books={books} onOpenYear={() => setCurrentTab('year')} />
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Form Column */}
@@ -423,6 +423,8 @@ export default function App() {
 
               {/* Side Column: Sample Books & Tips */}
               <div className="lg:col-span-5 space-y-6">
+                <CurrentlyReading onFinish={handleBookCreated} />
+                <Recommendations books={books} />
                 {/* Quick Archetype Preview Explainer */}
                 <div className="p-6 rounded-2xl bg-stone-900/50 border border-stone-800 space-y-4">
                   <h3 className="text-sm font-mono uppercase tracking-wider text-stone-300 font-semibold flex items-center gap-2">
