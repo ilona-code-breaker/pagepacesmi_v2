@@ -57,6 +57,8 @@ interface BookFormProps {
   mode?: 'finished' | 'reading';
   onReadingStarted?: (r: CurrentRead) => void;
   initialBook?: QueuedBook;
+  /** Called when "I own this book" is ticked on submit */
+  onOwn?: (b: { title: string; author: string; totalPages: number; genre?: string; coverUrl?: string; isbn?: string }) => void;
 }
 
 export const BookForm: React.FC<BookFormProps> = ({
@@ -65,7 +67,9 @@ export const BookForm: React.FC<BookFormProps> = ({
   mode = 'finished',
   onReadingStarted,
   initialBook,
+  onOwn,
 }) => {
+  const [ownIt, setOwnIt] = useState(false);
   const isReading = mode === 'reading';
   const [currentPage, setCurrentPage] = useState<number | ''>(initialBook ? 0 : '');
   // Today's date in YYYY-MM-DD
@@ -265,6 +269,7 @@ export const BookForm: React.FC<BookFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
+    if (ownIt) onOwn?.({ title: title.trim(), author: author.trim() || 'Unknown Author', totalPages: safePages, genre, coverUrl, isbn });
 
     if (isReading) {
       onReadingStarted?.({
@@ -684,6 +689,13 @@ export const BookForm: React.FC<BookFormProps> = ({
           className="w-full px-3.5 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 placeholder-stone-500 text-sm focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-colors leading-relaxed"
         />
       </div>}
+
+      {onOwn && (
+        <label className="flex items-center gap-2 text-sm text-stone-300 cursor-pointer select-none">
+          <input type="checkbox" checked={ownIt} onChange={(e) => setOwnIt(e.target.checked)} className="w-4 h-4 accent-amber-500" />
+          I own this book <span className="text-stone-500 text-xs">(adds it to My Book Corner)</span>
+        </label>
+      )}
 
       {/* Submit Button */}
       <button

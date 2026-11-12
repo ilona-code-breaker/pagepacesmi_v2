@@ -29,6 +29,9 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
   const [keepScanning, setKeepScanning] = useState(false);
   const [caseIdx, setCaseIdx] = useState(0);
   const [picked, setPicked] = useState<OwnedBook | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [listFilter, setListFilter] = useState('');
+  const [confirmDel, setConfirmDel] = useState(false);
 
   const readSet = useMemo(() => new Set(owned.filter((o) => isOwnedRead(o, completed)).map((o) => o.id)), [owned, completed]);
   const sorted = useMemo(() => [...owned].sort((a, b) => (a.genre || 'zzz').localeCompare(b.genre || 'zzz') || a.author.localeCompare(b.author)), [owned]);
@@ -152,6 +155,52 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
           })}
         </div>
         <p className="text-xs text-muted-foreground">Bright spines are books you've read; faded ones are waiting. Colours show genre.</p>
+      </section>
+
+      <section className="rounded-2xl border border-border bg-card/30 p-4 space-y-3" aria-label="Books I own">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-serif text-xl font-bold">Books I own ({owned.length})</h2>
+          {selected.size > 0 && (
+            <div className="flex gap-2">
+              <Button size="sm" variant="ghost" onClick={() => { setSelected(new Set()); setConfirmDel(false); }}>Clear</Button>
+              <Button size="sm" variant="destructive" onClick={() => {
+                if (!confirmDel) return setConfirmDel(true);
+                onChange(owned.filter((o) => !selected.has(o.id)));
+                setNote(`Removed ${selected.size} book${selected.size > 1 ? 's' : ''}.`);
+                setSelected(new Set()); setConfirmDel(false);
+              }}>
+                <Trash2 className="w-4 h-4" /> {confirmDel ? `Confirm delete ${selected.size}` : `Delete ${selected.size}`}
+              </Button>
+            </div>
+          )}
+        </div>
+        {owned.length === 0 ? <p className="text-sm text-muted-foreground">No books yet. Add some above.</p> : (() => {
+          const f = listFilter.toLowerCase();
+          const shown = sorted.filter((b) => !f || b.title.toLowerCase().includes(f) || b.author.toLowerCase().includes(f));
+          const allOn = shown.length > 0 && shown.every((b) => selected.has(b.id));
+          return (<>
+            <div className="flex flex-wrap items-center gap-3">
+              <input value={listFilter} onChange={(e) => setListFilter(e.target.value)} placeholder="Filter my books" aria-label="Filter my books"
+                className="flex-1 min-w-0 rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+              <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <input type="checkbox" checked={allOn} onChange={() => { const n = new Set(selected); shown.forEach((b) => allOn ? n.delete(b.id) : n.add(b.id)); setSelected(n); setConfirmDel(false); }} /> Select all
+              </label>
+            </div>
+            <ul className="divide-y divide-border max-h-[28rem] overflow-y-auto">
+              {shown.map((b) => (
+                <li key={b.id} className="flex items-center gap-3 py-2">
+                  <input type="checkbox" aria-label={`Select ${b.title}`} checked={selected.has(b.id)} onChange={() => { const n = new Set(selected); n.has(b.id) ? n.delete(b.id) : n.add(b.id); setSelected(n); setConfirmDel(false); }} />
+                  <span className="w-1.5 h-8 rounded-sm shrink-0" style={{ background: genreColor(b.genre) }} />
+                  <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setPicked(b)}>
+                    <p className="text-sm font-semibold truncate">{b.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{b.author}{b.genre ? ` · ${b.genre}` : ''}</p>
+                  </button>
+                  <span className={`text-xs shrink-0 ${readSet.has(b.id) ? 'text-primary' : 'text-muted-foreground'}`}>{readSet.has(b.id) ? 'Read' : 'Unread'}</span>
+                </li>
+              ))}
+            </ul>
+          </>);
+        })()}
       </section>
 
       {picked && (

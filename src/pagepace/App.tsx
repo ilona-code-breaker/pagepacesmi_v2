@@ -27,7 +27,7 @@ import { ReadingQueue } from './components/ReadingQueue';
 import { QUEUE_KEY, saveToQueue, removeFromQueue, type QueuedBook } from './utils/readingQueue';
 import { Button } from '@/components/ui/button';
 import { BookCorner } from './components/BookCorner';
-import { OWNED_KEY, type OwnedBook } from './utils/ownedBooks';
+import { OWNED_KEY, addOwned, type OwnedBook } from './utils/ownedBooks';
 import { YearInReview } from './components/YearInReview';
 import { getCurrentMonthKey } from './utils/goalUtils';
 import {
@@ -477,6 +477,7 @@ export default function App() {
                   mode={trackStatus}
                   onBookCreated={handleBookCreated}
                   soundEnabled={soundEnabled}
+                  onOwn={(b) => saveOwned(addOwned(owned, [b], new Date().toLocaleDateString('en-CA')).list)}
                   onReadingStarted={(r) => {
                     addCurrentRead(r);
                     if (queuedStart) {
