@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { BookOpen, Calendar, Gauge, Loader2, Share2, Star, Trophy, User } from 'lucide-react';
-import { BookEntry } from '../types/book';
+import { BookEntry, MonthlyGoal } from '../types/book';
+import { Target, X } from 'lucide-react';
 import { ARCHETYPES } from '../constants/archetypes';
 import { buildYearInReview, computeStreaks, yearsWithBooks } from '../utils/readingStats';
 import { renderYearReviewImage, shareOrDownload } from '../utils/yearReviewCard';
@@ -8,7 +9,14 @@ import { StreakWidget } from './StreakWidget';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export const YearInReview: React.FC<{ books: BookEntry[]; onSelectBook: (b: BookEntry) => void }> = ({ books, onSelectBook }) => {
+export const YearInReview: React.FC<{
+  books: BookEntry[];
+  onSelectBook: (b: BookEntry) => void;
+  goals?: Record<string, MonthlyGoal>;
+  goalsEditor?: React.ReactNode;
+  goalsOpen?: boolean;
+  onGoalsOpenChange?: (open: boolean) => void;
+}> = ({ books, onSelectBook, goals = {}, goalsEditor, goalsOpen = false, onGoalsOpenChange }) => {
   const years = useMemo(() => {
     const ys = yearsWithBooks(books);
     const now = new Date().getFullYear();
@@ -21,7 +29,11 @@ export const YearInReview: React.FC<{ books: BookEntry[]; onSelectBook: (b: Book
   const [shareNote, setShareNote] = useState('');
   const [month, setMonth] = useState<number | null>(null);
   const monthBooks = month === null ? [] : review.books.filter((b) => parseInt(b.finishDate.slice(5, 7), 10) === month + 1);
-  const maxMonth = Math.max(1, ...review.booksPerMonth);
+  const goalFor = (i: number) => {
+    const g = goals[`${year}-${String(i + 1).padStart(2, '0')}`];
+    return g && g.targetType !== 'pages' && g.targetBooks > 0 ? g.targetBooks : 0;
+  };
+  const maxMonth = Math.max(1, ...review.booksPerMonth, ...MONTHS.map((_, i) => goalFor(i)));
   const arch = review.topArchetype ? ARCHETYPES[review.topArchetype.id] : null;
 
   const handleShare = async () => {
@@ -76,10 +88,20 @@ export const YearInReview: React.FC<{ books: BookEntry[]; onSelectBook: (b: Book
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-100">Your Year in Review</h1>
-          <p className="text-stone-400 text-xs sm:text-sm mt-1">Streaks, highlights and a shareable image of your reading year.</p>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-100">Your Progress</h1>
+          <p className="text-stone-400 text-xs sm:text-sm mt-1">Monthly goals, streaks and highlights of your reading year.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {goalsEditor && (
+            <button
+              type="button"
+              onClick={() => onGoalsOpenChange?.(true)}
+              className="px-3.5 py-2 rounded-xl bg-stone-900 border border-stone-800 hover:border-amber-500/40 text-stone-200 font-semibold text-sm flex items-center gap-1.5"
+            >
+              <Target className="w-4 h-4 text-amber-400" />
+              Edit goals
+            </button>
+          )}
           <select
             value={year}
             onChange={(e) => setYear(parseInt(e.target.value, 10))}
@@ -121,21 +143,33 @@ export const YearInReview: React.FC<{ books: BookEntry[]; onSelectBook: (b: Book
           </div>
 
           <div className="p-5 rounded-2xl bg-stone-900/70 border border-stone-800 space-y-3">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-stone-500">Books per month</div>
+            <div className="text-[11px] font-mono uppercase tracking-wider text-stone-500">Books per month <span className="normal-case tracking-normal text-stone-600">· dashed line = goal</span></div>
             <div className="flex items-end gap-1.5 sm:gap-3 h-36">
               {review.booksPerMonth.map((n, i) => (
                 <button
                   type="button"
                   key={i}
                   disabled={!n}
+                  aria-label={`${MONTHS[i]}: ${n} books${goalFor(i) ? ` of ${goalFor(i)} goal` : ''}`}
                   onClick={() => setMonth(month === i ? null : i)}
                   className={`flex-1 flex flex-col items-center gap-1.5 h-full justify-end ${n ? 'cursor-pointer' : 'cursor-default'} ${month === i ? 'opacity-100' : month !== null ? 'opacity-50' : ''}`}
                 >
-                  <span className="text-[10px] font-mono text-stone-400">{n || ''}</span>
-                  <div
-                    className={`w-full rounded-md ${n ? 'bg-amber-500' : 'bg-stone-800'}`}
-                    style={{ height: `${Math.max(4, (n / maxMonth) * 100)}%` }}
-                  />
+                  <span className={`text-[10px] font-mono ${goalFor(i) && n >= goalFor(i) ? 'text-emerald-400' : 'text-stone-400'}`}>
+                    {goalFor(i) ? `${n}/${goalFor(i)}` : n || ''}
+                  </span>
+                  <div className="relative w-full flex-1 flex items-end">
+                    {goalFor(i) > 0 && (
+                      <div
+                        className="absolute inset-x-0 border-t-2 border-dashed border-stone-500"
+                        style={{ bottom: `${(goalFor(i) / maxMonth) * 100}%` }}
+                        title={`Goal: ${goalFor(i)} books`}
+                      />
+                    )}
+                    <div
+                      className={`w-full rounded-md ${n ? (goalFor(i) && n >= goalFor(i) ? 'bg-emerald-500' : 'bg-amber-500') : 'bg-stone-800'}`}
+                      style={{ height: `${Math.max(4, (n / maxMonth) * 100)}%` }}
+                    />
+                  </div>
                   <span className={`text-[10px] font-mono ${month === i ? 'text-amber-400' : 'text-stone-500'}`}>{MONTHS[i]}</span>
                 </button>
               ))}
@@ -199,6 +233,21 @@ export const YearInReview: React.FC<{ books: BookEntry[]; onSelectBook: (b: Book
             </div>
           </div>
         </>
+      )}
+      {goalsOpen && goalsEditor && (
+        <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-sm overflow-y-auto p-3 sm:p-8" onClick={() => onGoalsOpenChange?.(false)}>
+          <div className="relative max-w-6xl mx-auto bg-stone-950 border border-stone-800 rounded-2xl p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => onGoalsOpenChange?.(false)}
+              aria-label="Close goals"
+              className="absolute top-3 right-3 z-10 p-2 rounded-full bg-stone-900 border border-stone-800 text-stone-300 hover:text-stone-100"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            {goalsEditor}
+          </div>
+        </div>
       )}
     </div>
   );

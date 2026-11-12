@@ -94,7 +94,8 @@ export default function App() {
     }
   });
 
-  const [currentTab, setCurrentTab] = useState<'track' | 'library' | 'goals' | 'year' | 'codex'>('track');
+  const [currentTab, setCurrentTab] = useState<'track' | 'library' | 'year' | 'codex'>('track');
+  const [goalsOpen, setGoalsOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<BookEntry | null>(null);
 
   const [isShareCardOpen, setIsShareCardOpen] = useState<boolean>(false);
@@ -378,7 +379,7 @@ export default function App() {
               <MonthlyGoalWidget
                 books={books}
                 goals={goals}
-                onViewGoals={() => setCurrentTab('goals')}
+                onViewGoals={() => setCurrentTab('year')}
               />
               <StreakWidget books={books} onOpenYear={() => setCurrentTab('year')} />
             </div>
@@ -504,23 +505,6 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: Monthly Reading Goals */}
-        {currentTab === 'goals' && (
-          <div>
-            <MonthlyGoalTracker
-              books={books}
-              goals={goals}
-              onUpdateGoal={handleUpdateGoal}
-              onSelectBook={(book) => {
-                setSelectedBook(book);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              onNavigateToTrack={() => setCurrentTab('track')}
-              soundEnabled={soundEnabled}
-            />
-          </div>
-        )}
-
         {/* TAB 3: Library & Archive */}
         {currentTab === 'library' && (
           <div className="space-y-6">
@@ -585,6 +569,26 @@ export default function App() {
         {currentTab === 'year' && (
           <YearInReview
             books={books}
+            goals={goals}
+            goalsOpen={goalsOpen}
+            onGoalsOpenChange={setGoalsOpen}
+            goalsEditor={
+              <MonthlyGoalTracker
+                books={books}
+                goals={goals}
+                onUpdateGoal={handleUpdateGoal}
+                onSelectBook={(book) => {
+                  setGoalsOpen(false);
+                  setSelectedBook(book);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onNavigateToTrack={() => {
+                  setGoalsOpen(false);
+                  setCurrentTab('track');
+                }}
+                soundEnabled={soundEnabled}
+              />
+            }
             onSelectBook={(book) => {
               setSelectedBook(book);
               window.scrollTo({ top: 0, behavior: 'smooth' });

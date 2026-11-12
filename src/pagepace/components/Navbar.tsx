@@ -2,8 +2,8 @@ import React from 'react';
 import { BookOpen, Volume2, VolumeX, Plus, Compass, Target, Share2, CalendarHeart } from 'lucide-react';
 
 interface NavbarProps {
-  currentTab: 'track' | 'library' | 'goals' | 'year' | 'codex';
-  onTabChange: (tab: 'track' | 'library' | 'goals' | 'year' | 'codex') => void;
+  currentTab: 'track' | 'library' | 'year' | 'codex';
+  onTabChange: (tab: 'track' | 'library' | 'year' | 'codex') => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
   libraryCount: number;
@@ -80,20 +80,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>Track Book</span>
           </button>
 
-          {/* Goals Tab */}
-          <button
-            type="button"
-            onClick={() => onTabChange('goals')}
-            className={`flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              currentTab === 'goals'
-                ? 'bg-stone-800 text-stone-100 shadow-sm border border-stone-700'
-                : 'text-stone-300 hover:text-stone-100 hover:bg-stone-800/60'
-            }`}
-          >
-            <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
-            <span>Goals</span>
-          </button>
-
           {/* Library Tab */}
           <button
             type="button"
@@ -115,8 +101,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={() => onTabChange('year')}
-            aria-label="Year in review and streaks"
-            title="Year in review and streaks"
+            aria-label="Progress: goals, streaks and year in review"
+            title="Progress: goals, streaks and year in review"
             className={`flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               currentTab === 'year'
                 ? 'bg-stone-800 text-stone-100 shadow-sm border border-stone-700'
