@@ -1,4 +1,5 @@
 import { normalizeTitle, type Recommendation } from './recommendations';
+import type { LibraryFilterState } from './libraryFilters';
 
 export interface QueuedBook {
   id: string;
@@ -17,4 +18,15 @@ export function saveToQueue(queue: QueuedBook[], book: Recommendation, id: strin
 
 export function removeFromQueue(queue: QueuedBook[], id: string) {
   return queue.filter((book) => book.id !== id);
+}
+
+export function filterReadingQueue(queue: QueuedBook[], filters: LibraryFilterState): QueuedBook[] {
+  if (!['all', 'Want to read'].includes(filters.shelf) || filters.archetype !== 'all') return [];
+  const query = filters.search.trim().toLowerCase();
+  const filtered = queue.filter((book) =>
+    (!query || [book.title, book.author, book.genre, book.reason].some((value) => value?.toLowerCase().includes(query))) &&
+    (filters.genre === 'all' || book.genre?.toLowerCase() === filters.genre.toLowerCase())
+  );
+  const key = filters.sortBy === 'author' ? 'author' : filters.sortBy === 'genre' ? 'genre' : filters.sortBy === 'title' ? 'title' : undefined;
+  return key ? [...filtered].sort((a, b) => (a[key] || '').localeCompare(b[key] || '', undefined, { sensitivity: 'base' })) : filtered;
 }

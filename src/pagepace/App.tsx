@@ -155,6 +155,17 @@ export default function App() {
       setQueueError('');
     } catch { setQueueError('Could not save your queue on this device.'); }
   };
+  const removeQueuedBook = (id: string) => {
+    updateQueue(removeFromQueue(queue, id));
+    if (queuedStart?.id === id) setQueuedStart(undefined);
+  };
+  const startQueuedBook = (book: QueuedBook) => {
+    setCurrentTab('track');
+    setTrackStatus('reading');
+    setQueuedStart(book);
+    setSelectedBook(null);
+    requestAnimationFrame(() => document.getElementById('book-tracking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
 
   const handleBookCreated = (newBook: BookEntry) => {
     setBooks((prev) => [newBook, ...prev]);
@@ -456,14 +467,7 @@ export default function App() {
                 <CurrentlyReading onFinish={handleBookCreated} />
                 <Recommendations books={books} queue={queue} onSave={(book) => updateQueue(saveToQueue(queue, book, crypto.randomUUID()))} />
                 {queueError && <p role="alert" className="text-sm text-destructive">{queueError}</p>}
-                <ReadingQueue queue={queue} onRemove={(id) => {
-                  updateQueue(removeFromQueue(queue, id));
-                  if (queuedStart?.id === id) setQueuedStart(undefined);
-                }} onStart={(book) => {
-                  setTrackStatus('reading');
-                  setQueuedStart(book);
-                  requestAnimationFrame(() => document.getElementById('book-tracking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-                }} />
+                <ReadingQueue queue={queue} onRemove={removeQueuedBook} onStart={startQueuedBook} />
                 {/* Quick Archetype Preview Explainer */}
                 <div className="p-6 rounded-2xl bg-stone-900/50 border border-stone-800 space-y-4">
                   <h3 className="text-sm font-mono uppercase tracking-wider text-stone-300 font-semibold flex items-center gap-2">
@@ -584,6 +588,9 @@ export default function App() {
             </div>
 
             <BookList
+              queue={queue}
+              onStartQueuedBook={startQueuedBook}
+              onRemoveQueuedBook={removeQueuedBook}
               books={books}
               goals={goals}
               onSelectBook={(book) => {

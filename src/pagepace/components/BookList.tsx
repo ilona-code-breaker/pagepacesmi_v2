@@ -19,8 +19,13 @@ import { SelectionBar } from './library/SelectionBar';
 import { UndoToast } from './library/UndoToast';
 import { ClearLibraryModal } from './library/ClearLibraryModal';
 import { EmptyLibrary } from './library/EmptyLibrary';
+import { ReadingQueue } from './ReadingQueue';
+import { filterReadingQueue, type QueuedBook } from '../utils/readingQueue';
 
 interface BookListProps {
+  queue: QueuedBook[];
+  onStartQueuedBook: (book: QueuedBook) => void;
+  onRemoveQueuedBook: (id: string) => void;
   books: BookEntry[];
   goals?: Record<string, MonthlyGoal>;
   onSelectBook: (book: BookEntry) => void;
@@ -36,6 +41,9 @@ interface BookListProps {
 }
 
 export const BookList: React.FC<BookListProps> = ({
+  queue,
+  onStartQueuedBook,
+  onRemoveQueuedBook,
   books,
   goals = {},
   onSelectBook,
@@ -58,9 +66,14 @@ export const BookList: React.FC<BookListProps> = ({
   const undo = useUndoDeletion();
 
   const patchFilters = (patch: Partial<LibraryFilterState>) => setFilters((f) => ({ ...f, ...patch }));
-  const libraryGenres = useMemo(() => countGenres(books), [books]);
-  const shelves = useMemo(() => countShelves(books), [books]);
+  const libraryGenres = useMemo(() => {
+    const counts = new Map(countGenres(books));
+    queue.forEach((book) => { if (book.genre) counts.set(book.genre, (counts.get(book.genre) || 0) + 1); });
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  }, [books, queue]);
+  const shelves = useMemo(() => countShelves(books).map(([shelf, count]): [string, number] => [shelf, count + (shelf === 'Want to read' ? queue.length : 0)]), [books, queue]);
   const filtered = useMemo(() => filterAndSortBooks(books, filters), [books, filters]);
+  const filteredQueue = useMemo(() => filterReadingQueue(queue, filters), [queue, filters]);
   const click = () => soundEnabled && playSoftClick();
 
   // Drop selections for books that no longer exist
@@ -145,7 +158,7 @@ export const BookList: React.FC<BookListProps> = ({
         onClearLibraryClick={() => setIsClearConfirmOpen(true)}
       />
 
-      {showGenreChart && (
+      {showGenreChart && filters.shelf !== 'Want to read' && (
         <GenrePieChart books={books} selectedGenre={filters.genre} onSelectGenre={(g) => patchFilters({ genre: g })} />
       )}
 
@@ -170,7 +183,11 @@ export const BookList: React.FC<BookListProps> = ({
         </div>
       )}
 
-      {filtered.length === 0 ? (
+      {(filteredQueue.length > 0 || filters.shelf === 'Want to read') && (
+        <ReadingQueue queue={filteredQueue} onStart={onStartQueuedBook} onRemove={onRemoveQueuedBook} fullShelf />
+      )}
+
+      {filtered.length === 0 && filteredQueue.length === 0 && filters.shelf !== 'Want to read' ? (
         <EmptyLibrary filters={filters} onResetFilters={() => setFilters(DEFAULT_FILTERS)} onAddBookClick={onAddBookClick} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

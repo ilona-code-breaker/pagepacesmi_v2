@@ -2,16 +2,17 @@ import { Bookmark, BookOpen, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { QueuedBook } from '../utils/readingQueue';
 
-export function ReadingQueue({ queue, onStart, onRemove }: {
+export function ReadingQueue({ queue, onStart, onRemove, fullShelf = false }: {
   queue: QueuedBook[];
   onStart: (book: QueuedBook) => void;
   onRemove: (id: string) => void;
+  fullShelf?: boolean;
 }) {
   return (
     <section aria-label="Want to read" className="dark border-t border-border pt-4">
       <h3 className="flex items-center gap-2 font-serif text-lg text-foreground"><Bookmark className="h-4 w-4 text-chart-5" />Want to read <span className="text-xs font-sans text-muted-foreground">{queue.length}</span></h3>
       {!queue.length && <p className="mt-2 text-xs text-muted-foreground">No saved books yet.</p>}
-      <ul className="mt-3 max-h-80 overflow-y-auto divide-y divide-border">
+      <ul className={fullShelf ? 'mt-3 grid grid-cols-1 md:grid-cols-2 gap-x-6' : 'mt-3 max-h-80 overflow-y-auto divide-y divide-border'}>
         {queue.map((book) => (
           <li key={book.id} className="py-3 space-y-2">
             <div className="flex items-start justify-between gap-2">
