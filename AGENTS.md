@@ -30,3 +30,4 @@ use the editor.
 <!-- LOVABLE:END -->
 
 - PagePace app lives in src/pagepace and renders client-only from the / route (data is in browser storage); its server endpoints are src/routes/api/* calling src/pagepace/server/api.server.ts, so AI and book search stay on the server.
+- Share recommendation date-window and exclusion helpers between client and server so both enforce the same eligibility and distinct-pick rules.
