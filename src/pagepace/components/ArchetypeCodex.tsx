@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ARCHETYPES } from '../constants/archetypes';
-import { ArchetypeId } from '../types/book';
+import { ArchetypeId, BookEntry } from '../types/book';
+import { collectedArchetypes, unlockHint } from '../utils/archetypeProgress';
 import {
   Zap,
   Compass,
@@ -14,7 +15,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-export const ArchetypeCodex: React.FC = () => {
+export const ArchetypeCodex: React.FC<{ books?: BookEntry[] }> = ({ books = [] }) => {
+  const collected = collectedArchetypes(books);
   const [testPages, setTestPages] = useState<number>(400);
 
   const archetypeList = Object.values(ARCHETYPES);
@@ -104,13 +106,27 @@ export const ArchetypeCodex: React.FC = () => {
         </p>
       </div>
 
+      {/* Collection progress */}
+      <div className="p-5 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-serif font-bold text-stone-100">Your collection</span>
+          <span className="font-mono text-amber-400">{collected.size} / {archetypeList.length} unlocked</span>
+        </div>
+        <div className="h-2 rounded-full bg-stone-800 overflow-hidden"><div className="h-full bg-amber-400" style={{ width: `${(collected.size / archetypeList.length) * 100}%` }} /></div>
+        <p className="text-xs text-stone-400">{collected.size === archetypeList.length ? 'You have collected every reader type!' : 'Each book you finish earns the type of its pace. Try a different pace to unlock the rest.'}</p>
+      </div>
+
       {/* 7 Archetypes Showcase Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {archetypeList.map((arch) => (
+        {archetypeList.map((arch) => { const count = collected.get(arch.id) ?? 0; const locked = count === 0; return (
           <div
             key={arch.id}
-            className="p-6 rounded-2xl bg-stone-900/80 border border-stone-800 hover:border-stone-700 transition-all space-y-4 flex flex-col justify-between"
+            className={`relative p-6 rounded-2xl bg-stone-900/80 border transition-all space-y-4 flex flex-col justify-between ${locked ? 'border-stone-800 opacity-60 grayscale' : 'border-stone-700'}`}
+            style={locked ? undefined : { borderColor: arch.accentHex + '88' }}
           >
+            <div className={`text-[11px] font-mono font-semibold ${locked ? 'text-stone-400' : ''}`} style={locked ? undefined : { color: arch.accentHex }}>
+              {locked ? `🔒 Locked · ${unlockHint(arch)}` : `✓ Unlocked · ${count} ${count === 1 ? 'book' : 'books'}`}
+            </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -156,7 +172,7 @@ export const ArchetypeCodex: React.FC = () => {
               </div>
             </div>
           </div>
-        ))}
+        ); })}
       </div>
 
       {/* Interactive Pace Target Simulator */}

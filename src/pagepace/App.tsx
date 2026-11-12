@@ -16,6 +16,9 @@ import { MonthlyGoalWidget } from './components/MonthlyGoalWidget';
 import { ShareableArchetypeCardModal } from './components/ShareableArchetypeCardModal';
 import { DataPortabilityToolbar } from './components/DataPortabilityToolbar';
 import { CsvImportModal } from './components/CsvImportModal';
+import { ReaderTypeCard } from './components/ReaderTypeCard';
+import { isNewUnlock } from './utils/archetypeProgress';
+import type { ArchetypeDefinition } from './types/book';
 import { applyGenres, fetchGenres, isUnassigned } from './utils/genreFill';
 import { StreakWidget } from './components/StreakWidget';
 import { CurrentlyReading, addCurrentRead } from './components/CurrentlyReading';
@@ -101,6 +104,7 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<'track' | 'library' | 'year' | 'codex'>('track');
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<BookEntry | null>(null);
+  const [unlocked, setUnlocked] = useState<ArchetypeDefinition | null>(null);
 
   const [isShareCardOpen, setIsShareCardOpen] = useState<boolean>(false);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState<boolean>(false);
@@ -169,6 +173,10 @@ export default function App() {
   };
 
   const handleBookCreated = (newBook: BookEntry) => {
+    if (isNewUnlock(books, newBook) && ARCHETYPES[newBook.archetypeId]) {
+      setUnlocked(ARCHETYPES[newBook.archetypeId]);
+      import('canvas-confetti').then((m) => m.default({ particleCount: 140, spread: 80, origin: { y: 0.3 } })).catch(() => {});
+    }
     setBooks((prev) => [newBook, ...prev]);
     setSelectedBook(newBook);
     // Scroll to completion card smoothly
@@ -472,6 +480,7 @@ export default function App() {
 
               {/* Side Column: Sample Books & Tips */}
               <div className="lg:col-span-5 space-y-6">
+                <ReaderTypeCard books={books} today={new Date().toLocaleDateString('en-CA')} onOpenCollection={() => setCurrentTab('codex')} />
                 <CurrentlyReading onFinish={handleBookCreated} />
                 <Recommendations books={books} queue={queue} onSave={(book) => updateQueue(saveToQueue(queue, book, crypto.randomUUID()))} />
                 {queueError && <p role="alert" className="text-sm text-destructive">{queueError}</p>}
@@ -657,7 +666,7 @@ export default function App() {
         {/* TAB 4: Archetype Codex & Field Guide */}
         {currentTab === 'codex' && (
           <div>
-            <ArchetypeCodex />
+            <ArchetypeCodex books={books} />
           </div>
         )}
       </main>
@@ -670,6 +679,22 @@ export default function App() {
       />
 
       {/* Client-Side CSV Import Modal (Goodreads & Custom Spreadsheets) */}
+      {unlocked && (
+        <div role="dialog" aria-label="New reader type unlocked" className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setUnlocked(null)}>
+          <div className="max-w-sm w-full rounded-2xl bg-stone-900 border p-6 text-center space-y-3" style={{ borderColor: unlocked.accentHex }} onClick={(e) => e.stopPropagation()}>
+            <p className="text-[11px] font-mono uppercase tracking-wider text-amber-400">New reader type unlocked</p>
+            <div className="text-6xl" aria-hidden>{unlocked.badgeEmoji}</div>
+            <h2 className="font-serif text-2xl font-bold" style={{ color: unlocked.accentHex }}>{unlocked.name}</h2>
+            <p className="text-sm text-stone-300 italic">“{unlocked.tagline}”</p>
+            <p className="text-xs text-stone-400">{new Set([...books.map((b) => b.archetypeId)]).size} / {Object.keys(ARCHETYPES).length} collected</p>
+            <div className="flex gap-2 justify-center pt-2">
+              <Button variant="ghost" onClick={() => setUnlocked(null)}>Nice!</Button>
+              <Button onClick={() => { setUnlocked(null); setCurrentTab('codex'); }}>See collection</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <CsvImportModal
         isOpen={isCsvModalOpen}
         onClose={() => setIsCsvModalOpen(false)}

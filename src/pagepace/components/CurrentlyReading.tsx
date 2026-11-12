@@ -5,6 +5,7 @@ import { useReadingLists } from '../hooks/useReadingLists';
 export { addCurrentRead } from '../hooks/useReadingLists';
 import { BookEntry } from '../types/book';
 import { CurrentRead, computeProgress } from '../utils/currentReading';
+import { projectedArchetype } from '../utils/archetypeProgress';
 import { calculateElapsedDays, calculatePPD, getArchetypeByPPD } from '../utils/calculator';
 import { todayIso } from '../utils/readingStats';
 
@@ -147,6 +148,7 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
                 / {r.totalPages} <span className="text-amber-400 font-semibold">({p.percent}%)</span>
               </label>
               <span>{p.pace} pages/day</span>
+              {(() => { const a = projectedArchetype(p.pace); return a ? <span style={{ color: a.accentHex }}>At this pace: {a.badgeEmoji} {a.name}</span> : null; })()}
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs text-stone-300">
