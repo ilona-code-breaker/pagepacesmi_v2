@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import type { BookEntry } from '../types/book';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { searchBooksUnified, type ApiBookMetadata } from '../services/bookApiService';
+import { useReadingLists } from '../hooks/useReadingLists';
+import type { QueuedBook } from '../utils/readingQueue';
 import { parseOwnedFile } from '../utils/ownedImport';
 import { OWNED_FORMATS, BOOKCASE_SIZE, addOwned, isOwnedRead, toBookcases, type OwnedBook } from '../utils/ownedBooks';
 
@@ -11,6 +13,7 @@ interface Props {
   owned: OwnedBook[];
   onChange: (list: OwnedBook[]) => void;
   completed: BookEntry[];
+  queue?: QueuedBook[];
 }
 
 const today = () => new Date().toLocaleDateString('en-CA');
@@ -21,7 +24,7 @@ const genreColor = (g = '') => {
 };
 const fromMeta = (m: ApiBookMetadata) => ({ format: 'Physical' as const, title: m.title, author: m.author, totalPages: m.totalPages || 0, genre: m.genre, coverUrl: m.coverUrl, isbn: m.isbn });
 
-export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
+export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue = [] }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ApiBookMetadata[]>([]);
   const [busy, setBusy] = useState(false);
@@ -34,7 +37,16 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
   const [listFilter, setListFilter] = useState('');
   const [confirmDel, setConfirmDel] = useState(false);
 
-  const readSet = useMemo(() => new Set(owned.filter((o) => isOwnedRead(o, completed)).map((o) => o.id)), [owned, completed]);
+  const { reads, dropped } = useReadingLists();
+  /** Status mirrors the Library: Done > In progress > Dropped > Want to read > Unread. */
+  const statusOf = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const o of owned) {
+      m.set(o.id, isOwnedRead(o, completed) ? 'Read' : isOwnedRead(o, reads) ? 'Reading' : isOwnedRead(o, dropped) ? 'Dropped' : isOwnedRead(o, queue) ? 'Want to read' : 'Unread');
+    }
+    return m;
+  }, [owned, completed, reads, dropped, queue]);
+  const readSet = useMemo(() => new Set(owned.filter((o) => statusOf.get(o.id) === 'Read').map((o) => o.id)), [owned, statusOf]);
   const sorted = useMemo(() => [...owned].sort((a, b) => (a.genre || 'zzz').localeCompare(b.genre || 'zzz') || a.author.localeCompare(b.author)), [owned]);
   const cases = toBookcases(sorted);
   const idx = Math.min(caseIdx, cases.length - 1);
@@ -217,7 +229,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
                     <p className="text-sm font-semibold truncate">{b.title}</p>
                     <p className="text-xs text-muted-foreground truncate">{b.author}{b.genre ? ` · ${b.genre}` : ''} · {b.format || 'Physical'}</p>
                   </button>
-                  <span className={`text-xs shrink-0 ${readSet.has(b.id) ? 'text-primary' : 'text-muted-foreground'}`}>{readSet.has(b.id) ? 'Read' : 'Unread'}</span>
+                  <span className={`text-xs shrink-0 ${readSet.has(b.id) ? 'text-primary' : 'text-muted-foreground'}`}>{statusOf.get(b.id)}</span>
                 </li>
               ))}
             </ul>
@@ -234,7 +246,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
                 <h2 className="font-serif text-lg font-bold">{picked.title}</h2>
                 <p className="text-sm text-muted-foreground">{picked.author}</p>
                 <p className="text-xs text-muted-foreground mt-1">{[picked.genre, picked.totalPages ? `${picked.totalPages} pages` : ''].filter(Boolean).join(' · ')}</p>
-                <p className="text-xs mt-1 text-primary">{readSet.has(picked.id) ? 'Read ✓' : 'Not read yet'}</p>
+                <p className="text-xs mt-1 text-primary">{readSet.has(picked.id) ? 'Read ✓' : statusOf.get(picked.id) === 'Unread' ? 'Not read yet' : statusOf.get(picked.id)}</p>
               </div>
               <button type="button" aria-label="Close" onClick={() => setPicked(null)}><X className="w-4 h-4" /></button>
             </div>

@@ -668,7 +668,7 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'corner' && <BookCorner owned={owned} onChange={saveOwned} completed={books} />}
+        {currentTab === 'corner' && <BookCorner owned={owned} onChange={saveOwned} completed={books} queue={queue} />}
 
         {/* TAB 4: Archetype Codex & Field Guide */}
         {currentTab === 'codex' && (
