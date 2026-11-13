@@ -106,7 +106,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
     return m;
   }, [owned, completed, reads, dropped, queue]);
   const readSet = useMemo(() => new Set(owned.filter((o) => statusOf.get(o.id) === 'Read').map((o) => o.id)), [owned, statusOf]);
-  const sorted = useMemo(() => [...owned].sort((a, b) => (a.genre || 'zzz').localeCompare(b.genre || 'zzz') || a.author.localeCompare(b.author)), [owned]);
+  const sorted = useMemo(() => [...owned].sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }) || a.author.localeCompare(b.author)), [owned]);
   const cases = toBookcases(sorted);
   const idx = Math.min(caseIdx, cases.length - 1);
   const full = owned.length === 0 ? 0 : Math.floor(owned.length / BOOKCASE_SIZE);
