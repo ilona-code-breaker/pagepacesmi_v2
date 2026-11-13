@@ -14,6 +14,7 @@ import { ArchetypeCodex } from './components/ArchetypeCodex';
 import { CompletionSummaryCard } from './components/CompletionSummaryCard';
 import { MonthlyGoalTracker } from './components/MonthlyGoalTracker';
 import { MonthlyGoalWidget } from './components/MonthlyGoalWidget';
+import { YearlyGoalWidget } from './components/YearlyGoalWidget';
 import { ShareableArchetypeCardModal } from './components/ShareableArchetypeCardModal';
 import { DataPortabilityToolbar } from './components/DataPortabilityToolbar';
 import { CsvImportModal } from './components/CsvImportModal';
@@ -439,11 +440,14 @@ export default function App() {
             {/* Compact Monthly Reading Goal Progress Widget */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-8 items-stretch">
               <div className="min-w-0 lg:col-span-7">
-                <MonthlyGoalWidget
-                  books={statsBooks}
-                  goals={goals}
-                  onViewGoals={() => setCurrentTab('year')}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+                  <MonthlyGoalWidget
+                    books={statsBooks}
+                    goals={goals}
+                    onViewGoals={() => setCurrentTab('year')}
+                  />
+                  <YearlyGoalWidget books={statsBooks} />
+                </div>
               </div>
               <div className="min-w-0 lg:col-span-5">
                 <StreakWidget books={statsBooks} onOpenYear={() => setCurrentTab('year')} />
@@ -642,7 +646,10 @@ export default function App() {
             goals={goals}
             goalsOpen={goalsOpen}
             goalsSummary={
-              <MonthlyGoalWidget books={statsBooks} goals={goals} onViewGoals={() => setGoalsOpen(true)} />
+              <>
+                <MonthlyGoalWidget books={statsBooks} goals={goals} onViewGoals={() => setGoalsOpen(true)} />
+                <YearlyGoalWidget books={statsBooks} />
+              </>
             }
             onGoalsOpenChange={setGoalsOpen}
             goalsEditor={
