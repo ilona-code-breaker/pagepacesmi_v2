@@ -278,138 +278,6 @@ export default function App() {
       />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 space-y-10">
-        {/* Archetype Quick Tier Bar & Persona Action */}
-        <div className="space-y-3">
-          <section aria-label="Reading Archetypes Overview" className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-            {/* 1. Narrative Comet */}
-            <div
-              onClick={() => setCurrentTab('codex')}
-              className="p-2.5 rounded-xl bg-stone-900/60 border border-stone-800 hover:border-rose-500/40 transition-colors cursor-pointer group flex items-center gap-2.5"
-            >
-              <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 group-hover:scale-110 transition-transform">
-                <Flame className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[9px] font-mono text-stone-500 uppercase tracking-wider">125+ PPD</div>
-                <div className="text-xs font-bold text-stone-200 truncate group-hover:text-rose-300">
-                  Comet
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Speed Reader */}
-            <div
-              onClick={() => setCurrentTab('codex')}
-              className="p-2.5 rounded-xl bg-stone-900/60 border border-stone-800 hover:border-amber-500/40 transition-colors cursor-pointer group flex items-center gap-2.5"
-            >
-              <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
-                <Zap className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[9px] font-mono text-stone-500 uppercase tracking-wider">90–124 PPD</div>
-                <div className="text-xs font-bold text-stone-200 truncate group-hover:text-amber-300">
-                  Speed Reader
-                </div>
-              </div>
-            </div>
-
-            {/* 3. Momentum Builder */}
-            <div
-              onClick={() => setCurrentTab('codex')}
-              className="p-2.5 rounded-xl bg-stone-900/60 border border-stone-800 hover:border-emerald-500/40 transition-colors cursor-pointer group flex items-center gap-2.5"
-            >
-              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-transform">
-                <Rocket className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[9px] font-mono text-stone-500 uppercase tracking-wider">65–89 PPD</div>
-                <div className="text-xs font-bold text-stone-200 truncate group-hover:text-emerald-300">
-                  Momentum
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Steady Cruiser */}
-            <div
-              onClick={() => setCurrentTab('codex')}
-              className="p-2.5 rounded-xl bg-stone-900/60 border border-stone-800 hover:border-cyan-500/40 transition-colors cursor-pointer group flex items-center gap-2.5"
-            >
-              <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 group-hover:scale-110 transition-transform">
-                <Compass className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[9px] font-mono text-stone-500 uppercase tracking-wider">45–64 PPD</div>
-                <div className="text-xs font-bold text-stone-200 truncate group-hover:text-cyan-300">
-                  Cruiser
-                </div>
-              </div>
-            </div>
-
-            {/* 5. Cozy Lounge Reader */}
-            <div
-              onClick={() => setCurrentTab('codex')}
-              className="p-2.5 rounded-xl bg-stone-900/60 border border-stone-800 hover:border-blue-500/40 transition-colors cursor-pointer group flex items-center gap-2.5"
-            >
-              <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 group-hover:scale-110 transition-transform">
-                <Armchair className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[9px] font-mono text-stone-500 uppercase tracking-wider">30–44 PPD</div>
-                <div className="text-xs font-bold text-stone-200 truncate group-hover:text-blue-300">
-                  Cozy Lounge
-                </div>
-              </div>
-            </div>
-
-            {/* 6. Book Sommelier */}
-            <div
-              onClick={() => setCurrentTab('codex')}
-              className="p-2.5 rounded-xl bg-stone-900/60 border border-stone-800 hover:border-pink-500/40 transition-colors cursor-pointer group flex items-center gap-2.5"
-            >
-              <div className="p-1.5 rounded-lg bg-pink-500/10 text-pink-400 group-hover:scale-110 transition-transform">
-                <Wine className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[9px] font-mono text-stone-500 uppercase tracking-wider">15–29 PPD</div>
-                <div className="text-xs font-bold text-stone-200 truncate group-hover:text-pink-300">
-                  Sommelier
-                </div>
-              </div>
-            </div>
-
-            {/* 7. Bedtime Taster */}
-            <div
-              onClick={() => setCurrentTab('codex')}
-              className="p-2.5 rounded-xl bg-stone-900/60 border border-stone-800 hover:border-violet-500/40 transition-colors cursor-pointer group flex items-center gap-2.5 col-span-2 sm:col-span-1"
-            >
-              <div className="p-1.5 rounded-lg bg-violet-500/10 text-violet-400 group-hover:scale-110 transition-transform">
-                <Moon className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[9px] font-mono text-stone-500 uppercase tracking-wider">0.1–14 PPD</div>
-                <div className="text-xs font-bold text-stone-200 truncate group-hover:text-violet-300">
-                  Bedtime Taster
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Quick Action Pill: Share Archetype Card */}
-          <div className="flex items-center justify-between text-xs text-stone-400 px-1">
-            <span className="text-[11px] font-mono text-stone-500 uppercase tracking-wider">
-              Calculates Dynamic Pace & Archetype
-            </span>
-            <button
-              type="button"
-              onClick={() => setIsShareCardOpen(true)}
-              className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1.5 transition-colors group"
-            >
-              <Share2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-              <span>Share My Archetype Card →</span>
-            </button>
-          </div>
-        </div>
-
         {/* Highlighted Completion Summary Card (When a book is active or just logged) */}
         {selectedBook && (
           <section aria-label="Book Completion Card" className="space-y-3">
@@ -438,18 +306,12 @@ export default function App() {
         {/* TAB 1: Track Book Form */}
         {currentTab === 'track' && (
           <div className="space-y-6">
-            {/* Compact Monthly Reading Goal Progress Widget */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-8 items-stretch">
-              <div className="min-w-0 lg:col-span-7">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-                  <MonthlyGoalWidget
-                    books={statsBooks}
-                    goals={goals}
-                    onViewGoals={() => setCurrentTab('year')}
-                  />
-                  <YearlyGoalWidget books={statsBooks} />
-                </div>
-              </div>
+              <button type="button" onClick={() => setCurrentTab('year')} className="min-w-0 lg:col-span-7 text-left p-4 rounded-2xl bg-stone-900/60 border border-stone-800 hover:border-amber-500/40 transition-colors">
+                <div className="text-[11px] font-mono uppercase tracking-wider text-stone-500">Books read in {new Date().getFullYear()}</div>
+                <div className="text-3xl font-serif font-bold text-amber-400 mt-1">{statsBooks.filter((b) => (b.finishDate || '').startsWith(String(new Date().getFullYear()))).length}</div>
+                <div className="text-[11px] text-stone-500 mt-1">See goals & progress →</div>
+              </button>
               <div className="min-w-0 lg:col-span-5">
                 <StreakWidget books={statsBooks} onOpenYear={() => setCurrentTab('year')} />
               </div>
@@ -494,31 +356,6 @@ export default function App() {
                 <Recommendations books={books} queue={queue} onSave={(book) => updateQueue(saveToQueue(queue, book, crypto.randomUUID()))} />
                 {queueError && <p role="alert" className="text-sm text-destructive">{queueError}</p>}
                 <ReadingQueue queue={queue} onRemove={removeQueuedBook} onStart={startQueuedBook} />
-                {/* Quick Archetype Preview Explainer */}
-                <div className="p-6 rounded-2xl bg-stone-900/50 border border-stone-800 space-y-4">
-                  <h3 className="text-sm font-mono uppercase tracking-wider text-stone-300 font-semibold flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-400" />
-                    How Archetypes Are Assigned
-                  </h3>
-                  <div className="space-y-2.5 text-xs text-stone-400 leading-relaxed font-sans">
-                    <div className="p-3 rounded-xl bg-stone-950 border border-stone-800 space-y-1">
-                      <div className="font-mono text-stone-300 font-medium">Elapsed Days Formula:</div>
-                      <code className="text-amber-400 font-mono block">Finish Date - Start Date + 1</code>
-                      <span className="text-[11px] text-stone-500">Same-day read counts as 1 day minimum.</span>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-stone-950 border border-stone-800 space-y-1">
-                      <div className="font-mono text-stone-300 font-medium">Velocity Calculation:</div>
-                      <code className="text-amber-400 font-mono block">PPD = Total Pages / Elapsed Days</code>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-stone-950 border border-stone-800 space-y-1">
-                      <div className="font-mono text-stone-300 font-medium">0.1 Precision Rating Scale:</div>
-                      <span className="text-stone-300">Supports fine increments (e.g. 3.7, 4.3, 4.8, 5.0) for book connoisseurs.</span>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Sample Library Quick Showcase */}
                 <div className="p-6 rounded-2xl bg-stone-900/50 border border-stone-800 space-y-4">
                   <div className="flex items-center justify-between">
@@ -682,7 +519,49 @@ export default function App() {
         {/* TAB 4: Archetype Codex & Field Guide */}
         {currentTab === 'codex' && (
           <div>
+            <div className="space-y-3">
+          {/* Quick Action Pill: Share Archetype Card */}
+          <div className="flex items-center justify-between text-xs text-stone-400 px-1">
+            <span className="text-[11px] font-mono text-stone-500 uppercase tracking-wider">
+              Calculates Dynamic Pace & Archetype
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsShareCardOpen(true)}
+              className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1.5 transition-colors group"
+            >
+              <Share2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+              <span>Share My Archetype Card →</span>
+            </button>
+          </div>
+            </div>
             <ArchetypeCodex books={books} />
+                {/* Quick Archetype Preview Explainer */}
+                <div className="p-6 rounded-2xl bg-stone-900/50 border border-stone-800 space-y-4">
+                  <h3 className="text-sm font-mono uppercase tracking-wider text-stone-300 font-semibold flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    How Archetypes Are Assigned
+                  </h3>
+                  <div className="space-y-2.5 text-xs text-stone-400 leading-relaxed font-sans">
+                    <div className="p-3 rounded-xl bg-stone-950 border border-stone-800 space-y-1">
+                      <div className="font-mono text-stone-300 font-medium">Elapsed Days Formula:</div>
+                      <code className="text-amber-400 font-mono block">Finish Date - Start Date + 1</code>
+                      <span className="text-[11px] text-stone-500">Same-day read counts as 1 day minimum.</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-stone-950 border border-stone-800 space-y-1">
+                      <div className="font-mono text-stone-300 font-medium">Velocity Calculation:</div>
+                      <code className="text-amber-400 font-mono block">PPD = Total Pages / Elapsed Days</code>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-stone-950 border border-stone-800 space-y-1">
+                      <div className="font-mono text-stone-300 font-medium">0.1 Precision Rating Scale:</div>
+                      <span className="text-stone-300">Supports fine increments (e.g. 3.7, 4.3, 4.8, 5.0) for book connoisseurs.</span>
+                    </div>
+                  </div>
+                </div>
+
+
           </div>
         )}
       </main>
