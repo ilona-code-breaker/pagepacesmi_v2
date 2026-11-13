@@ -51,14 +51,40 @@ export const isbnKey = (i?: string) => {
   return d.length === 13 && d.startsWith('978') ? d.slice(3, 12) : d.length === 10 ? d.slice(0, 9) : d;
 };
 
-/** An owned book counts as read when a completed book has the same ISBN, or the same title (subtitles and series ignored) and author (name order ignored). */
+const NUM_WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+/** Series volume from "#3", "Volume Three", "Vol. 3", "Book 3" or a trailing "3". */
+const volumeOf = (t: string): number | undefined => {
+  const l = t.toLowerCase();
+  const m = l.match(/#\s*(\d+(?:\.\d+)?)/) ?? l.match(/\b(?:volume|vol\.?|book|part|tomas|dalis)\s*(\d+|[a-z]+)/) ?? l.match(/\s(\d+)\s*$/);
+  if (!m) return undefined;
+  const v = NUM_WORDS[m[1]] ?? parseFloat(m[1]);
+  return Number.isFinite(v) ? v : undefined;
+};
+const coreTitle = (t: string) => baseTitle(t.replace(/\s\d+\s*$/, ''));
+const lev = (a: string, b: string) => {
+  if (Math.abs(a.length - b.length) > 3) return 99;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+};
+/** Equal, or within a small typo distance for longer strings. */
+const near = (a: string, b: string) => a === b || (Math.min(a.length, b.length) >= 5 && lev(a, b) <= Math.max(1, Math.floor(Math.min(a.length, b.length) / 6)));
+
+/** An owned book counts as read when a completed book has the same ISBN, or a near-identical title (subtitles, series tags and small typos ignored), the same volume number when both have one, and a near-identical author. */
 export function isOwnedRead(owned: OwnedBook, completed: Pick<BookEntry, 'title' | 'author' | 'isbn'>[]): boolean {
-  const t = baseTitle(owned.title);
+  const t = coreTitle(owned.title);
+  const ov = volumeOf(owned.title);
   const oi = isbnKey(owned.isbn);
   return completed.some((c) => {
     if (oi && oi === isbnKey(c.isbn)) return true;
-    if (!t || baseTitle(c.title) !== t) return false;
-    return !owned.author || !c.author || authorTokens(owned.author) === authorTokens(c.author);
+    if (!t || !near(coreTitle(c.title), t)) return false;
+    const cv = volumeOf(c.title);
+    if (ov !== undefined && cv !== undefined && ov !== cv) return false;
+    return !owned.author || !c.author || near(authorTokens(owned.author).replace(/ /g, ''), authorTokens(c.author).replace(/ /g, ''));
   });
 }
 

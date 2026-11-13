@@ -12,3 +12,16 @@ describe('isOwnedRead', () => {
     expect(isOwnedRead(o({ title: 'Emma', author: 'Jane Austen' }), [{ title: 'Emma', author: 'Someone Else' }])).toBe(false);
   });
 });
+describe('isOwnedRead typos and volumes', () => {
+  const done = [
+    { title: 'Heartstopper: Volume Two (Heartstopper, #2)', author: 'Alice Oseman' },
+    { title: 'This Winter (Solitaire, #0.5)', author: 'Alice Oseman' },
+  ];
+  it('matches a misspelled title and author with the same volume', () => {
+    expect(isOwnedRead(o({ title: 'Hearstopper 2', author: 'Alice Oselman' }), done)).toBe(true);
+    expect(isOwnedRead(o({ title: 'This Winter', author: 'Alice Oselman' }), done)).toBe(true);
+  });
+  it('a different volume stays unread', () => {
+    expect(isOwnedRead(o({ title: 'Heartstopper 3', author: 'Alice Oseman' }), done)).toBe(false);
+  });
+});
