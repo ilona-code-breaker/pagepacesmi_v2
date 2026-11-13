@@ -40,13 +40,25 @@ export function addOwned(list: OwnedBook[], incoming: Omit<OwnedBook, 'id' | 'ad
   return { list: next, added };
 }
 
-/** An owned book counts as read when a completed book has the same title (and author, when both are known). */
+const baseTitle = (t: string) =>
+  t.toLowerCase().replace(/\(.*?\)|\[.*?\]/g, '').split(/[:\u2013\u2014]| - /)[0]
+    .replace(/^(the|a|an)\s+/, '').replace(/&/g, 'and').replace(/[^\p{L}\p{N}]/gu, '');
+const authorTokens = (a: string) =>
+  a.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z]+/).filter((w) => w.length > 1).sort().join(' ');
+/** ISBN-10 and ISBN-13 of the same edition compare equal. */
+export const isbnKey = (i?: string) => {
+  const d = (i ?? '').replace(/[^0-9Xx]/g, '').toUpperCase();
+  return d.length === 13 && d.startsWith('978') ? d.slice(3, 12) : d.length === 10 ? d.slice(0, 9) : d;
+};
+
+/** An owned book counts as read when a completed book has the same ISBN, or the same title (subtitles and series ignored) and author (name order ignored). */
 export function isOwnedRead(owned: OwnedBook, completed: Pick<BookEntry, 'title' | 'author' | 'isbn'>[]): boolean {
-  const t = ownedKey(owned.title).split('|')[0];
+  const t = baseTitle(owned.title);
+  const oi = isbnKey(owned.isbn);
   return completed.some((c) => {
-    if (owned.isbn && c.isbn && owned.isbn === c.isbn) return true;
-    if (ownedKey(c.title).split('|')[0] !== t) return false;
-    return !owned.author || !c.author || ownedKey('', owned.author) === ownedKey('', c.author);
+    if (oi && oi === isbnKey(c.isbn)) return true;
+    if (!t || baseTitle(c.title) !== t) return false;
+    return !owned.author || !c.author || authorTokens(owned.author) === authorTokens(c.author);
   });
 }
 
