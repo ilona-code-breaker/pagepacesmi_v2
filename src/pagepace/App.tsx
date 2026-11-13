@@ -449,30 +449,17 @@ export default function App() {
               <div id="book-tracking-form" className="lg:col-span-7 bg-stone-900/70 border border-stone-800 rounded-2xl p-6 sm:p-8 backdrop-blur-sm space-y-6">
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-100">
-                    Track Book Completion
+                    Track Books
                   </h1>
                   <p className="text-stone-400 text-xs sm:text-sm mt-1">
-                    Enter dates and page count. PagePace calculates your exact Pages Per Day (PPD),
-                    advances your monthly goal, and assigns your personalized reading archetype.
+                    Enter a book, then tick whether you want to read it, are still reading it, or finished it.
                   </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-stone-950 border border-stone-800">
-                  {(['finished', 'reading'] as const).map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => { setTrackStatus(s); setQueuedStart(undefined); }}
-                      className={`py-2 rounded-lg text-sm font-semibold transition-colors ${trackStatus === s ? 'bg-amber-500 text-stone-950' : 'text-stone-400 hover:text-stone-200'}`}
-                    >
-                      {s === 'finished' ? 'Finished' : 'Still reading'}
-                    </button>
-                  ))}
                 </div>
 
                 {queuedStart && <div className="dark flex items-center justify-between gap-2 text-sm text-muted-foreground"><span className="min-w-0 break-words">Starting {queuedStart.title}</span><Button variant="ghost" size="sm" onClick={() => setQueuedStart(undefined)}>Cancel</Button></div>}
                 <BookForm
                   key={`${trackStatus}-${queuedStart?.id || ''}`}
+                  onWantToRead={(b) => updateQueue(saveToQueue(queue, { ...b, reason: '' } as any, crypto.randomUUID()))}
                   initialBook={queuedStart}
                   mode={trackStatus}
                   onBookCreated={handleBookCreated}

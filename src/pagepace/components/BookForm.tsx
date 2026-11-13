@@ -59,6 +59,8 @@ interface BookFormProps {
   onReadingStarted?: (r: CurrentRead) => void;
   initialBook?: QueuedBook;
   /** Called when "I own this book" is ticked on submit */
+  /** Called when the book is saved as Want to read */
+  onWantToRead?: (b: { title: string; author: string; genre?: string }) => void;
   onOwn?: (b: { title: string; author: string; totalPages: number; genre?: string; coverUrl?: string; isbn?: string; format?: OwnedFormat }) => void;
 }
 
@@ -69,9 +71,13 @@ export const BookForm: React.FC<BookFormProps> = ({
   onReadingStarted,
   initialBook,
   onOwn,
+  onWantToRead,
 }) => {
   const [ownIt, setOwnIt] = useState(false);
-  const isReading = mode === 'reading';
+  const [status, setStatus] = useState<'want' | 'reading' | 'finished'>(mode);
+  const isReading = status === 'reading';
+  const isWant = status === 'want';
+  const isFinished = status === 'finished';
   const [currentPage, setCurrentPage] = useState<number | ''>(initialBook ? 0 : '');
   // Today's date in YYYY-MM-DD
   const todayStr = new Date().toISOString().split('T')[0];
@@ -271,6 +277,13 @@ export const BookForm: React.FC<BookFormProps> = ({
     e.preventDefault();
     if (!title.trim()) return;
     if (ownIt) onOwn?.({ title: title.trim(), author: author.trim() || 'Unknown Author', totalPages: safePages, genre, coverUrl, isbn, format });
+
+    if (isWant) {
+      onWantToRead?.({ title: title.trim(), author: author.trim() || 'Unknown Author', genre });
+      if (soundEnabled) playCelebrationChime();
+      setTitle(''); setAuthor(''); setCoverUrl(undefined); setIsbn(undefined); setAutoFilledBadge(null);
+      return;
+    }
 
     if (isReading) {
       onReadingStarted?.({
@@ -576,7 +589,7 @@ export const BookForm: React.FC<BookFormProps> = ({
           </div>
         </div>
 
-        <div className="space-y-1.5">
+        {!isWant && <div className="space-y-1.5">
           <label className="text-xs font-medium text-stone-300 flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-stone-500" />
             Start Date <span className="text-amber-500">*</span>
@@ -588,9 +601,9 @@ export const BookForm: React.FC<BookFormProps> = ({
             onChange={(e) => setStartDate(e.target.value)}
             className="w-full px-3.5 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 text-sm focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-colors"
           />
-        </div>
+        </div>}
 
-        {isReading ? (
+        {isWant ? null : isReading ? (
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-stone-300">Current Page</label>
             <input
@@ -621,14 +634,14 @@ export const BookForm: React.FC<BookFormProps> = ({
       </div>
 
       {/* Live 7-Tier Velocity Telemetry Bar */}
-      {!isReading && <VelocityTelemetryBar
+      {isFinished && <VelocityTelemetryBar
         ppd={livePpd}
         elapsedDays={elapsedDays}
         totalPages={safePages}
       />}
 
       {/* Rating Scale: 0.1 Precision */}
-      {!isReading && (
+      {isFinished && (
         <RatingInput
           value={rating}
           onChange={setRating}
@@ -675,7 +688,7 @@ export const BookForm: React.FC<BookFormProps> = ({
       </div>
 
       {/* Review / Opinion */}
-      {!isReading && <div className="space-y-1.5">
+      {isFinished && <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <label className="text-xs font-medium text-stone-300">
             Review & Opinion (Short Review)
@@ -691,6 +704,19 @@ export const BookForm: React.FC<BookFormProps> = ({
         />
       </div>}
 
+      <fieldset className="space-y-2">
+        <legend className="text-xs font-medium text-stone-300 mb-1.5">This book is…</legend>
+        <div className="grid grid-cols-3 gap-2">
+          {([['want', 'Want to read'], ['reading', 'Still reading'], ['finished', 'Finished']] as const).filter(([v]) => v !== 'want' || onWantToRead).map(([v, label]) => (
+            <label key={v} className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm cursor-pointer select-none transition-colors ${status === v ? 'border-amber-500/60 bg-amber-500/10 text-amber-200' : 'border-stone-800 text-stone-400 hover:text-stone-200'}`}>
+              <input type="radio" name="book-status" value={v} checked={status === v} onChange={() => setStatus(v)} className="w-4 h-4 accent-amber-500" />
+              {label}
+            </label>
+          ))}
+        </div>
+        <p className="text-[11px] text-stone-500">Switching keeps everything you've typed.</p>
+      </fieldset>
+
       {onOwn && (
         <label className="flex items-center gap-2 text-sm text-stone-300 cursor-pointer select-none">
           <input type="checkbox" checked={ownIt} onChange={(e) => setOwnIt(e.target.checked)} className="w-4 h-4 accent-amber-500" />
@@ -704,7 +730,7 @@ export const BookForm: React.FC<BookFormProps> = ({
         className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-amber-500/20 active:scale-[0.99] transition-all cursor-pointer"
       >
         <Sparkles className="w-5 h-5" />
-        {isReading ? 'Start Tracking This Book' : 'Complete Book & Generate Archetype Card'}
+        {isWant ? 'Save to Want to read' : isReading ? 'Start Tracking This Book' : 'Complete Book & Generate Archetype Card'}
       </button>
     </form>
   );
