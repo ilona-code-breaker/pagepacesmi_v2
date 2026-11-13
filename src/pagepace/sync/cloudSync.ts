@@ -39,9 +39,15 @@ function patchStorage() {
 
 let pendingRemote: Map<string, unknown> | null = null;
 
+// Stable form: the database reorders object keys, so plain string compare always looked "changed".
+const canon = (v: unknown): string => JSON.stringify(v, (_k, x) =>
+  x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, x[k]])) : x);
+
 function writeLocal(key: string, value: unknown): boolean {
-  const str = JSON.stringify(value);
-  if (localStorage.getItem(key) === str) return false;
+  const current = localStorage.getItem(key);
+  if (current !== null && canon(parse(current)) === canon(value)) return false;
+  if (current === null && (value === null || value === undefined)) return false;
+  const str = typeof value === 'string' && current !== null && parse(current) === current ? value : JSON.stringify(value);
   Storage.prototype.setItem.call(localStorage, key, str);
   return true;
 }
@@ -60,6 +66,9 @@ export async function startSync(uid: string): Promise<SyncStart> {
     if (localStorage.getItem(DIRTY)) { await push(); return { reload: false }; }
     let changed = false;
     for (const [k, v] of remote) changed = writeLocal(k, v) || changed;
+    // Never reload more than once per tab session, even if something keeps differing.
+    if (changed && sessionStorage.getItem('pagepace-sync-reloaded')) return { reload: false };
+    if (changed) sessionStorage.setItem('pagepace-sync-reloaded', '1');
     return { reload: changed };
   }
   if (remote.size === 0) { localStorage.setItem(OWNER, uid); await push(); return { reload: false }; }
