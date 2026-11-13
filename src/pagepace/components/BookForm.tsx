@@ -452,14 +452,14 @@ export const BookForm: React.FC<BookFormProps> = ({
         <div className="space-y-1.5 relative">
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-stone-300 flex items-center gap-1.5">
-              <span>Book Title or ISBN <span className="text-amber-500">*</span></span>
+              <span className="whitespace-nowrap">Book Title or ISBN <span className="text-amber-500">*</span></span>
               {isSearchingApi && (
                 <Loader2 className="w-3 h-3 text-amber-400 animate-spin" />
               )}
             </label>
-            <span className="text-[11px] text-amber-400/90 font-mono flex items-center gap-1">
+            <span className="hidden lg:flex text-[10px] text-amber-400/90 font-mono items-center gap-1 whitespace-nowrap" title="Google Books &amp; Open Library">
               <Globe className="w-3 h-3" />
-              Google Books & Open Library
+              Smart search
             </span>
           </div>
 
