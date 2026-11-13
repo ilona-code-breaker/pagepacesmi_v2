@@ -19,6 +19,13 @@ interface Props {
   onLibrarySync?: (library: BookEntry[]) => void;
 }
 
+const NUM_WORDS: Record<string, string> = { one: '1', two: '2', three: '3', four: '4', five: '5', six: '6', seven: '7', eight: '8', nine: '9', ten: '10' };
+const spineTitle = (t: string) => {
+  const vol = t.match(/(?:volume|vol\.?|book|#)\s*(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\b/i);
+  let base = t.replace(/\s*\(.*?\)\s*/g, ' ').split(/[:–—]/)[0].trim();
+  if (vol && !/\d\s*$/.test(base)) base += ' ' + (NUM_WORDS[vol[1].toLowerCase()] ?? vol[1]);
+  return base.length > 22 ? base.slice(0, 21) + '…' : base;
+};
 const today = () => new Date().toLocaleDateString('en-CA');
 const genreColor = (g = '') => {
   let h = 0;
@@ -29,6 +36,11 @@ const fromMeta = (m: ApiBookMetadata) => ({ format: 'Physical' as const, title: 
 
 export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue = [], onQueue, onLibrarySync }) => {
   const [confirmSync, setConfirmSync] = useState(false);
+  const [PER_SHELF, setPerShelf] = useState(20);
+  useEffect(() => {
+    const fit = () => setPerShelf(window.innerWidth < 640 ? 12 : window.innerWidth < 1024 ? 16 : 22);
+    fit(); window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit);
+  }, []);
   const runSync = () => {
     const r = syncCornerLibrary(owned, completed, (o) => {
       const pages = o.totalPages || 0; const d = o.addedAt || today();
@@ -231,25 +243,27 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
           )}
         </div>
         <div className="bookcase rounded-2xl p-3 sm:p-4">
-          {Array.from({ length: 4 }).map((_, row) => {
-            const shelf = cases[idx].slice(row * 25, row * 25 + 25);
+          {Array.from({ length: Math.max(1, Math.ceil(cases[idx].length / PER_SHELF)) }).map((_, row) => {
+            const shelf = cases[idx].slice(row * PER_SHELF, row * PER_SHELF + PER_SHELF);
             return (
-              <div key={row} className="bookcase-shelf flex items-end gap-[2px] h-28 sm:h-36 px-1">
+              <div key={row} className="bookcase-shelf flex items-end gap-[3px] h-36 sm:h-44 px-1">
                 {shelf.map((b) => {
                   const pages = Math.max(80, Math.min(1200, b.totalPages || 300));
                   const tall = 80 + ([...b.id].reduce((a, c) => a + c.charCodeAt(0), 0) % 16);
                   return (
                     <button key={b.id} type="button" title={`${b.title} — ${b.author} · ${b.totalPages || '?'} pages`} aria-label={`${b.title} by ${b.author}`}
                       onClick={() => setPicked(b)}
-                      className="min-w-[3px] rounded-t-sm transition-transform hover:-translate-y-1 focus-visible:-translate-y-1"
-                      style={{ flex: `${pages} 1 0`, maxWidth: `${6 + pages / 22}px`, height: `${tall}%`, background: genreColor(b.genre), opacity: readSet.has(b.id) ? 1 : 0.45, boxShadow: 'inset -2px 0 0 color-mix(in oklab, black 25%, transparent)' }} />
+                      className="overflow-hidden rounded-t-sm transition-transform hover:-translate-y-1 focus-visible:-translate-y-1 flex items-center justify-center"
+                      style={{ flex: `${pages} 1 0`, minWidth: 14, maxWidth: `${Math.round(22 + pages / 30)}px`, height: `${tall}%`, background: genreColor(b.genre), opacity: readSet.has(b.id) ? 1 : 0.45, boxShadow: 'inset -2px 0 0 color-mix(in oklab, black 25%, transparent)' }}>
+                      <span className="text-[10px] sm:text-[11px] font-semibold leading-none whitespace-nowrap overflow-hidden text-ellipsis max-h-[92%] text-background" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{spineTitle(b.title)}</span>
+                    </button>
                   );
                 })}
               </div>
             );
           })}
         </div>
-        <p className="text-xs text-muted-foreground">Bright spines are books you've read; faded ones are waiting. Colours show genre; thicker spines are longer books.</p>
+        <p className="text-xs text-muted-foreground">Bright spines are books you've read; faded ones are waiting. Colours show genre; thicker spines are longer books. Tap a spine for details.</p>
       </section>
 
       {dupGroups.length > 0 && (
