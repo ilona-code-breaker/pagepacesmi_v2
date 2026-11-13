@@ -7,7 +7,8 @@ import { searchBooksUnified, type ApiBookMetadata } from '../services/bookApiSer
 import { useReadingLists } from '../hooks/useReadingLists';
 import type { QueuedBook } from '../utils/readingQueue';
 import { parseOwnedFile } from '../utils/ownedImport';
-import { OWNED_FORMATS, BOOKCASE_SIZE, addOwned, isOwnedRead, findOwnedDuplicates, removeOwnedDuplicates, toBookcases, type OwnedBook } from '../utils/ownedBooks';
+import { calculateElapsedDays, calculatePPD, getArchetypeByPPD } from '../utils/calculator';
+import { syncCornerLibrary, OWNED_FORMATS, BOOKCASE_SIZE, addOwned, isOwnedRead, findOwnedDuplicates, removeOwnedDuplicates, toBookcases, type OwnedBook } from '../utils/ownedBooks';
 
 interface Props {
   owned: OwnedBook[];
@@ -15,6 +16,7 @@ interface Props {
   completed: BookEntry[];
   queue?: QueuedBook[];
   onQueue?: (books: { title: string; author: string; genre?: string }[]) => void;
+  onLibrarySync?: (library: BookEntry[]) => void;
 }
 
 const today = () => new Date().toLocaleDateString('en-CA');
@@ -25,7 +27,19 @@ const genreColor = (g = '') => {
 };
 const fromMeta = (m: ApiBookMetadata) => ({ format: 'Physical' as const, title: m.title, author: m.author, totalPages: m.totalPages || 0, genre: m.genre, coverUrl: m.coverUrl, isbn: m.isbn });
 
-export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue = [], onQueue }) => {
+export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue = [], onQueue, onLibrarySync }) => {
+  const [confirmSync, setConfirmSync] = useState(false);
+  const runSync = () => {
+    const r = syncCornerLibrary(owned, completed, (o) => {
+      const pages = o.totalPages || 0; const d = o.addedAt || today();
+      const ppd = calculatePPD(pages, calculateElapsedDays(d, d));
+      return { id: `corner-${o.id}`, title: o.title, author: o.author, totalPages: pages, startDate: d, finishDate: d, elapsedDays: 1, ppd, archetypeId: getArchetypeByPPD(ppd).id, rating: 0, review: '', genre: o.genre, coverUrl: o.coverUrl, isbn: o.isbn, format: o.format ?? 'Physical', createdAt: Date.now() } as BookEntry;
+    });
+    if (r.newBooks.length || r.formats) onLibrarySync?.(r.nextLibrary);
+    if (r.markedRead) onChange(r.nextOwned);
+    setConfirmSync(false);
+    setNote(r.newBooks.length || r.formats || r.markedRead ? `Synced: ${r.newBooks.length} read book${r.newBooks.length === 1 ? '' : 's'} added to Library, ${r.markedRead} marked Read here, ${r.formats} format${r.formats === 1 ? '' : 's'} updated in Library.` : 'Book Corner and Library are already in sync.');
+  };
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ApiBookMetadata[]>([]);
   const [busy, setBusy] = useState(false);
@@ -179,6 +193,11 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
           <label className="flex items-center gap-1.5"><input type="checkbox" checked={keepScanning} onChange={(e) => setKeepScanning(e.target.checked)} /> Scan my shelf (keep camera on after each book)</label>
           <span>Import: Excel or CSV with a Title column (Author, Pages, Genre, ISBN, Format optional)</span>
+          {onLibrarySync && (
+            <button type="button" className="underline text-primary" onClick={() => (confirmSync ? runSync() : setConfirmSync(true))}>
+              {confirmSync ? 'Tap again to sync with Library' : 'Sync with Library'}
+            </button>
+          )}
           {completed.length > 0 && (
             <button type="button" className="underline" onClick={() => add(completed.map((c) => ({ title: c.title, author: c.author, totalPages: c.totalPages, genre: c.genre, coverUrl: c.coverUrl, isbn: c.isbn, format: c.format })))}>
               Add all my finished books

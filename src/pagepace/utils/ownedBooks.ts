@@ -139,3 +139,27 @@ export function removeOwnedDuplicates(list: OwnedBook[]): OwnedBook[] {
   }
   return list.filter((b) => !drop.has(b.id)).map((b) => keep.get(b.id) ?? b);
 }
+
+/**
+ * Two-way sync between Book Corner and the Library.
+ * - Owned books marked Read that aren't in the Library are returned as new finished books.
+ * - Owned books marked Unread that the Library has finished become Read again.
+ * - Library books missing a format take the owned copy's format.
+ */
+export function syncCornerLibrary(owned: OwnedBook[], library: BookEntry[], makeBook: (o: OwnedBook) => BookEntry) {
+  const newBooks = owned.filter((o) => o.markedRead === true && !isOwnedRead(o, library)).map(makeBook);
+  let markedRead = 0;
+  const nextOwned = owned.map((o) => {
+    if (o.markedRead === false && isOwnedRead(o, library)) { markedRead++; const { markedRead: _m, ...rest } = o; return rest; }
+    return o;
+  });
+  let formats = 0;
+  const nextLibrary = library.map((b) => {
+    if (b.format) return b;
+    const o = owned.find((x) => isOwnedRead(x, [b]));
+    if (!o?.format) return b;
+    formats++;
+    return { ...b, format: o.format };
+  });
+  return { newBooks, nextOwned, nextLibrary: [...newBooks, ...nextLibrary], markedRead, formats };
+}
