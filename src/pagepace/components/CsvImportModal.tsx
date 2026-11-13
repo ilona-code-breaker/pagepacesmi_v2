@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React from 'react';
 import { ArrowRight, FileSpreadsheet, RefreshCw, ShieldCheck, X } from 'lucide-react';
 import { BookEntry } from '../types/book';
@@ -29,7 +30,7 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({ isOpen, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md">
+    createPortal(<div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md">
       <div className="relative w-full max-w-3xl bg-stone-900 border border-stone-800 rounded-3xl shadow-2xl p-5 sm:p-7 flex flex-col max-h-[92vh] overflow-y-auto space-y-5">
         <div className="flex items-start justify-between pb-3 border-b border-stone-800">
           <div className="flex items-center gap-3">
@@ -99,5 +100,5 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({ isOpen, onClose,
         )}
       </div>
     </div>
-  );
+  , document.body));
 };
