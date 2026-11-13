@@ -57,6 +57,8 @@ export interface BookEntry {
   notes?: string;
   /** Favourite quotes saved from the book */
   quotes?: string[];
+  /** Finish dates of additional reads of the same book (re-reads) */
+  rereadDates?: string[];
   createdAt: number;
 }
 

@@ -1,3 +1,4 @@
+import { RereadEditor } from './RereadEditor';
 import React, { useState } from 'react';
 import { BookEntry, ArchetypeDefinition } from '../types/book';
 import { ARCHETYPES } from '../constants/archetypes';
@@ -302,6 +303,7 @@ export const CompletionSummaryCard: React.FC<CompletionSummaryCardProps> = ({
           </button>
         </div>
       </div>
+      {onEdit && <RereadEditor book={book} onChange={(rereadDates) => onEdit({ ...book, rereadDates })} />}
 
       {/* Main Content Area */}
       <div className="p-6 sm:p-8 space-y-6">

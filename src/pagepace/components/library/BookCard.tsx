@@ -90,6 +90,7 @@ export const BookCard: React.FC<BookCardProps> = ({
         <div className="min-w-0 flex-1">
           <h4 className="text-base sm:text-lg font-serif font-bold text-stone-100 group-hover:text-amber-300 transition-colors line-clamp-1">
             <Highlight text={book.title} query={search} />
+            {book.rereadDates?.length ? <span className="ml-1.5 align-middle text-[10px] font-mono text-amber-300 border border-amber-500/30 rounded px-1">×{book.rereadDates.length + 1}</span> : null}
           </h4>
           {book.author && (
             <p className="text-xs text-stone-400 mt-0.5 line-clamp-1">
