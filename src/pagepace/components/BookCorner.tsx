@@ -36,7 +36,15 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
   const [picked, setPicked] = useState<OwnedBook | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [listFilter, setListFilter] = useState('');
-  const dupGroups = useMemo(() => findOwnedDuplicates(owned), [owned]);
+  // Groups the user accepted as "not duplicates" (stored per device, synced with the account)
+  const [accepted, setAccepted] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('pagepace_owned_not_duplicates_v1') || '[]'); } catch { return []; } });
+  const groupKey = (g: OwnedBook[]) => g.map((b) => b.id).sort().join('+');
+  const acceptGroup = (g: OwnedBook[]) => {
+    const next = [...accepted, groupKey(g)];
+    setAccepted(next);
+    localStorage.setItem('pagepace_owned_not_duplicates_v1', JSON.stringify(next));
+  };
+  const dupGroups = useMemo(() => findOwnedDuplicates(owned).filter((g) => !accepted.includes(groupKey(g))), [owned, accepted]);
   const [showDups, setShowDups] = useState(false);
   const [confirmDups, setConfirmDups] = useState(false);
   const [readFilter, setReadFilter] = useState<'all' | 'read' | 'unread'>('all');
@@ -233,7 +241,8 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
               <Button size="sm" variant="ghost" onClick={() => setShowDups((v) => !v)}>{showDups ? 'Hide' : 'Review'}</Button>
               <Button size="sm" variant="destructive" onClick={() => {
                 if (!confirmDups) return setConfirmDups(true);
-                const next = removeOwnedDuplicates(owned);
+                const ok = new Set(dupGroups.flatMap((g) => g.map((b) => b.id)));
+                const next = removeOwnedDuplicates(owned.filter((b) => ok.has(b.id))).concat(owned.filter((b) => !ok.has(b.id)));
                 setNote(`Removed ${owned.length - next.length} duplicate${owned.length - next.length > 1 ? 's' : ''}.`);
                 onChange(next); setConfirmDups(false); setShowDups(false);
               }}><Trash2 className="w-4 h-4" /> {confirmDups ? 'Confirm remove' : 'Remove duplicates'}</Button>
@@ -243,6 +252,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
             <ul className="space-y-2 text-xs max-h-64 overflow-y-auto">
               {dupGroups.map((g) => (
                 <li key={g[0].id} className="rounded-lg border border-border bg-background/50 p-2">
+                  <div className="flex justify-end"><button type="button" className="text-primary underline" onClick={() => acceptGroup(g)}>Not a duplicate — keep all</button></div>
                   {g.map((b) => (
                     <div key={b.id} className="flex items-center justify-between gap-2 py-0.5">
                       <span className="truncate">{b.title} <span className="text-muted-foreground">· {b.author}</span></span>
