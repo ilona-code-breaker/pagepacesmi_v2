@@ -11,3 +11,12 @@ describe('csv shelves', () => {
     expect(r.map((b) => [b.title, b.currentPage])).toEqual([['Dune', 0]]);
   });
 });
+
+import { dropMisfiledCsvBooks } from './csvShelves';
+describe('dropMisfiledCsvBooks', () => {
+  it('removes imported finished copies of to-read books but keeps hand-entered ones', () => {
+    const rows = [{ title: 'Emma', shelf: 'to-read' }] as never;
+    const out = dropMisfiledCsvBooks([{ id: 'csv-1', title: 'Emma' }, { id: 'b-1', title: 'Emma' }, { id: 'csv-2', title: 'Dune' }], rows);
+    expect(out.map((b) => b.id)).toEqual(['b-1', 'csv-2']);
+  });
+});

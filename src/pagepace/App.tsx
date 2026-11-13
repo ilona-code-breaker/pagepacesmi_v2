@@ -18,7 +18,7 @@ import { ShareableArchetypeCardModal } from './components/ShareableArchetypeCard
 import { DataPortabilityToolbar } from './components/DataPortabilityToolbar';
 import { CsvImportModal } from './components/CsvImportModal';
 import { todayIso } from './utils/readingStats';
-import { csvReadingToCurrent, csvToReadToQueue } from './utils/csvShelves';
+import { csvReadingToCurrent, csvToReadToQueue, dropMisfiledCsvBooks } from './utils/csvShelves';
 const loadCurrentReadsForImport = () => { try { const d = JSON.parse(localStorage.getItem('pagepace_current_reads') || '[]'); return Array.isArray(d) ? d : []; } catch { return []; } };
 import { ReaderTypeCard } from './components/ReaderTypeCard';
 import { isNewUnlock } from './utils/archetypeProgress';
@@ -706,7 +706,8 @@ export default function App() {
         isOpen={isCsvModalOpen}
         onClose={() => setIsCsvModalOpen(false)}
         existingBooks={books}
-        onImportComplete={(updatedBooks, shelfRows) => {
+        onImportComplete={(importedBooks, shelfRows) => {
+          const updatedBooks = dropMisfiledCsvBooks(importedBooks, shelfRows);
           handleDataImported({ books: updatedBooks, goals });
           const stamp = Date.now();
           const reading = loadCurrentReadsForImport();

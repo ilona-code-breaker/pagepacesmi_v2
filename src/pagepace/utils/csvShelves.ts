@@ -32,3 +32,9 @@ export function csvReadingToCurrent(rows: NormalizedCsvRow[], existing: CurrentR
   });
   return added;
 }
+
+/** Earlier imports may have put Goodreads to-read / currently-reading books into finished books; drop those CSV-imported copies so the CSV shelf wins. Books entered by hand are kept. */
+export function dropMisfiledCsvBooks<T extends { id: string; title: string }>(books: T[], rows: NormalizedCsvRow[]): T[] {
+  const notRead = new Set(rows.filter((r) => r.shelf === 'to-read' || r.shelf === 'currently-reading').map((r) => normalizeTitle(r.title)));
+  return books.filter((b) => !(b.id.startsWith('csv-') && notRead.has(normalizeTitle(b.title))));
+}
