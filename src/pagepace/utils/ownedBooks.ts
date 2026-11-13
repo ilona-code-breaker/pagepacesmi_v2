@@ -55,14 +55,14 @@ export const isbnKey = (i?: string) => {
 
 const NUM_WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
 /** Series volume from "#3", "Volume Three", "Vol. 3", "Book 3" or a trailing "3". */
-const volumeOf = (t: string): number | undefined => {
+export const volumeOf = (t: string): number | undefined => {
   const l = t.toLowerCase();
   const m = l.match(/#\s*(\d+(?:\.\d+)?)/) ?? l.match(/\b(?:volume|vol\.?|book|part|tomas|dalis)\s*(\d+|[a-z]+)/) ?? l.match(/\s(\d+)\s*$/);
   if (!m) return undefined;
   const v = NUM_WORDS[m[1]] ?? parseFloat(m[1]);
   return Number.isFinite(v) ? v : undefined;
 };
-const coreTitle = (t: string) => baseTitle(t.replace(/\s\d+\s*$/, ''));
+export const coreTitle = (t: string) => baseTitle(t.replace(/\s\d+\s*$/, ''));
 const lev = (a: string, b: string) => {
   if (Math.abs(a.length - b.length) > 3) return 99;
   let prev = Array.from({ length: b.length + 1 }, (_, i) => i);

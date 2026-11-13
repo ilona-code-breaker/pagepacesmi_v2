@@ -35,6 +35,9 @@ import { Button } from '@/components/ui/button';
 import { BookCorner } from './components/BookCorner';
 import { OWNED_KEY, addOwned, findOwned, toggleOwned, type OwnedBook } from './utils/ownedBooks';
 import { YearInReview } from './components/YearInReview';
+import { ReadingBadgeWatcher, ReadingBadgesGuide } from './components/ReadingBadges';
+import { loadBirthday, loadTbrStarted, loadYearlyGoals, recordTbrStart, type ReadingContext } from './utils/readingAchievements';
+import { useReadingLists } from './hooks/useReadingLists';
 import { getCurrentMonthKey } from './utils/goalUtils';
 import {
   Sparkles,
@@ -114,6 +117,15 @@ export default function App() {
   useEffect(() => {
     try { setOwned(JSON.parse(localStorage.getItem(OWNED_KEY) || '[]')); } catch { /* ignore */ }
   }, []);
+  const { dropped: droppedReads } = useReadingLists();
+  const [birthday, setBirthday] = useState<string | undefined>();
+  const [badgeTick, setBadgeTick] = useState(0);
+  useEffect(() => { setBirthday(loadBirthday()); }, []);
+  const readingCtx = useMemo<ReadingContext>(() => ({
+    books: statsBooks, originals: books, goals, yearlyGoals: typeof window === 'undefined' ? {} : loadYearlyGoals(),
+    tbrStarted: typeof window === 'undefined' ? [] : loadTbrStarted(), droppedCount: droppedReads.length, owned, birthday,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [statsBooks, books, goals, droppedReads.length, owned, birthday, badgeTick]);
   const saveOwned = (list: OwnedBook[]) => {
     setOwned(list);
     localStorage.setItem(OWNED_KEY, JSON.stringify(list));
@@ -183,6 +195,8 @@ export default function App() {
     if (queuedStart && ids.has(queuedStart.id)) setQueuedStart(undefined);
   };
   const startQueuedBook = (book: QueuedBook) => {
+    recordTbrStart(book.title);
+    setBadgeTick((t) => t + 1);
     setCurrentTab('track');
     setTrackStatus('reading');
     setQueuedStart(book);
@@ -517,6 +531,7 @@ export default function App() {
         {currentTab === 'corner' && <BookCorner onOpenCodex={() => setCurrentTab('codex')} owned={owned} onChange={saveOwned} completed={books} onLibrarySync={setBooks} queue={queue} onQueue={(list) => updateQueue(list.reduce((q, b, i) => saveToQueue(q, { title: b.title, author: b.author, genre: b.genre ?? '', reason: '' } as never, `corner-q-${Date.now()}-${i}`), queue))} />}
 
         {/* TAB 4: Archetype Codex & Field Guide */}
+        <ReadingBadgeWatcher ctx={readingCtx} />
         {currentTab === 'codex' && (
           <div>
             <div className="space-y-3">
@@ -536,6 +551,7 @@ export default function App() {
           </div>
             </div>
             <ArchetypeCodex books={books} />
+            <div className="mt-6"><ReadingBadgesGuide ctx={readingCtx} onBirthday={setBirthday} /></div>
                 {/* Quick Archetype Preview Explainer */}
                 <div className="p-6 rounded-2xl bg-stone-900/50 border border-stone-800 space-y-4">
                   <h3 className="text-sm font-mono uppercase tracking-wider text-stone-300 font-semibold flex items-center gap-2">
