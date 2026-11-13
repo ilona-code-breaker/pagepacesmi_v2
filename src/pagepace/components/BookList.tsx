@@ -1,3 +1,4 @@
+import { DuplicateCleaner } from './library/DuplicateCleaner';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { BookEntry, MonthlyGoal } from '../types/book';
@@ -182,6 +183,7 @@ export const BookList: React.FC<BookListProps> = ({
       />
 
       {onApplyGenres && <GenreFillPanel books={books} onApply={onApplyGenres} />}
+      <DuplicateCleaner />
 
       <div role="group" aria-label="Reading status" className="dark flex flex-wrap gap-2">
         {([['all', 'All', books.length + queue.length + reads.length + dropped.length], ['want', 'Want to read', queue.length], ['reading', 'In progress', reads.length], ['done', 'Done', books.length], ['dropped', 'Dropped', dropped.length]] as const).map(([value, label, count]) =>
