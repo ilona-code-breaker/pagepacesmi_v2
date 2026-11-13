@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Library, Loader2, Plus, ScanBarcode, Search, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Library, Loader2, Plus, ScanBarcode, Search, Trash2, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { BookEntry } from '../types/book';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { searchBooksUnified, type ApiBookMetadata } from '../services/bookApiService';
+import { parseOwnedFile } from '../utils/ownedImport';
 import { OWNED_FORMATS, BOOKCASE_SIZE, addOwned, isOwnedRead, toBookcases, type OwnedBook } from '../utils/ownedBooks';
 
 interface Props {
@@ -73,6 +74,20 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
     if (keepScanning) setTimeout(() => setScanning(true), 600);
   };
 
+  const importFile = async (file?: File) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const items = await parseOwnedFile(file);
+      if (!items.length) setNote('No books found. Make sure the file has a "Title" column.');
+      else add(items);
+    } catch {
+      setNote("Couldn't read that file. Use .xlsx, .xls or .csv.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const unreadCount = owned.length - readSet.size;
 
   return (
@@ -101,9 +116,15 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed }) => {
           </div>
           <Button type="submit" disabled={busy}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Find'}</Button>
           <Button type="button" variant="outline" onClick={() => setScanning(true)} aria-label="Scan barcode"><ScanBarcode className="w-4 h-4" /><span className="hidden sm:inline">Scan</span></Button>
+          <Button type="button" variant="outline" asChild aria-label="Import from Excel or CSV">
+            <label className="cursor-pointer"><Upload className="w-4 h-4" /><span className="hidden sm:inline">Import</span>
+              <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(e) => { importFile(e.target.files?.[0]); e.target.value = ''; }} />
+            </label>
+          </Button>
         </form>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
           <label className="flex items-center gap-1.5"><input type="checkbox" checked={keepScanning} onChange={(e) => setKeepScanning(e.target.checked)} /> Scan my shelf (keep camera on after each book)</label>
+          <span>Import: Excel or CSV with a Title column (Author, Pages, Genre, ISBN, Format optional)</span>
           {completed.length > 0 && (
             <button type="button" className="underline" onClick={() => add(completed.map((c) => ({ title: c.title, author: c.author, totalPages: c.totalPages, genre: c.genre, coverUrl: c.coverUrl, isbn: c.isbn, format: c.format })))}>
               Add all my finished books
