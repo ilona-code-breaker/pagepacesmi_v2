@@ -1,3 +1,4 @@
+import { RereadEditor } from './RereadEditor';
 import React, { useState, useEffect } from 'react';
 import { BookEntry } from '../types/book';
 import {
@@ -57,6 +58,7 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
   const [shelves, setShelves] = useState<string[]>(book?.shelves || []);
   const [notes, setNotes] = useState(book?.notes || '');
   const [quotes, setQuotes] = useState<string[]>(book?.quotes || []);
+  const [rereadDates, setRereadDates] = useState<string[]>(book?.rereadDates || []);
 
   // Reset form when book changes
   useEffect(() => {
@@ -74,6 +76,7 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
       setShelves(book.shelves || []);
       setNotes(book.notes || '');
       setQuotes(book.quotes || []);
+      setRereadDates(book.rereadDates || []);
     }
   }, [book]);
 
@@ -105,6 +108,7 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
       shelves,
       notes: notes.trim() || undefined,
       quotes: quotes.length ? quotes : undefined,
+      rereadDates: rereadDates.length ? rereadDates : undefined,
       celebrationMessage: generateArchetypeCelebration({
         title: title.trim(),
         author: author.trim(),
@@ -286,6 +290,10 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
               onChange={setRating}
               label="Star Rating (0.1 Precision)"
             />
+          </div>
+
+          <div className="-mx-6 sm:-mx-8 border-t border-stone-800">
+            <RereadEditor book={{ ...(book as any), finishDate, rereadDates }} onChange={setRereadDates} />
           </div>
 
           {/* Review / Notes */}
