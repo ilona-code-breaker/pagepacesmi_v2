@@ -419,9 +419,11 @@ export function analyzeAndNormalizeCsv(
     } else if (rawShelf.includes('to-read') || rawShelf.includes('want to read') || rawShelf === 'to-read') {
       shelf = 'to-read';
       toReadCount++;
-    } else {
+    } else if (!rawShelf || rawShelf === 'read' || rawShelf === 'finished' || rawShelf === 'completed') {
       shelf = 'read';
       readCount++;
+    } else {
+      shelf = 'other';
     }
 
     // If options specify read_only and row is not read, skip or include according to option
