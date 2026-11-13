@@ -1,3 +1,4 @@
+import { AccountButton } from './AccountButton';
 import React from 'react';
 import { BookOpen, Volume2, VolumeX, Plus, Compass, Target, Share2, CalendarHeart, Library } from 'lucide-react';
 
@@ -154,6 +155,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden lg:inline">Share Card</span>
             </button>
           )}
+
+          <AccountButton />
 
           {/* Sound Toggle */}
           <button

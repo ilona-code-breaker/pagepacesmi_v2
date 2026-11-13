@@ -35,3 +35,4 @@ use the editor.
 - Current and dropped reads use one shared reading-list hook across Track and Library; dropping preserves progress in separate storage and never creates a completed entry, so goals and streaks remain completion-only.
 - Render genre legends outside the fixed-height Recharts canvas with a responsive grid so long labels never reduce or overlap the donut; chart and legend share CSS palette tokens.
 - Owned books (Book Corner) are a separate device-local collection; read/unread is derived from completed books by ISBN or title match, never stored, so it stays in sync.
+- Accounts are optional Google sign-in; src/pagepace/sync mirrors every pagepace_* browser-storage key to the per-user user_data table, merging device data on a device's first sign-in and treating the account as the source afterwards, so the app keeps reading browser storage unchanged.
