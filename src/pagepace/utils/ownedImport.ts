@@ -8,8 +8,18 @@ const pick = (row: Row, names: string[]) => {
 };
 
 /** Turn spreadsheet rows (any column order; headers like Title, Author, Pages, Genre, ISBN, Format) into owned books. */
-export function rowsToOwned(rows: Row[]): Omit<OwnedBook, 'id' | 'addedAt'>[] {
-  const out: Omit<OwnedBook, 'id' | 'addedAt'>[] = [];
+export type OwnedImportRow = Omit<OwnedBook, 'id' | 'addedAt'> & { status?: 'read' | 'tbr' };
+
+/** Status from a Status/Shelf column, falling back to the sheet name (e.g. sheets called "Read" and "TBR"). */
+export function statusOf(raw: string): 'read' | 'tbr' | undefined {
+  const l = raw.toLowerCase();
+  if (/tbr|to.?read|want|unread|neskaity/.test(l)) return 'tbr';
+  if (/^(read|done|finished|completed|perskaity|skaityta)/.test(l.trim())) return 'read';
+  return undefined;
+}
+
+export function rowsToOwned(rows: Row[], sheetName = ''): OwnedImportRow[] {
+  const out: OwnedImportRow[] = [];
   for (const row of rows) {
     const title = pick(row, ['title', 'booktitle', 'name', 'pavadinimas']);
     if (!title) continue;
@@ -25,6 +35,7 @@ export function rowsToOwned(rows: Row[]): Omit<OwnedBook, 'id' | 'addedAt'>[] {
       genre: pick(row, ['genre', 'category', 'zanras']) || undefined,
       isbn: isbn || undefined,
       format,
+      status: statusOf(pick(row, ['status', 'readstatus', 'shelf', 'exclusiveshelf', 'read', 'statusas'])) ?? statusOf(sheetName),
     });
   }
   return out;
@@ -33,6 +44,6 @@ export function rowsToOwned(rows: Row[]): Omit<OwnedBook, 'id' | 'addedAt'>[] {
 export async function parseOwnedFile(file: File) {
   const XLSX = await import('xlsx');
   const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
-  const sheet = wb.Sheets[wb.SheetNames[0]];
-  return rowsToOwned(XLSX.utils.sheet_to_json<Row>(sheet, { defval: '' }));
+  // Every sheet is imported, not just the first one
+  return wb.SheetNames.flatMap((name) => rowsToOwned(XLSX.utils.sheet_to_json<Row>(wb.Sheets[name], { defval: '' }), name));
 }

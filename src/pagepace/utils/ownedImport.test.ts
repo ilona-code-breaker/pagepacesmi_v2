@@ -14,3 +14,10 @@ describe('rowsToOwned', () => {
     expect(rowsToOwned([{ title: 'X' }])[0].format).toBe('Physical');
   });
 });
+describe('owned import status', () => {
+  it('uses the Status column, else the sheet name', () => {
+    expect(rowsToOwned([{ Title: 'A', Status: 'Read' }])[0].status).toBe('read');
+    expect(rowsToOwned([{ Title: 'B' }], 'TBR')[0].status).toBe('tbr');
+    expect(rowsToOwned([{ Title: 'C' }], 'Sheet1')[0].status).toBeUndefined();
+  });
+});

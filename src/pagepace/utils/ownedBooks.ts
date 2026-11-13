@@ -15,6 +15,8 @@ export interface OwnedBook {
   coverUrl?: string;
   isbn?: string;
   format?: OwnedFormat;
+  /** Marked as read by an imported list (e.g. a "Read" status); otherwise read is derived from finished books. */
+  markedRead?: boolean;
   addedAt: string; // YYYY-MM-DD
 }
 

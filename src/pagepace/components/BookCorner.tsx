@@ -14,6 +14,7 @@ interface Props {
   onChange: (list: OwnedBook[]) => void;
   completed: BookEntry[];
   queue?: QueuedBook[];
+  onQueue?: (books: { title: string; author: string; genre?: string }[]) => void;
 }
 
 const today = () => new Date().toLocaleDateString('en-CA');
@@ -24,7 +25,7 @@ const genreColor = (g = '') => {
 };
 const fromMeta = (m: ApiBookMetadata) => ({ format: 'Physical' as const, title: m.title, author: m.author, totalPages: m.totalPages || 0, genre: m.genre, coverUrl: m.coverUrl, isbn: m.isbn });
 
-export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue = [] }) => {
+export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue = [], onQueue }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ApiBookMetadata[]>([]);
   const [busy, setBusy] = useState(false);
@@ -42,7 +43,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
   const statusOf = useMemo(() => {
     const m = new Map<string, string>();
     for (const o of owned) {
-      m.set(o.id, isOwnedRead(o, completed) ? 'Read' : isOwnedRead(o, reads) ? 'Reading' : isOwnedRead(o, dropped) ? 'Dropped' : isOwnedRead(o, queue) ? 'Want to read' : 'Unread');
+      m.set(o.id, o.markedRead || isOwnedRead(o, completed) ? 'Read' : isOwnedRead(o, reads) ? 'Reading' : isOwnedRead(o, dropped) ? 'Dropped' : isOwnedRead(o, queue) ? 'Want to read' : 'Unread');
     }
     return m;
   }, [owned, completed, reads, dropped, queue]);
@@ -90,9 +91,18 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
     if (!file) return;
     setBusy(true);
     try {
-      const items = await parseOwnedFile(file);
-      if (!items.length) setNote('No books found. Make sure the file has a "Title" column.');
-      else add(items);
+      const rows = await parseOwnedFile(file);
+      if (!rows.length) { setNote('No books found. Make sure the file has a "Title" column.'); return; }
+      const items = rows.map(({ status, ...b }) => ({ ...b, ...(status === 'read' ? { markedRead: true } : {}) }));
+      // Books already owned pick up a "Read" status from the file too
+      const readRows = items.filter((i) => i.markedRead);
+      const base = owned.map((o) => (!o.markedRead && readRows.some((r) => isOwnedRead(o, [r])) ? { ...o, markedRead: true } : o));
+      const r = addOwned(base, items, today());
+      onChange(r.list);
+      const tbr = rows.filter((x) => x.status === 'tbr');
+      if (tbr.length && onQueue) onQueue(tbr);
+      const reads = r.list.filter((o) => o.markedRead).length;
+      setNote(`Imported ${rows.length} rows: added ${r.added} new book${r.added === 1 ? '' : 's'}${readRows.length ? `, ${readRows.length} marked read` : ''}${tbr.length ? `, ${tbr.length} sent to Want to read` : ''}. ${reads ? '' : ''}`.trim());
     } catch {
       setNote("Couldn't read that file. Use .xlsx, .xls or .csv.");
     } finally {
