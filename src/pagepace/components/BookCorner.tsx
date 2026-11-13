@@ -157,7 +157,17 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
       const base = owned.map((o) => (!o.markedRead && readRows.some((r) => isOwnedRead(o, [r])) ? { ...o, markedRead: true } : o));
       const r = addOwned(base, items, today());
       onChange(r.list);
-      const tbr = rows.filter((x) => x.status === 'tbr');
+      const seen = new Set(queue.map((q) => `${q.title}|${q.author}`.toLowerCase()));
+      const tbr = rows.filter((x) => {
+        if (x.status !== 'tbr') return false;
+        // Skip books already finished, marked read in this file, queued, or listed twice
+        if (isOwnedRead(x as never, completed) || isOwnedRead(x as never, readRows as never)) return false;
+        if (queue.some((q) => isOwnedRead(x as never, [q] as never))) return false;
+        const k = `${x.title}|${x.author}`.toLowerCase();
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
       if (tbr.length && onQueue) onQueue(tbr);
       const reads = r.list.filter((o) => o.markedRead).length;
       setNote(`Imported ${rows.length} rows: added ${r.added} new book${r.added === 1 ? '' : 's'}${readRows.length ? `, ${readRows.length} marked read` : ''}${tbr.length ? `, ${tbr.length} sent to Want to read` : ''}. ${reads ? '' : ''}`.trim());

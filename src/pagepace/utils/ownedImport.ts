@@ -13,7 +13,8 @@ export type OwnedImportRow = Omit<OwnedBook, 'id' | 'addedAt'> & { status?: 'rea
 /** Status from a Status/Shelf column, falling back to the sheet name (e.g. sheets called "Read" and "TBR"). */
 export function statusOf(raw: string): 'read' | 'tbr' | undefined {
   const l = raw.toLowerCase();
-  if (/tbr|to.?read|want|unread|neskaity/.test(l)) return 'tbr';
+  if (/unread|not.?read|neskaity/.test(l)) return undefined; // owning an unread book ≠ wanting to read it
+  if (/tbr|to.?read|want/.test(l)) return 'tbr';
   if (/^(read|done|finished|completed|perskaity|skaityta)/.test(l.trim())) return 'read';
   return undefined;
 }
