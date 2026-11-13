@@ -108,13 +108,13 @@ export function toggleOwned(list: OwnedBook[], book: Omit<OwnedBook, 'id' | 'add
   return hit ? list.filter((o) => o.id !== hit.id) : addOwned(list, [book], today).list;
 }
 
-/** Groups of owned books that look like the same book (same ISBN, or near-identical title/author/volume). */
+/** Groups of owned books that look like the same book: near-identical title always required (a shared ISBN alone can be a lookup mistake). */
 export function findOwnedDuplicates(list: OwnedBook[]): OwnedBook[][] {
   const used = new Set<string>();
   const groups: OwnedBook[][] = [];
   list.forEach((a, i) => {
     if (used.has(a.id)) return;
-    const g = [a, ...list.slice(i + 1).filter((b) => !used.has(b.id) && isOwnedRead(a, [b]) && isOwnedRead(b, [a]))];
+    const g = [a, ...list.slice(i + 1).filter((b) => !used.has(b.id) && near(coreTitle(a.title), coreTitle(b.title)) && isOwnedRead(a, [b]) && isOwnedRead(b, [a]))];
     if (g.length > 1) { g.forEach((b) => used.add(b.id)); groups.push(g); }
   });
   return groups;
