@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Library, Loader2, Plus, ScanBarcode, Search, Trash2, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { BookEntry } from '../types/book';
+import { LibraryAchievementBar } from './LibraryAchievementBar';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { searchBooksUnified, type ApiBookMetadata } from '../services/bookApiService';
 import { useReadingLists } from '../hooks/useReadingLists';
@@ -17,6 +18,7 @@ interface Props {
   queue?: QueuedBook[];
   onQueue?: (books: { title: string; author: string; genre?: string }[]) => void;
   onLibrarySync?: (library: BookEntry[]) => void;
+  onOpenCodex?: () => void;
 }
 
 const NUM_WORDS: Record<string, string> = { one: '1', two: '2', three: '3', four: '4', five: '5', six: '6', seven: '7', eight: '8', nine: '9', ten: '10' };
@@ -34,7 +36,7 @@ const genreColor = (g = '') => {
 };
 const fromMeta = (m: ApiBookMetadata) => ({ format: 'Physical' as const, title: m.title, author: m.author, totalPages: m.totalPages || 0, genre: m.genre, coverUrl: m.coverUrl, isbn: m.isbn });
 
-export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue = [], onQueue, onLibrarySync }) => {
+export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue = [], onQueue, onLibrarySync, onOpenCodex }) => {
   const [confirmSync, setConfirmSync] = useState(false);
   const [PER_SHELF, setPerShelf] = useState(20);
   useEffect(() => {
@@ -196,6 +198,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
           ))}
         </div>
       </header>
+      <LibraryAchievementBar stats={{ owned: owned.length, read: readSet.size, formats: owned.reduce<Record<string, number>>((m, o) => { const f = o.format || 'Physical'; m[f] = (m[f] ?? 0) + 1; return m; }, {}) }} onOpenCodex={onOpenCodex} />
 
       <section className="rounded-2xl border border-border bg-card/30 p-4 space-y-3">
         <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); runSearch(query); }}>

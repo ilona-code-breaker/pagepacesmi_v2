@@ -514,7 +514,7 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'corner' && <BookCorner owned={owned} onChange={saveOwned} completed={books} onLibrarySync={setBooks} queue={queue} onQueue={(list) => updateQueue(list.reduce((q, b, i) => saveToQueue(q, { title: b.title, author: b.author, genre: b.genre ?? '', reason: '' } as never, `corner-q-${Date.now()}-${i}`), queue))} />}
+        {currentTab === 'corner' && <BookCorner onOpenCodex={() => setCurrentTab('codex')} owned={owned} onChange={saveOwned} completed={books} onLibrarySync={setBooks} queue={queue} onQueue={(list) => updateQueue(list.reduce((q, b, i) => saveToQueue(q, { title: b.title, author: b.author, genre: b.genre ?? '', reason: '' } as never, `corner-q-${Date.now()}-${i}`), queue))} />}
 
         {/* TAB 4: Archetype Codex & Field Guide */}
         {currentTab === 'codex' && (

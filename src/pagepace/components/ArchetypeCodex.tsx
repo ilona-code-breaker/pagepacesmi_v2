@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ARCHETYPES } from '../constants/archetypes';
 import { ArchetypeId, BookEntry } from '../types/book';
+import { LibraryAchievementsGuide } from './LibraryAchievementBar';
 import { collectedArchetypes, unlockHint } from '../utils/archetypeProgress';
 import {
   Zap,
@@ -115,6 +116,8 @@ export const ArchetypeCodex: React.FC<{ books?: BookEntry[] }> = ({ books = [] }
         <div className="h-2 rounded-full bg-stone-800 overflow-hidden"><div className="h-full bg-amber-400" style={{ width: `${(collected.size / archetypeList.length) * 100}%` }} /></div>
         <p className="text-xs text-stone-400">{collected.size === archetypeList.length ? 'You have collected every reader type!' : 'Each book you finish earns the type of its pace. Try a different pace to unlock the rest.'}</p>
       </div>
+
+      <LibraryAchievementsGuide />
 
       {/* 7 Archetypes Showcase Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
