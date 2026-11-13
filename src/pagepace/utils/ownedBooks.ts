@@ -74,7 +74,7 @@ const lev = (a: string, b: string) => {
   return prev[b.length];
 };
 /** Equal, or within a small typo distance for longer strings. */
-const near = (a: string, b: string) => a === b || (Math.min(a.length, b.length) >= 5 && lev(a, b) <= Math.max(1, Math.floor(Math.min(a.length, b.length) / 6)));
+const near = (a: string, b: string) => a === b || (Math.min(a.length, b.length) >= 5 && lev(a, b) <= (Math.min(a.length, b.length) >= 20 ? 2 : 1));
 
 /** An owned book counts as read when a completed book has the same ISBN, or a near-identical title (subtitles, series tags and small typos ignored), the same volume number when both have one, and a near-identical author. */
 export function isOwnedRead(owned: OwnedBook, completed: Pick<BookEntry, 'title' | 'author' | 'isbn'>[]): boolean {
