@@ -149,7 +149,7 @@ export function removeOwnedDuplicates(list: OwnedBook[]): OwnedBook[] {
 export function syncCornerLibrary(owned: OwnedBook[], library: BookEntry[], makeBook: (o: OwnedBook) => BookEntry) {
   const newBooks = owned.filter((o) => o.markedRead === true && !isOwnedRead(o, library)).map(makeBook);
   let markedRead = 0;
-  const nextOwned = owned.map((o) => {
+  const nextOwned: OwnedBook[] = owned.map((o): OwnedBook => {
     if (o.markedRead === false && isOwnedRead(o, library)) { markedRead++; const { markedRead: _m, ...rest } = o; return rest; }
     return o;
   });
