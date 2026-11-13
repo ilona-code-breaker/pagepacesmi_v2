@@ -385,6 +385,19 @@ export const BookForm: React.FC<BookFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <fieldset className="space-y-2">
+        <legend className="text-xs font-medium text-stone-300 mb-1.5">This book is…</legend>
+        <div className="grid grid-cols-3 gap-2">
+          {([['want', 'Want to read'], ['reading', 'Still reading'], ['finished', 'Finished']] as const).filter(([v]) => v !== 'want' || onWantToRead).map(([v, label]) => (
+            <label key={v} className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm cursor-pointer select-none transition-colors ${status === v ? 'border-amber-500/60 bg-amber-500/10 text-amber-200' : 'border-stone-800 text-stone-400 hover:text-stone-200'}`}>
+              <input type="radio" name="book-status" value={v} checked={status === v} onChange={() => setStatus(v)} className="w-4 h-4 accent-amber-500" />
+              {label}
+            </label>
+          ))}
+        </div>
+        <p className="text-[11px] text-stone-500">Switching keeps everything you've typed.</p>
+      </fieldset>
+
       {/* Auto-Fill Banner Indicator with Cover Art and API Attribution */}
       {autoFilledBadge && (
         <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start justify-between gap-3 text-xs animate-in fade-in duration-200">
@@ -703,19 +716,6 @@ export const BookForm: React.FC<BookFormProps> = ({
           className="w-full px-3.5 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 placeholder-stone-500 text-sm focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-colors leading-relaxed"
         />
       </div>}
-
-      <fieldset className="space-y-2">
-        <legend className="text-xs font-medium text-stone-300 mb-1.5">This book is…</legend>
-        <div className="grid grid-cols-3 gap-2">
-          {([['want', 'Want to read'], ['reading', 'Still reading'], ['finished', 'Finished']] as const).filter(([v]) => v !== 'want' || onWantToRead).map(([v, label]) => (
-            <label key={v} className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm cursor-pointer select-none transition-colors ${status === v ? 'border-amber-500/60 bg-amber-500/10 text-amber-200' : 'border-stone-800 text-stone-400 hover:text-stone-200'}`}>
-              <input type="radio" name="book-status" value={v} checked={status === v} onChange={() => setStatus(v)} className="w-4 h-4 accent-amber-500" />
-              {label}
-            </label>
-          ))}
-        </div>
-        <p className="text-[11px] text-stone-500">Switching keeps everything you've typed.</p>
-      </fieldset>
 
       {onOwn && (
         <label className="flex items-center gap-2 text-sm text-stone-300 cursor-pointer select-none">
