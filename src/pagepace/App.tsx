@@ -1,9 +1,10 @@
+import { withRereads, originalBook } from './utils/rereads';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BookEntry, MonthlyGoal } from './types/book';
 import { INITIAL_SAMPLE_BOOKS, ARCHETYPES } from './constants/archetypes';
 import { Navbar } from './components/Navbar';
@@ -83,6 +84,7 @@ export default function App() {
     }
     return INITIAL_SAMPLE_BOOKS;
   });
+  const statsBooks = useMemo(() => withRereads(books), [books]);
 
   const [goals, setGoals] = useState<Record<string, MonthlyGoal>>(() => {
     try {
@@ -437,13 +439,13 @@ export default function App() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-8 items-stretch">
               <div className="min-w-0 lg:col-span-7">
                 <MonthlyGoalWidget
-                  books={books}
+                  books={statsBooks}
                   goals={goals}
                   onViewGoals={() => setCurrentTab('year')}
                 />
               </div>
               <div className="min-w-0 lg:col-span-5">
-                <StreakWidget books={books} onOpenYear={() => setCurrentTab('year')} />
+                <StreakWidget books={statsBooks} onOpenYear={() => setCurrentTab('year')} />
               </div>
             </div>
 
@@ -615,7 +617,7 @@ export default function App() {
               books={books}
               goals={goals}
               onSelectBook={(book) => {
-                setSelectedBook(book);
+                setSelectedBook(originalBook(books, book));
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onDeleteBook={handleDeleteBook}
@@ -635,21 +637,21 @@ export default function App() {
         {/* TAB: Year in Review & Streaks */}
         {currentTab === 'year' && (
           <YearInReview
-            books={books}
+            books={statsBooks}
             goals={goals}
             goalsOpen={goalsOpen}
             goalsSummary={
-              <MonthlyGoalWidget books={books} goals={goals} onViewGoals={() => setGoalsOpen(true)} />
+              <MonthlyGoalWidget books={statsBooks} goals={goals} onViewGoals={() => setGoalsOpen(true)} />
             }
             onGoalsOpenChange={setGoalsOpen}
             goalsEditor={
               <MonthlyGoalTracker
-                books={books}
+                books={statsBooks}
                 goals={goals}
                 onUpdateGoal={handleUpdateGoal}
                 onSelectBook={(book) => {
                   setGoalsOpen(false);
-                  setSelectedBook(book);
+                  setSelectedBook(originalBook(books, book));
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 onNavigateToTrack={() => {
@@ -660,7 +662,7 @@ export default function App() {
               />
             }
             onSelectBook={(book) => {
-              setSelectedBook(book);
+              setSelectedBook(originalBook(books, book));
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />

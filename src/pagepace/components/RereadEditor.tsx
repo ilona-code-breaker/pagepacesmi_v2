@@ -1,7 +1,7 @@
 import { Minus, Plus, Repeat } from 'lucide-react';
 import type { BookEntry } from '../types/book';
 
-/** Times-read stepper; each extra read gets its own date. Extra reads never change goals or streaks. */
+/** Times-read stepper; each extra read gets its own date. Each dated re-read counts as a finished book for goals, streaks and yearly stats. */
 export function RereadEditor({ book, onChange }: { book: BookEntry; onChange: (dates: string[]) => void }) {
   const dates = book.rereadDates ?? [];
   const total = dates.length + 1;
