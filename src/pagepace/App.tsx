@@ -175,9 +175,10 @@ export default function App() {
       setQueueError('');
     } catch { setQueueError('Could not save your queue on this device.'); }
   };
-  const removeQueuedBook = (id: string) => {
-    updateQueue(removeFromQueue(queue, id));
-    if (queuedStart?.id === id) setQueuedStart(undefined);
+  const removeQueuedBook = (id: string | string[]) => {
+    const ids = new Set(Array.isArray(id) ? id : [id]);
+    updateQueue(queue.filter((q) => !ids.has(q.id)));
+    if (queuedStart && ids.has(queuedStart.id)) setQueuedStart(undefined);
   };
   const startQueuedBook = (book: QueuedBook) => {
     setCurrentTab('track');

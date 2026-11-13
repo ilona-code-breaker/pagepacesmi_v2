@@ -31,7 +31,7 @@ import { Button } from '@/components/ui/button';
 interface BookListProps {
   queue: QueuedBook[];
   onStartQueuedBook: (book: QueuedBook) => void;
-  onRemoveQueuedBook: (id: string) => void;
+  onRemoveQueuedBook: (id: string | string[]) => void;
   onFinishReading: (book: BookEntry) => void;
   books: BookEntry[];
   goals?: Record<string, MonthlyGoal>;
