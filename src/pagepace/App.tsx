@@ -1,3 +1,4 @@
+import { StorageBadge } from './components/StorageBadge';
 import { withRereads, originalBook } from './utils/rereads';
 /**
  * @license
@@ -729,12 +730,7 @@ export default function App() {
       <footer className="border-t border-stone-800/80 py-8 text-center text-xs text-stone-500 space-y-4">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <div className="flex items-center justify-center gap-2 flex-wrap text-[11px] text-stone-400 font-mono">
-            <span className="px-3 py-1 rounded-full bg-stone-900 border border-stone-800 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              MVP Edition • Goals & Books Stored on This Device (localStorage)
-            </span>
-            <span className="text-stone-600 hidden sm:inline">·</span>
-            <span className="text-stone-500">Private to Your Browser</span>
+            <StorageBadge />
           </div>
 
           <DataPortabilityToolbar
