@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Library, Loader2, Plus, ScanBarcode, Search, Trash2, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { BookEntry } from '../types/book';
@@ -36,6 +36,27 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
   const [picked, setPicked] = useState<OwnedBook | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [listFilter, setListFilter] = useState('');
+  const [readFilter, setReadFilter] = useState<'all' | 'read' | 'unread'>('all');
+
+  // Fill missing details (cover, genre, pages, ISBN) from matching Library books
+  useEffect(() => {
+    let changed = false;
+    const next = owned.map((o) => {
+      const lib = completed.find((c) => isOwnedRead(o, [c]));
+      if (!lib) return o;
+      const patch: Partial<OwnedBook> = {};
+      if (!o.coverUrl && lib.coverUrl) patch.coverUrl = lib.coverUrl;
+      if ((!o.genre || o.genre === 'Unassigned') && lib.genre && lib.genre !== 'Unassigned') patch.genre = lib.genre;
+      if (!o.totalPages && lib.totalPages) patch.totalPages = lib.totalPages;
+      if (!o.isbn && lib.isbn) patch.isbn = lib.isbn;
+      if (!o.author && lib.author) patch.author = lib.author;
+      if (!Object.keys(patch).length) return o;
+      changed = true;
+      return { ...o, ...patch };
+    });
+    if (changed) onChange(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [owned, completed]);
   const [confirmDel, setConfirmDel] = useState(false);
 
   const { reads, dropped } = useReadingLists();
@@ -43,7 +64,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
   const statusOf = useMemo(() => {
     const m = new Map<string, string>();
     for (const o of owned) {
-      m.set(o.id, o.markedRead || isOwnedRead(o, completed) ? 'Read' : isOwnedRead(o, reads) ? 'Reading' : isOwnedRead(o, dropped) ? 'Dropped' : isOwnedRead(o, queue) ? 'Want to read' : 'Unread');
+      m.set(o.id, o.markedRead === true || (o.markedRead !== false && isOwnedRead(o, completed)) ? 'Read' : isOwnedRead(o, reads) ? 'Reading' : isOwnedRead(o, dropped) ? 'Dropped' : isOwnedRead(o, queue) ? 'Want to read' : 'Unread');
     }
     return m;
   }, [owned, completed, reads, dropped, queue]);
@@ -220,12 +241,20 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
         </div>
         {owned.length === 0 ? <p className="text-sm text-muted-foreground">No books yet. Add some above.</p> : (() => {
           const f = listFilter.toLowerCase();
-          const shown = sorted.filter((b) => !f || b.title.toLowerCase().includes(f) || b.author.toLowerCase().includes(f));
+          const shown = sorted.filter((b) => readFilter === 'all' || (readFilter === 'read') === readSet.has(b.id)).filter((b) => !f || b.title.toLowerCase().includes(f) || b.author.toLowerCase().includes(f));
           const allOn = shown.length > 0 && shown.every((b) => selected.has(b.id));
           return (<>
             <div className="flex flex-wrap items-center gap-3">
               <input value={listFilter} onChange={(e) => setListFilter(e.target.value)} placeholder="Filter my books" aria-label="Filter my books"
                 className="flex-1 min-w-0 rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+              <div className="flex rounded-xl border border-border overflow-hidden text-xs" role="group" aria-label="Show read or unread">
+                {(['all', 'read', 'unread'] as const).map((k) => (
+                  <button key={k} type="button" onClick={() => setReadFilter(k)} aria-pressed={readFilter === k}
+                    className={`px-3 py-2 capitalize ${readFilter === k ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>
+                    {k} ({k === 'all' ? owned.length : k === 'read' ? readSet.size : owned.length - readSet.size})
+                  </button>
+                ))}
+              </div>
               <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <input type="checkbox" checked={allOn} onChange={() => { const n = new Set(selected); shown.forEach((b) => allOn ? n.delete(b.id) : n.add(b.id)); setSelected(n); setConfirmDel(false); }} /> Select all
               </label>
@@ -259,6 +288,18 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
                 <p className="text-xs mt-1 text-primary">{readSet.has(picked.id) ? 'Read ✓' : statusOf.get(picked.id) === 'Unread' ? 'Not read yet' : statusOf.get(picked.id)}</p>
               </div>
               <button type="button" aria-label="Close" onClick={() => setPicked(null)}><X className="w-4 h-4" /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-2" role="group" aria-label="Read status">
+              {([['Read', true], ['Unread', false]] as const).map(([label, val]) => {
+                const on = readSet.has(picked.id) === val;
+                return (
+                  <button key={label} type="button" aria-pressed={on} onClick={() => {
+                    const next = { ...picked, markedRead: val };
+                    onChange(owned.map((o) => (o.id === picked.id ? next : o)));
+                    setPicked(next);
+                  }} className={`rounded-xl border px-3 py-2 text-sm ${on ? 'border-primary bg-primary/15 text-primary' : 'border-border text-muted-foreground hover:bg-muted'}`}>{label}</button>
+                );
+              })}
             </div>
             <label className="block text-sm">
               <span className="text-muted-foreground text-xs">Format</span>
