@@ -161,7 +161,7 @@ export const BookCard: React.FC<BookCardProps> = ({
               onClick={(e) => { e.stopPropagation(); onToggleOwned(); }}
               aria-pressed={owned}
               className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${owned ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-stone-800 text-stone-400 hover:text-stone-200'}`}
-              title={owned ? 'You own this book — tap to remove from My Book Corner' : 'Mark as owned (adds to My Book Corner)'}
+              title={owned ? 'You own this book — tap to remove from My Library' : 'Mark as owned (adds to My Library)'}
             >
               {owned ? '✓ Owned' : 'I own this'}
             </button>

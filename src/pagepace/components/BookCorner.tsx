@@ -50,7 +50,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
     if (r.newBooks.length || r.formats) onLibrarySync?.(r.nextLibrary);
     if (r.markedRead) onChange(r.nextOwned);
     setConfirmSync(false);
-    setNote(r.newBooks.length || r.formats || r.markedRead ? `Synced: ${r.newBooks.length} read book${r.newBooks.length === 1 ? '' : 's'} added to Library, ${r.markedRead} marked Read here, ${r.formats} format${r.formats === 1 ? '' : 's'} updated in Library.` : 'Book Corner and Library are already in sync.');
+    setNote(r.newBooks.length || r.formats || r.markedRead ? `Synced: ${r.newBooks.length} read book${r.newBooks.length === 1 ? '' : 's'} added to Archive, ${r.markedRead} marked Read here, ${r.formats} format${r.formats === 1 ? '' : 's'} updated in Archive.` : 'My Library and Archive are already in sync.');
   };
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ApiBookMetadata[]>([]);
@@ -184,7 +184,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
     <div className="dark space-y-5 text-foreground">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-serif text-3xl font-bold flex items-center gap-2"><Library className="w-7 h-7 text-primary" /> My Book Corner</h1>
+          <h1 className="font-serif text-3xl font-bold flex items-center gap-2"><Library className="w-7 h-7 text-primary" /> My Library</h1>
           <p className="text-sm text-muted-foreground">Your physical bookshelf, one spine per book.</p>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
@@ -217,7 +217,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
           <span>Import: Excel or CSV with a Title column (Author, Pages, Genre, ISBN, Format optional)</span>
           {onLibrarySync && (
             <button type="button" className="underline text-primary" onClick={() => (confirmSync ? runSync() : setConfirmSync(true))}>
-              {confirmSync ? 'Tap again to sync with Library' : 'Sync with Library'}
+              {confirmSync ? 'Tap again to sync with Archive' : 'Sync with Archive'}
             </button>
           )}
           {completed.length > 0 && (

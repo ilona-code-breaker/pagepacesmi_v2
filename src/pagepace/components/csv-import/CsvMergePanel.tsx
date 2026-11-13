@@ -14,7 +14,7 @@ export const CsvMergePanel: React.FC<Props> = ({ value, onChange, newCount, dupl
   const options: { id: MergeStrategy; title: string; text: string; danger?: boolean }[] = [
     { id: 'merge_skip', title: 'Merge (Skip Duplicates)', text: `Adds only ${newCount} new books. Leaves your existing books unchanged.` },
     { id: 'merge_update', title: 'Merge & Update', text: 'Adds new books and updates matching ones. Your shelves, notes and quotes are kept.' },
-    { id: 'replace', title: 'Replace Entire Library', text: `Replaces current library with all ${totalCount} books from this CSV.`, danger: true },
+    { id: 'replace', title: 'Replace Entire Archive', text: `Replaces current archive with all ${totalCount} books from this CSV.`, danger: true },
   ];
   return (
     <div className="p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-3">

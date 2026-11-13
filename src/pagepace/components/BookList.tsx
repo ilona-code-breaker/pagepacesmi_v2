@@ -152,7 +152,7 @@ export const BookList: React.FC<BookListProps> = ({
   const confirmClear = () => {
     if (books.length === 0) return;
     click();
-    undo.start([...books], `Cleared entire library (${books.length} ${books.length === 1 ? 'book' : 'books'})`);
+    undo.start([...books], `Cleared entire archive (${books.length} ${books.length === 1 ? 'book' : 'books'})`);
     if (onClearLibrary) onClearLibrary();
     else if (onDeleteBooks) onDeleteBooks(books.map((b) => b.id));
     else books.forEach((b) => onDeleteBook(b.id));
@@ -165,7 +165,7 @@ export const BookList: React.FC<BookListProps> = ({
     onRestoreBooks?.(undo.activeUndo.books);
     if (soundEnabled) playCelebrationChime();
     const n = undo.activeUndo.books.length;
-    setFlash(`Restored ${n} ${n === 1 ? 'book' : 'books'} to library!`);
+    setFlash(`Restored ${n} ${n === 1 ? 'book' : 'books'} to archive!`);
     setTimeout(() => setFlash(null), 3500);
     undo.dismiss();
   };

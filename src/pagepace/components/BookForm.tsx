@@ -720,7 +720,7 @@ export const BookForm: React.FC<BookFormProps> = ({
       {onOwn && (
         <label className="flex items-center gap-2 text-sm text-stone-300 cursor-pointer select-none">
           <input type="checkbox" checked={ownIt} onChange={(e) => setOwnIt(e.target.checked)} className="w-4 h-4 accent-amber-500" />
-          I own this book <span className="text-stone-500 text-xs">(adds it to My Book Corner)</span>
+          I own this book <span className="text-stone-500 text-xs">(adds it to My Library)</span>
         </label>
       )}
 

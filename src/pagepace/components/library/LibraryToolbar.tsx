@@ -59,7 +59,7 @@ export const LibraryToolbar: React.FC<LibraryToolbarProps> = ({
           className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold transition-all active:scale-95"
         >
           <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-          <span>Clear Library</span>
+          <span>Clear Archive</span>
         </button>
       )}
     </div>

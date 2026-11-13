@@ -92,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-400" />
-            <span>Library</span>
+            <span>Archive</span>
             <span className="text-[10px] sm:text-[11px] font-mono px-1.5 py-0.2 rounded-full bg-stone-900 border border-stone-800 text-stone-400">
               {libraryCount}
             </span>
@@ -117,8 +117,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={() => onTabChange('corner')}
-            aria-label="My Book Corner"
-            title="My Book Corner"
+            aria-label="My Library"
+            title="My Library"
             className={`flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               currentTab === 'corner'
                 ? 'bg-stone-800 text-stone-100 shadow-sm border border-stone-700'
@@ -126,7 +126,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Library className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
-            <span className="hidden sm:inline">Corner</span>
+            <span className="hidden sm:inline">Library</span>
           </button>
 
           {/* Codex Tab */}
