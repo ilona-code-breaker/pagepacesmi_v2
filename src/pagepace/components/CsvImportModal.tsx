@@ -13,7 +13,7 @@ interface CsvImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   existingBooks: BookEntry[];
-  onImportComplete: (updatedBooks: BookEntry[]) => void;
+  onImportComplete: (updatedBooks: BookEntry[], shelfRows: import('../utils/csvParser').NormalizedCsvRow[]) => void;
 }
 
 export const CsvImportModal: React.FC<CsvImportModalProps> = ({ isOpen, onClose, existingBooks, onImportComplete }) => {
@@ -21,9 +21,9 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({ isOpen, onClose,
   if (!isOpen) return null;
 
   const handleImport = async () => {
-    const library = await csv.runImport();
-    if (library) {
-      onImportComplete(library);
+    const result = await csv.runImport();
+    if (result) {
+      onImportComplete(result.library, result.shelfRows);
       onClose();
     }
   };

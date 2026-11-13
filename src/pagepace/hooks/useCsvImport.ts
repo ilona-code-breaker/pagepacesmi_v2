@@ -107,17 +107,22 @@ export function useCsvImport(existingBooks: BookEntry[]) {
     setFile(null);
   };
 
-  const runImport = async (): Promise<BookEntry[] | null> => {
-    if (!analysis || analysis.validRows.length === 0) return null;
+  const runImport = async (): Promise<{ library: BookEntry[]; shelfRows: CsvAnalysisResult['validRows'] } | null> => {
+    if (!analysis || !rawRows) return null;
+    // Want to read / currently reading rows go to their own lists, never into finished books
+    const shelfRows = analyzeAndNormalizeCsv(rawRows, { ...options, importShelfFilter: 'all' }).validRows
+      .filter((r) => r.shelf === 'to-read' || r.shelf === 'currently-reading');
+    const finishedRows = analysis.validRows.filter((r) => r.shelf === 'read' || r.shelf === 'other');
+    if (finishedRows.length === 0 && shelfRows.length === 0) return null;
     setIsImporting(true);
     setProgressStage('parsing');
-    const total = analysis.validRows.length;
+    const total = Math.max(finishedRows.length, 1);
     // Yield to the UI in chunks so large files don't freeze the page
     for (let i = 0; i < total; i += 40) {
       setProgress({ current: Math.min(i + 40, total), total });
       await new Promise((r) => setTimeout(r, 15));
     }
-    let library = mergeImportedRows(analysis.validRows, existingBooks, mergeStrategy);
+    let library = mergeImportedRows(finishedRows, existingBooks, mergeStrategy);
     if (autoEnrichGenres && library.length > 0) {
       setProgressStage('enriching');
       const { enrichedBooks } = await enrichCsvGenres(library, {
@@ -132,7 +137,7 @@ export function useCsvImport(existingBooks: BookEntry[]) {
     setIsImporting(false);
     setProgressStage(null);
     setProgressTitle('');
-    return library;
+    return { library, shelfRows };
   };
 
   const duplicateStats = analysis

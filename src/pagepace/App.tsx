@@ -16,6 +16,9 @@ import { MonthlyGoalWidget } from './components/MonthlyGoalWidget';
 import { ShareableArchetypeCardModal } from './components/ShareableArchetypeCardModal';
 import { DataPortabilityToolbar } from './components/DataPortabilityToolbar';
 import { CsvImportModal } from './components/CsvImportModal';
+import { todayIso } from './utils/readingStats';
+import { csvReadingToCurrent, csvToReadToQueue } from './utils/csvShelves';
+const loadCurrentReadsForImport = () => { try { const d = JSON.parse(localStorage.getItem('pagepace_current_reads') || '[]'); return Array.isArray(d) ? d : []; } catch { return []; } };
 import { ReaderTypeCard } from './components/ReaderTypeCard';
 import { isNewUnlock } from './utils/archetypeProgress';
 import type { ArchetypeDefinition } from './types/book';
@@ -701,8 +704,13 @@ export default function App() {
         isOpen={isCsvModalOpen}
         onClose={() => setIsCsvModalOpen(false)}
         existingBooks={books}
-        onImportComplete={(updatedBooks) => {
+        onImportComplete={(updatedBooks, shelfRows) => {
           handleDataImported({ books: updatedBooks, goals });
+          const stamp = Date.now();
+          const reading = loadCurrentReadsForImport();
+          const newReads = csvReadingToCurrent(shelfRows, reading, todayIso(), (i) => `csv-cr-${stamp}-${i}`);
+          newReads.forEach((r) => addCurrentRead(r));
+          updateQueue(csvToReadToQueue(shelfRows, queue, [...reading, ...newReads].map((r) => r.title).concat(updatedBooks.map((b) => b.title)), (i) => `csv-q-${stamp}-${i}`));
         }}
       />
 
