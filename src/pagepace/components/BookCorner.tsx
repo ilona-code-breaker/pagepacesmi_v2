@@ -7,7 +7,7 @@ import { searchBooksUnified, type ApiBookMetadata } from '../services/bookApiSer
 import { useReadingLists } from '../hooks/useReadingLists';
 import type { QueuedBook } from '../utils/readingQueue';
 import { parseOwnedFile } from '../utils/ownedImport';
-import { OWNED_FORMATS, BOOKCASE_SIZE, addOwned, isOwnedRead, toBookcases, type OwnedBook } from '../utils/ownedBooks';
+import { OWNED_FORMATS, BOOKCASE_SIZE, addOwned, isOwnedRead, findOwnedDuplicates, removeOwnedDuplicates, toBookcases, type OwnedBook } from '../utils/ownedBooks';
 
 interface Props {
   owned: OwnedBook[];
@@ -36,6 +36,9 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
   const [picked, setPicked] = useState<OwnedBook | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [listFilter, setListFilter] = useState('');
+  const dupGroups = useMemo(() => findOwnedDuplicates(owned), [owned]);
+  const [showDups, setShowDups] = useState(false);
+  const [confirmDups, setConfirmDups] = useState(false);
   const [readFilter, setReadFilter] = useState<'all' | 'read' | 'unread'>('all');
 
   // Fill missing details (cover, genre, pages, ISBN) from matching Library books
@@ -221,6 +224,38 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
         </div>
         <p className="text-xs text-muted-foreground">Bright spines are books you've read; faded ones are waiting. Colours show genre; thicker spines are longer books.</p>
       </section>
+
+      {dupGroups.length > 0 && (
+        <section className="rounded-2xl border border-primary/40 bg-primary/10 p-4 space-y-3" aria-label="Duplicates">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm"><strong>{dupGroups.reduce((n, g) => n + g.length - 1, 0)} duplicate{dupGroups.length > 1 ? 's' : ''}</strong> found in {dupGroups.length} book{dupGroups.length > 1 ? 's' : ''}.</p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setShowDups((v) => !v)}>{showDups ? 'Hide' : 'Review'}</Button>
+              <Button size="sm" variant="destructive" onClick={() => {
+                if (!confirmDups) return setConfirmDups(true);
+                const next = removeOwnedDuplicates(owned);
+                setNote(`Removed ${owned.length - next.length} duplicate${owned.length - next.length > 1 ? 's' : ''}.`);
+                onChange(next); setConfirmDups(false); setShowDups(false);
+              }}><Trash2 className="w-4 h-4" /> {confirmDups ? 'Confirm remove' : 'Remove duplicates'}</Button>
+            </div>
+          </div>
+          {showDups && (
+            <ul className="space-y-2 text-xs max-h-64 overflow-y-auto">
+              {dupGroups.map((g) => (
+                <li key={g[0].id} className="rounded-lg border border-border bg-background/50 p-2">
+                  {g.map((b) => (
+                    <div key={b.id} className="flex items-center justify-between gap-2 py-0.5">
+                      <span className="truncate">{b.title} <span className="text-muted-foreground">· {b.author}</span></span>
+                      <button type="button" className="shrink-0 text-destructive underline" onClick={() => onChange(owned.filter((o) => o.id !== b.id))}>Delete this</button>
+                    </div>
+                  ))}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="text-xs text-muted-foreground">"Remove duplicates" keeps the most complete copy of each book.</p>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-border bg-card/30 p-4 space-y-3" aria-label="Books I own">
         <div className="flex flex-wrap items-center justify-between gap-2">

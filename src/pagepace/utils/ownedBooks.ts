@@ -107,3 +107,35 @@ export function toggleOwned(list: OwnedBook[], book: Omit<OwnedBook, 'id' | 'add
   const hit = findOwned(list, book);
   return hit ? list.filter((o) => o.id !== hit.id) : addOwned(list, [book], today).list;
 }
+
+/** Groups of owned books that look like the same book (same ISBN, or near-identical title/author/volume). */
+export function findOwnedDuplicates(list: OwnedBook[]): OwnedBook[][] {
+  const used = new Set<string>();
+  const groups: OwnedBook[][] = [];
+  list.forEach((a, i) => {
+    if (used.has(a.id)) return;
+    const g = [a, ...list.slice(i + 1).filter((b) => !used.has(b.id) && isOwnedRead(a, [b]) && isOwnedRead(b, [a]))];
+    if (g.length > 1) { g.forEach((b) => used.add(b.id)); groups.push(g); }
+  });
+  return groups;
+}
+
+const richness = (b: OwnedBook) => (b.coverUrl ? 2 : 0) + (b.isbn ? 2 : 0) + (b.genre && b.genre !== 'Unassigned' ? 1 : 0) + (b.totalPages ? 1 : 0) + (b.markedRead !== undefined ? 1 : 0);
+
+/** Keeps the most complete copy of each duplicate group, filling its gaps from the others. */
+export function removeOwnedDuplicates(list: OwnedBook[]): OwnedBook[] {
+  const drop = new Set<string>();
+  const keep = new Map<string, OwnedBook>();
+  for (const g of findOwnedDuplicates(list)) {
+    const [best, ...rest] = [...g].sort((a, b) => richness(b) - richness(a));
+    const merged = { ...best };
+    for (const r of rest) {
+      merged.coverUrl ||= r.coverUrl; merged.isbn ||= r.isbn; merged.totalPages ||= r.totalPages;
+      if (!merged.genre || merged.genre === 'Unassigned') merged.genre = r.genre;
+      if (merged.markedRead === undefined) merged.markedRead = r.markedRead;
+      drop.add(r.id);
+    }
+    keep.set(best.id, merged);
+  }
+  return list.filter((b) => !drop.has(b.id)).map((b) => keep.get(b.id) ?? b);
+}

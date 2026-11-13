@@ -25,3 +25,12 @@ describe('isOwnedRead typos and volumes', () => {
     expect(isOwnedRead(o({ title: 'Heartstopper 3', author: 'Alice Oseman' }), done)).toBe(false);
   });
 });
+import { findOwnedDuplicates, removeOwnedDuplicates } from './ownedBooks';
+describe('owned duplicates', () => {
+  it('finds typo duplicates but keeps different volumes', () => {
+    const list = [o({ id: 'a', title: 'Heartstopper 2', author: 'Alice Oseman' }), o({ id: 'b', title: 'Hearstopper 2', author: 'Alice Oselman', isbn: '9781444951400' }), o({ id: 'c', title: 'Heartstopper 3', author: 'Alice Oseman' })];
+    expect(findOwnedDuplicates(list)).toHaveLength(1);
+    const out = removeOwnedDuplicates(list);
+    expect(out.map((b) => b.id)).toEqual(['b', 'c']);
+  });
+});
