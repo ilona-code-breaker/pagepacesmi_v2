@@ -555,6 +555,9 @@ export default function App() {
           </div>
             </div>
             <ArchetypeCodex books={books} />
+
+            <PaceSimulator />
+
                 {/* Quick Archetype Preview Explainer */}
                 <div className="p-6 rounded-2xl bg-stone-900/50 border border-stone-800 space-y-4">
                   <h3 className="text-sm font-mono uppercase tracking-wider text-stone-300 font-semibold flex items-center gap-2">
@@ -579,8 +582,6 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-
-            <PaceSimulator />
           </div>
         )}
       </main>
