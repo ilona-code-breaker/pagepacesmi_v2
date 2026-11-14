@@ -16,3 +16,8 @@
 - [x] Device-local owned-books collection with read/unread from completed books.
 - [x] Book Corner page: bookcases of 100 spines, add by search, barcode, or from finished books; continuous shelf scanning.
 - [ ] Accounts + sync across devices (waiting on user decision).
+
+# Weekly goal
+- [x] Weekly target from this month's goal, shown in the streak box.
+- [x] Weekly goal streak (current + best).
+- [x] Badges: Weekly Rhythm (4 weekly goals in a month), Seven for Seven (read all 7 days of a week).

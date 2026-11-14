@@ -35,3 +35,16 @@ describe('reading badges', () => {
     expect(earnedReadingBadges(ctx(b, { tbrStarted: b.map((x) => x.title.toLowerCase().replace(/[^a-z0-9]/g, '')) }))).toContain('tbr-tamer');
   });
 });
+
+describe('weekly badges', () => {
+  const g = { '2026-03': { monthKey: '2026-03', targetType: 'books' as const, targetBooks: 4, targetPages: 0 } };
+  it('Weekly Rhythm needs 4 weekly goals hit in one month', () => {
+    const b = ['2026-03-03', '2026-03-10', '2026-03-17', '2026-03-24'].map((d, i) => bk(i, { startDate: d, finishDate: d }));
+    expect(earnedReadingBadges(ctx(b.slice(0, 3), { goals: g }))).not.toContain('habit-week4');
+    expect(earnedReadingBadges(ctx(b, { goals: g }))).toContain('habit-week4');
+  });
+  it('Seven for Seven needs reading every day Monday to Sunday', () => {
+    expect(earnedReadingBadges(ctx([bk(1, { startDate: '2026-03-02', finishDate: '2026-03-08' })]))).toContain('habit-week7');
+    expect(earnedReadingBadges(ctx([bk(1, { startDate: '2026-03-03', finishDate: '2026-03-09' })]))).not.toContain('habit-week7');
+  });
+});

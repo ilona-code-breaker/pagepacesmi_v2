@@ -1,5 +1,6 @@
 import type { BookEntry, MonthlyGoal } from '../types/book';
 import { computeStreaks } from './readingStats';
+import { hadFullReadingWeek, weeksMetByMonth } from './weeklyGoal';
 import { normalizeTitle } from './recommendations';
 import { coreTitle, isOwnedRead, volumeOf, type OwnedBook } from './ownedBooks';
 
@@ -32,7 +33,7 @@ export const READING_GROUPS: [ReadingKind, string, string][] = [
   ['genre', '🎭 Genres', 'Based on the genre of finished books.'],
   ['length', '📏 Book length', 'Based on page counts.'],
   ['pace', '⚡ Pace', 'Based on how many days a book took.'],
-  ['habit', '🔥 Habits & goals', 'Streaks and your monthly and yearly goals.'],
+  ['habit', '🔥 Habits & goals', 'Streaks and your weekly, monthly and yearly goals.'],
   ['series', '📚 Series & re-reads', 'Re-reading and finishing series you own.'],
   ['notes', '✍️ Reviews & notes', 'Reviews, quotes and ratings.'],
   ['season', '🗓️ Seasons & dates', 'When you finish books.'],
@@ -115,6 +116,8 @@ export const READING_BADGES: ReadingBadge[] = [
 
   ...([7, 30, 100] as const).map((n, i): ReadingBadge => ({ id: `habit-streak-${n}`, emoji: ['🔥', '💪', '🌋'][i], name: ['Week Warrior', 'Month Marathoner', 'Hundred-Day Hero'][i], kind: 'habit', goal: `Reach a ${n}-day reading streak`, earned: (c) => computeStreaks(c.books, c.today).longest >= n })),
   { id: 'habit-goal3', emoji: '🎯', name: 'Goal Getter', kind: 'habit', goal: 'Hit your monthly goal 3 months in a row', earned: (c) => Object.keys(c.goals).some((k) => monthGoalMet(c, k) && monthGoalMet(c, nextMonth(k)) && monthGoalMet(c, nextMonth(nextMonth(k)))) },
+  { id: 'habit-week4', emoji: '📆', name: 'Weekly Rhythm', kind: 'habit', goal: 'Hit your weekly goal 4 times in one month', earned: (c) => [...weeksMetByMonth(c.books, c.goals, c.today).values()].some((n) => n >= 4) },
+  { id: 'habit-week7', emoji: '🗓️', name: 'Seven for Seven', kind: 'habit', goal: 'Read on all 7 days of one week (Monday–Sunday)', earned: (c) => hadFullReadingWeek(c.books, c.today) },
   { id: 'habit-year', emoji: '🏆', name: 'Year Champion', kind: 'habit', goal: 'Reach your yearly book goal', earned: (c) => Object.entries(c.yearlyGoals).some(([y, g]) => g?.books > 0 && c.books.filter((b) => b.finishDate?.startsWith(y)).length >= g.books) },
 
   { id: 'series-reread', emoji: '🤝', name: 'Old Friend', kind: 'series', goal: 'Re-read a book', earned: (c) => c.originals.some((b) => (b.rereadDates?.length ?? 0) >= 1) },

@@ -130,7 +130,7 @@ export const YearInReview: React.FC<{
 
       <div className={`grid grid-cols-1 ${goalsSummary ? 'sm:grid-cols-2' : ''} gap-4 items-stretch`}>
         {goalsSummary}
-        <StreakWidget books={books} />
+        <StreakWidget books={books} goals={goals} />
       </div>
 
       {review.bookCount === 0 ? (

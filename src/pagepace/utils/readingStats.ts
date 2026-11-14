@@ -2,7 +2,7 @@ import { ArchetypeId, BookEntry } from '../types/book';
 
 const DAY = 24 * 60 * 60 * 1000;
 
-const toDayIndex = (iso: string): number | null => {
+export const toDayIndex = (iso: string): number | null => {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
   if (!m) return null;
   return Math.floor(Date.UTC(+m[1], +m[2] - 1, +m[3]) / DAY);

@@ -329,7 +329,7 @@ export default function App() {
                 <div className="text-[11px] text-stone-500 mt-1">See goals & progress →</div>
               </button>
               <div className="min-w-0 lg:col-span-5">
-                <StreakWidget books={statsBooks} onOpenYear={() => setCurrentTab('year')} />
+                <StreakWidget books={statsBooks} goals={goals} onOpenYear={() => setCurrentTab('year')} />
               </div>
             </div>
 
