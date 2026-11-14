@@ -3,6 +3,11 @@ import confetti from 'canvas-confetti';
 import { Button } from '@/components/ui/button';
 import { BIRTHDAY_KEY, READING_BADGES, READING_BADGES_KEY, READING_GROUPS, earnedReadingBadges, loadReadingEarned, type ReadingBadge, type ReadingContext } from '../utils/readingAchievements';
 
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+const pad = (n: number) => String(n).padStart(2, '0');
+const daysInMonth = (m: number) => DAYS_IN_MONTH[m - 1] ?? 31;
+
 /** Celebrates newly earned reading badges; the first run only records what is already earned. */
 export function ReadingBadgeWatcher({ ctx }: { ctx: ReadingContext }) {
   const earned = useMemo(() => earnedReadingBadges(ctx), [ctx]);
@@ -31,6 +36,22 @@ export function ReadingBadgeWatcher({ ctx }: { ctx: ReadingContext }) {
 
 export function ReadingBadgesGuide({ ctx, onBirthday }: { ctx: ReadingContext; onBirthday: (v: string | undefined) => void }) {
   const earned = useMemo(() => new Set(earnedReadingBadges(ctx)), [ctx]);
+  const [bd, setBd] = useState(() => {
+    const [mm, dd] = (ctx.birthday ?? '').split('-');
+    return { m: Number(mm) || 0, d: Number(dd) || 0 };
+  });
+  // The stored birthday can arrive after mount (App reads it in an effect); adopt it while nothing is picked yet.
+  useEffect(() => {
+    const [mm, dd] = (ctx.birthday ?? '').split('-');
+    const m = Number(mm) || 0, d = Number(dd) || 0;
+    setBd((cur) => (cur.m || cur.d ? cur : { m, d }));
+  }, [ctx.birthday]);
+  const saveBirthday = (m: number, d: number) => {
+    setBd({ m, d });
+    const v = m && d ? `${pad(m)}-${pad(Math.min(d, daysInMonth(m)))}` : undefined;
+    if (v) localStorage.setItem(BIRTHDAY_KEY, v); else localStorage.removeItem(BIRTHDAY_KEY);
+    onBirthday(v);
+  };
   return (
     <div className="p-5 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-4">
       <div className="flex items-center justify-between text-sm">
@@ -48,15 +69,27 @@ export function ReadingBadgesGuide({ ctx, onBirthday }: { ctx: ReadingContext; o
                 <div className="text-[11px] text-stone-400">{a.goal}</div>
               </div>); })}
           </div>
-          {kind === 'season' && (
-            <label className="flex flex-wrap items-center gap-2 text-xs text-stone-300">
-              🎂 Your birthday (for Birthday Book):
-              <input type="date" aria-label="Birthday" className="rounded-md border border-stone-700 bg-stone-950 px-2 py-1 text-stone-200"
-                value={ctx.birthday ? `2000-${ctx.birthday}` : ''}
-                onChange={(e) => { const v = e.target.value ? e.target.value.slice(5) : undefined; if (v) localStorage.setItem(BIRTHDAY_KEY, v); else localStorage.removeItem(BIRTHDAY_KEY); onBirthday(v); }} />
-              <span className="text-stone-500">Only the day and month are used.</span>
-            </label>
-          )}
+          {kind === 'season' && (() => {
+            const month = bd.m;
+            const day = bd.d;
+            const max = month ? daysInMonth(month) : 31;
+            return (
+              <div className="flex flex-wrap items-center gap-2 text-xs text-stone-300">
+                <span>🎂 Your birthday (for Birthday Book):</span>
+                <select aria-label="Birthday month" className="rounded-md border border-stone-700 bg-stone-950 px-2 py-1 text-stone-200"
+                  value={month || ''} onChange={(e) => saveBirthday(Number(e.target.value), day)}>
+                  <option value="">Month</option>
+                  {MONTHS.map((name, i) => <option key={name} value={i + 1}>{name}</option>)}
+                </select>
+                <select aria-label="Birthday day" className="rounded-md border border-stone-700 bg-stone-950 px-2 py-1 text-stone-200"
+                  value={day || ''} onChange={(e) => saveBirthday(month, Number(e.target.value))}>
+                  <option value="">Day</option>
+                  {Array.from({ length: max }, (_, i) => i + 1).map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+                <span className="text-stone-500">Day and month only — no year needed.</span>
+              </div>
+            );
+          })()}
         </div>
       ))}
     </div>
