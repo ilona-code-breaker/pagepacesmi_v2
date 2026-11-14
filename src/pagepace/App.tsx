@@ -36,6 +36,8 @@ import { BookCorner } from './components/BookCorner';
 import { OWNED_KEY, addOwned, findOwned, toggleOwned, type OwnedBook } from './utils/ownedBooks';
 import { YearInReview } from './components/YearInReview';
 import { ReadingBadgeWatcher, ReadingBadgesGuide } from './components/ReadingBadges';
+import { LibraryAchievementsGuide } from './components/LibraryAchievementBar';
+import { PaceSimulator } from './components/PaceSimulator';
 import { loadBirthday, loadTbrStarted, loadYearlyGoals, recordTbrStart, type ReadingContext } from './utils/readingAchievements';
 import { useReadingLists } from './hooks/useReadingLists';
 import { getCurrentMonthKey } from './utils/goalUtils';
@@ -533,7 +535,9 @@ export default function App() {
         {/* TAB 4: Archetype Codex & Field Guide */}
         <ReadingBadgeWatcher ctx={readingCtx} />
         {currentTab === 'codex' && (
-          <div>
+          <div className="space-y-6">
+            <ReadingBadgesGuide ctx={readingCtx} onBirthday={setBirthday} />
+            <LibraryAchievementsGuide />
             <div className="space-y-3">
           {/* Quick Action Pill: Share Archetype Card */}
           <div className="flex items-center justify-between text-xs text-stone-400 px-1">
@@ -551,7 +555,6 @@ export default function App() {
           </div>
             </div>
             <ArchetypeCodex books={books} />
-            <div className="mt-6"><ReadingBadgesGuide ctx={readingCtx} onBirthday={setBirthday} /></div>
                 {/* Quick Archetype Preview Explainer */}
                 <div className="p-6 rounded-2xl bg-stone-900/50 border border-stone-800 space-y-4">
                   <h3 className="text-sm font-mono uppercase tracking-wider text-stone-300 font-semibold flex items-center gap-2">
@@ -577,7 +580,7 @@ export default function App() {
                   </div>
                 </div>
 
-
+            <PaceSimulator />
           </div>
         )}
       </main>
