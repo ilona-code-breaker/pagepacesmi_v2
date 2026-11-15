@@ -4,6 +4,8 @@ import type { LibraryFilterState } from './libraryFilters';
 export interface QueuedBook {
   id: string;
   title: string;
+  alternativeTitle?: string;
+  ownedBookId?: string;
   author: string;
   genre?: string;
   reason?: string;

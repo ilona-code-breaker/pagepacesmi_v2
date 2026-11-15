@@ -1,3 +1,4 @@
+import { AlternativeTitleField } from './book-details/AlternativeTitleField';
 import { RereadEditor } from './RereadEditor';
 import React, { useState, useEffect } from 'react';
 import { BookEntry } from '../types/book';
@@ -46,6 +47,7 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
   onSave,
 }) => {
   const [title, setTitle] = useState(book?.title ?? '');
+  const [alternativeTitle, setAlternativeTitle] = useState(book?.alternativeTitle ?? '');
   const [author, setAuthor] = useState(book?.author || '');
   const [totalPages, setTotalPages] = useState(book?.totalPages || 350);
   const [startDate, setStartDate] = useState(book?.startDate || '');
@@ -64,6 +66,7 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
   useEffect(() => {
     if (book) {
       setTitle(book.title);
+      setAlternativeTitle(book.alternativeTitle ?? "");
       setAuthor(book.author || '');
       setTotalPages(book.totalPages || 350);
       setStartDate(book.startDate || '');
@@ -93,6 +96,7 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
     const updatedBook: BookEntry = {
       ...book,
       title: title.trim(),
+      alternativeTitle: alternativeTitle.trim() || undefined,
       author: author.trim(),
       totalPages: safePages,
       startDate,
@@ -191,6 +195,7 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
             </div>
           </div>
 
+          <div className="dark"><AlternativeTitleField value={alternativeTitle} onChange={setAlternativeTitle} /></div>
           {/* Pages, Dates */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">

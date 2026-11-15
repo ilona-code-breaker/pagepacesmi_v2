@@ -15,9 +15,14 @@
 # My Book Corner
 - [x] Device-local owned-books collection with read/unread from completed books.
 - [x] Book Corner page: bookcases of 100 spines, add by search, barcode, or from finished books; continuous shelf scanning.
-- [ ] Accounts + sync across devices (waiting on user decision).
+- [x] Accounts + sync across devices.
 
 # Weekly goal
 - [x] Weekly target from this month's goal, shown in the streak box.
 - [x] Weekly goal streak (current + best).
 - [x] Badges: Weekly Rhythm (4 weekly goals in a month), Seven for Seven (read all 7 days of a week).
+
+# Translated editions
+- [x] Add alternative titles to book details and shared matching.
+- [x] Link tracked books to an existing owned edition without adding duplicates.
+- [x] Verify translated-edition status changes and persistence.

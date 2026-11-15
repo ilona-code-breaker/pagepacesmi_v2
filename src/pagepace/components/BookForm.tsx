@@ -1,4 +1,5 @@
-import type { OwnedFormat } from '../utils/ownedBooks';
+import { findOwned, type OwnedBook, type OwnedFormat } from '../utils/ownedBooks';
+import { AlternativeTitleField } from './book-details/AlternativeTitleField';
 import React, { useState, useEffect, useRef } from 'react';
 import type { CurrentRead } from '../utils/currentReading';
 import type { QueuedBook } from '../utils/readingQueue';
@@ -60,9 +61,10 @@ interface BookFormProps {
   initialBook?: QueuedBook;
   /** Called when "I own this book" is ticked on submit */
   /** Called when the book is saved as Want to read */
-  onWantToRead?: (b: { title: string; author: string; genre?: string }) => void;
-  isOwned?: (b: { title: string; author: string; isbn?: string }) => boolean;
-  onOwn?: (b: { title: string; author: string; totalPages: number; genre?: string; coverUrl?: string; isbn?: string; format?: OwnedFormat }, status: 'want' | 'reading' | 'finished') => void;
+  onWantToRead?: (b: { title: string; author: string; genre?: string; alternativeTitle?: string; ownedBookId?: string }) => void;
+  ownedBooks?: OwnedBook[];
+  isOwned?: (b: { title: string; author: string; isbn?: string; alternativeTitle?: string; ownedBookId?: string }) => boolean;
+  onOwn?: (b: { title: string; author: string; totalPages: number; genre?: string; coverUrl?: string; isbn?: string; format?: OwnedFormat; alternativeTitle?: string; ownedBookId?: string }, status: 'want' | 'reading' | 'finished') => void;
 }
 
 export const BookForm: React.FC<BookFormProps> = ({
@@ -74,6 +76,7 @@ export const BookForm: React.FC<BookFormProps> = ({
   onOwn,
   onWantToRead,
   isOwned,
+  ownedBooks = [],
 }) => {
   const [ownIt, setOwnIt] = useState(false);
   const [status, setStatus] = useState<'want' | 'reading' | 'finished'>(mode);
@@ -89,6 +92,9 @@ export const BookForm: React.FC<BookFormProps> = ({
   const initialMatch = initialBook ? findExactOrBestMatch(initialBook.title) : undefined;
   const [title, setTitle] = useState(initialBook?.title || '');
   const [author, setAuthor] = useState(initialBook?.author || '');
+  const [alternativeTitle, setAlternativeTitle] = useState(initialBook?.alternativeTitle || '');
+  const [linkedOwnedId, setLinkedOwnedId] = useState(initialBook?.ownedBookId || '');
+  const [ownedSearch, setOwnedSearch] = useState('');
   const [totalPages, setTotalPages] = useState<number | ''>(initialBook ? initialMatch?.totalPages || '' : 384);
   const [startDate, setStartDate] = useState(initialBook ? todayIso() : defaultStart);
   const [finishDate, setFinishDate] = useState(todayStr);
@@ -98,6 +104,9 @@ export const BookForm: React.FC<BookFormProps> = ({
   const [format, setFormat] = useState<'Physical' | 'E-Reader' | 'Audiobook' | 'Hybrid'>('Physical');
   const [coverUrl, setCoverUrl] = useState<string | undefined>(undefined);
   const [isbn, setIsbn] = useState<string | undefined>(undefined);
+  const linkedOwned = ownedBooks.find((book) => book.id === linkedOwnedId);
+  const ownedMatch = linkedOwned ?? findOwned(ownedBooks, { title, author, alternativeTitle, isbn });
+  const bookLink = { alternativeTitle: alternativeTitle.trim() || (ownedMatch && ownedMatch.title !== title.trim() ? ownedMatch.title : undefined), ownedBookId: ownedMatch?.id };
   const [publisher, setPublisher] = useState<string | undefined>(undefined);
   const [publishedYear, setPublishedYear] = useState<number | undefined>(undefined);
 
@@ -278,13 +287,13 @@ export const BookForm: React.FC<BookFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    const trackedBook = { title: title.trim(), author: author.trim() || 'Unknown Author', totalPages: safePages, genre, coverUrl, isbn, format };
+    const trackedBook = { title: title.trim(), author: author.trim() || 'Unknown Author', totalPages: safePages, genre, coverUrl, isbn, format, ...bookLink };
     if (ownIt || isOwned?.(trackedBook)) onOwn?.(trackedBook, status);
 
     if (isWant) {
-      onWantToRead?.({ title: title.trim(), author: author.trim() || 'Unknown Author', genre });
+      onWantToRead?.({ title: title.trim(), author: author.trim() || 'Unknown Author', genre, ...bookLink });
       if (soundEnabled) playCelebrationChime();
-      setTitle(''); setAuthor(''); setCoverUrl(undefined); setIsbn(undefined); setAutoFilledBadge(null);
+      setAlternativeTitle(''); setLinkedOwnedId(''); setOwnIt(false); setTitle(''); setAuthor(''); setCoverUrl(undefined); setIsbn(undefined); setAutoFilledBadge(null);
       return;
     }
 
@@ -292,6 +301,7 @@ export const BookForm: React.FC<BookFormProps> = ({
       onReadingStarted?.({
         id: 'read-' + Date.now(),
         title: title.trim(),
+        ...bookLink,
         author: author.trim() || 'Unknown Author',
         totalPages: safePages,
         currentPage: Math.min(safePages, Math.max(0, Number(currentPage) || 0)),
@@ -305,6 +315,7 @@ export const BookForm: React.FC<BookFormProps> = ({
       });
       if (soundEnabled) playCelebrationChime();
       setTitle('');
+      setAlternativeTitle(''); setLinkedOwnedId(''); setOwnIt(false);
       setAuthor('');
       setCurrentPage('');
       setCoverUrl(undefined);
@@ -327,6 +338,7 @@ export const BookForm: React.FC<BookFormProps> = ({
     const newBook: BookEntry = {
       id: 'book-' + Date.now(),
       title: title.trim(),
+      ...bookLink,
       author: author.trim(),
       totalPages: safePages,
       startDate,
@@ -720,12 +732,23 @@ export const BookForm: React.FC<BookFormProps> = ({
         />
       </div>}
 
-      {onOwn && (
-        <label className="flex items-center gap-2 text-sm text-stone-300 cursor-pointer select-none">
-          <input type="checkbox" aria-label="I own this book" checked={ownIt || !!isOwned?.({ title, author, isbn })} disabled={!!isOwned?.({ title, author, isbn })} onChange={(e) => setOwnIt(e.target.checked)} className="w-4 h-4 accent-amber-500" />
-          I own this book <span className="text-stone-500 text-xs">{isOwned?.({ title, author, isbn }) ? '(already in My Library)' : '(adds it to My Library)'}</span>
+      <div className="dark"><AlternativeTitleField value={alternativeTitle} onChange={setAlternativeTitle} /></div>
+      {onOwn && <div className="dark space-y-3 text-foreground">
+        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+          <input type="checkbox" aria-label="I own this book" checked={ownIt || !!ownedMatch || !!isOwned?.({ title, author, isbn, ...bookLink })} disabled={!!ownedMatch || !!isOwned?.({ title, author, isbn, ...bookLink })} onChange={(e) => setOwnIt(e.target.checked)} />
+          I own this book <span className="text-muted-foreground text-xs">{ownedMatch ? `(${ownedMatch.title})` : '(adds it to My Library)'}</span>
         </label>
-      )}
+        {(ownIt || ownedMatch) && ownedBooks.length > 0 && <div className="space-y-2">
+          <label className="block space-y-1 text-sm text-muted-foreground">
+            <span>Link to a book in My Library</span>
+            <input aria-label="Search My Library to link" value={ownedSearch} onChange={(e) => setOwnedSearch(e.target.value)} placeholder="Search your edition" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground" />
+          </label>
+          <select aria-label="Link to a book in My Library" value={linkedOwnedId} onChange={(e) => setLinkedOwnedId(e.target.value)} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground">
+            <option value="">{ownedMatch ? `Automatic match: ${ownedMatch.title}` : 'Add as a new owned book'}</option>
+            {ownedBooks.filter((b) => b.id === linkedOwnedId || !ownedSearch || [b.title, b.alternativeTitle, b.author].some((v) => v?.toLowerCase().includes(ownedSearch.toLowerCase()))).sort((a, b) => a.title.localeCompare(b.title)).map((b) => <option key={b.id} value={b.id}>{b.title} — {b.author}</option>)}
+          </select>
+        </div>}
+      </div>}
 
       {/* Submit Button */}
       <button

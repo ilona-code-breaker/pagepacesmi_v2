@@ -33,6 +33,8 @@ export type { MasterGenre } from '../utils/genreMapper';
 export interface BookEntry {
   id: string;
   title: string;
+  alternativeTitle?: string;
+  ownedBookId?: string;
   author: string;
   totalPages: number;
   startDate: string; // YYYY-MM-DD

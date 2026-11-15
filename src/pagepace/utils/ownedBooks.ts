@@ -9,6 +9,8 @@ export type OwnedFormat = (typeof OWNED_FORMATS)[number];
 export interface OwnedBook {
   id: string;
   title: string;
+  alternativeTitle?: string;
+  ownedBookId?: string;
   author: string;
   totalPages: number;
   genre?: string;
@@ -25,7 +27,8 @@ export function ownedKey(title: string, author = ''): string {
   return `${t}|${author.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
 }
 
-function sameBook(a: { title: string; author: string; isbn?: string }, b: { title: string; author: string; isbn?: string }) {
+function sameBook(a: BookIdentity, b: BookIdentity) {
+  if (a.alternativeTitle || b.alternativeTitle || a.ownedBookId || b.ownedBookId) return isOwnedRead(a, [b]);
   if (a.isbn && b.isbn && a.isbn === b.isbn) return true;
   return ownedKey(a.title, a.author) === ownedKey(b.title, b.author);
 }
@@ -77,15 +80,18 @@ const lev = (a: string, b: string) => {
 const near = (a: string, b: string) => a === b || (Math.min(a.length, b.length) >= 5 && lev(a, b) <= (Math.min(a.length, b.length) >= 20 ? 2 : 1));
 
 /** An owned book counts as read when a completed book has the same ISBN, or a near-identical title (subtitles, series tags and small typos ignored), the same volume number when both have one, and a near-identical author. */
-export function isOwnedRead(owned: OwnedBook, completed: Pick<BookEntry, 'title' | 'author' | 'isbn'>[]): boolean {
-  const t = coreTitle(owned.title);
-  const ov = volumeOf(owned.title);
+type BookIdentity = Pick<BookEntry, 'title' | 'author' | 'isbn' | 'alternativeTitle' | 'ownedBookId'> & { id?: string };
+export function isOwnedRead(owned: BookIdentity, completed: BookIdentity[]): boolean {
   const oi = isbnKey(owned.isbn);
   return completed.some((c) => {
+    if ((owned.id && c.ownedBookId === owned.id) || (c.id && owned.ownedBookId === c.id) || (owned.ownedBookId && owned.ownedBookId === c.ownedBookId)) return true;
     if (oi && oi === isbnKey(c.isbn)) return true;
-    if (!t || !near(coreTitle(c.title), t)) return false;
-    const cv = volumeOf(c.title);
-    if (ov !== undefined && cv !== undefined && ov !== cv) return false;
+    const titles = [owned.title, owned.alternativeTitle].filter((t): t is string => !!t);
+    const otherTitles = [c.title, c.alternativeTitle].filter((t): t is string => !!t);
+    if (!titles.some((a) => otherTitles.some((b) => {
+      const av = volumeOf(a); const bv = volumeOf(b);
+      return !!coreTitle(a) && near(coreTitle(a), coreTitle(b)) && !(av !== undefined && bv !== undefined && av !== bv);
+    }))) return false;
     return !owned.author || !c.author || near(authorTokens(owned.author).replace(/ /g, ''), authorTokens(c.author).replace(/ /g, ''));
   });
 }
@@ -98,7 +104,7 @@ export function toBookcases<T>(books: T[], size = BOOKCASE_SIZE): T[][] {
 }
 
 /** The owned copy matching a completed book, if any. */
-export function findOwned(list: OwnedBook[], book: Pick<BookEntry, 'title' | 'author' | 'isbn'>): OwnedBook | undefined {
+export function findOwned(list: OwnedBook[], book: BookIdentity): OwnedBook | undefined {
   return list.find((o) => isOwnedRead(o, [book]));
 }
 

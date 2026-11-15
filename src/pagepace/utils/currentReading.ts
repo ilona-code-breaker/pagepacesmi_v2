@@ -3,6 +3,8 @@ import { calculateElapsedDays } from './calculator';
 export interface CurrentRead {
   id: string;
   title: string;
+  alternativeTitle?: string;
+  ownedBookId?: string;
   author: string;
   totalPages: number;
   currentPage: number;

@@ -371,6 +371,7 @@ export default function App() {
                   mode={trackStatus}
                   onBookCreated={handleBookCreated}
                   soundEnabled={soundEnabled}
+                  ownedBooks={owned}
                   isOwned={(b) => !!findOwned(owned, b)}
                   onOwn={(b, status) => saveOwned(syncTrackedOwnedBook(owned, b, status, todayIso()))}
                   onReadingStarted={(r) => {

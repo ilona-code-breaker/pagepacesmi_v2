@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Library, Loader2, Plus, ScanBarcode, Search, Trash2, Upload, X } from 'lucide-react';
+import { AlternativeTitleField } from './book-details/AlternativeTitleField';
 import { Button } from '@/components/ui/button';
 import type { BookEntry } from '../types/book';
 import { LibraryAchievementBar } from './LibraryAchievementBar';
@@ -48,7 +49,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
     const r = syncCornerLibrary(owned, completed, (o) => {
       const pages = o.totalPages || 0; const d = o.addedAt || today();
       const ppd = calculatePPD(pages, calculateElapsedDays(d, d));
-      return { id: `corner-${o.id}`, title: o.title, author: o.author, totalPages: pages, startDate: d, finishDate: d, elapsedDays: 1, ppd, archetypeId: getArchetypeByPPD(ppd).id, rating: 0, review: '', genre: o.genre, coverUrl: o.coverUrl, isbn: o.isbn, format: o.format ?? 'Physical', createdAt: Date.now() } as BookEntry;
+      return { id: `corner-${o.id}`, title: o.title, alternativeTitle: o.alternativeTitle, ownedBookId: o.id, author: o.author, totalPages: pages, startDate: d, finishDate: d, elapsedDays: 1, ppd, archetypeId: getArchetypeByPPD(ppd).id, rating: 0, review: '', genre: o.genre, coverUrl: o.coverUrl, isbn: o.isbn, format: o.format ?? 'Physical', createdAt: Date.now() } as BookEntry;
     });
     if (r.newBooks.length || r.formats) onLibrarySync?.(r.nextLibrary);
     if (r.markedRead) onChange(r.nextOwned);
@@ -333,7 +334,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
         </div>
         {owned.length === 0 ? <p className="text-sm text-muted-foreground">No books yet. Add some above.</p> : (() => {
           const f = listFilter.toLowerCase();
-          const shown = sorted.filter((b) => readFilter === 'all' || (readFilter === 'read') === readSet.has(b.id)).filter((b) => !f || b.title.toLowerCase().includes(f) || b.author.toLowerCase().includes(f));
+          const shown = sorted.filter((b) => readFilter === 'all' || (readFilter === 'read') === readSet.has(b.id)).filter((b) => !f || b.title.toLowerCase().includes(f) || b.alternativeTitle?.toLowerCase().includes(f) || b.author.toLowerCase().includes(f));
           const allOn = shown.length > 0 && shown.every((b) => selected.has(b.id));
           return (<>
             <div className="flex flex-wrap items-center gap-3">
@@ -358,6 +359,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
                   <span className="w-1.5 h-8 rounded-sm shrink-0" style={{ background: genreColor(b.genre) }} />
                   <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setPicked(b)}>
                     <p className="text-sm font-semibold truncate">{b.title}</p>
+                    {b.alternativeTitle && <p className="text-xs text-muted-foreground truncate">{b.alternativeTitle}</p>}
                     <p className="text-xs text-muted-foreground truncate">{b.author}{b.genre ? ` · ${b.genre}` : ''} · {b.format || 'Physical'}</p>
                   </button>
                   <span className={`text-xs shrink-0 ${readSet.has(b.id) ? 'text-primary' : 'text-muted-foreground'}`}>{statusOf.get(b.id)}</span>
@@ -381,6 +383,11 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
               </div>
               <button type="button" aria-label="Close" onClick={() => setPicked(null)}><X className="w-4 h-4" /></button>
             </div>
+            <AlternativeTitleField value={picked.alternativeTitle || ''} onChange={(value) => {
+              const next = { ...picked, alternativeTitle: value || undefined };
+              onChange(owned.map((o) => o.id === picked.id ? next : o));
+              setPicked(next);
+            }} />
             <div className="grid grid-cols-2 gap-2" role="group" aria-label="Read status">
               {([['Read', true], ['Unread', false]] as const).map(([label, val]) => {
                 const on = statusOf.get(picked.id) === label;

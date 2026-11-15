@@ -56,6 +56,8 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
     onFinish({
       id: crypto.randomUUID(),
       title: r.title,
+      alternativeTitle: r.alternativeTitle,
+      ownedBookId: r.ownedBookId,
       author: r.author,
       genre: r.genre,
       format: r.format,
