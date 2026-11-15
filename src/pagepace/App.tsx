@@ -40,6 +40,7 @@ import { LibraryAchievementsGuide } from './components/LibraryAchievementBar';
 import { PaceSimulator } from './components/PaceSimulator';
 import { loadBirthday, loadTbrStarted, loadYearlyGoals, recordTbrStart, type ReadingContext } from './utils/readingAchievements';
 import { useReadingLists } from './hooks/useReadingLists';
+import { moveOwnedToReadingList } from './utils/ownedReading';
 import { getCurrentMonthKey } from './utils/goalUtils';
 import {
   Sparkles,
@@ -119,7 +120,7 @@ export default function App() {
   useEffect(() => {
     try { setOwned(JSON.parse(localStorage.getItem(OWNED_KEY) || '[]')); } catch { /* ignore */ }
   }, []);
-  const { dropped: droppedReads } = useReadingLists();
+  const { reads: currentReads, setReads, dropped: droppedReads } = useReadingLists();
   const [birthday, setBirthday] = useState<string | undefined>();
   const [badgeTick, setBadgeTick] = useState(0);
   useEffect(() => { setBirthday(loadBirthday()); }, []);
@@ -204,6 +205,18 @@ export default function App() {
     setQueuedStart(book);
     setSelectedBook(null);
     requestAnimationFrame(() => document.getElementById('book-tracking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
+
+  const changeOwnedReadingStatus = (book: OwnedBook, status: 'reading' | 'want') => {
+    const next = moveOwnedToReadingList(book, status, currentReads, queue, todayIso(), crypto.randomUUID());
+    // Persist the current read before removing its saved queue entry.
+    setReads(() => next.reads);
+    updateQueue(next.queue);
+    if (status === 'reading' && queue.some((q) => !!findOwned([book], q))) {
+      recordTbrStart(book.title);
+      setBadgeTick((t) => t + 1);
+    }
+    saveOwned(owned.map((o) => o.id === book.id ? { ...o, markedRead: undefined } : o));
   };
 
   const handleBookCreated = (newBook: BookEntry) => {
@@ -530,7 +543,7 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'corner' && <BookCorner onOpenCodex={() => setCurrentTab('codex')} owned={owned} onChange={saveOwned} completed={books} onLibrarySync={setBooks} queue={queue} onQueue={(list) => updateQueue(list.reduce((q, b, i) => saveToQueue(q, { title: b.title, author: b.author, genre: b.genre ?? '', reason: '' } as never, `corner-q-${Date.now()}-${i}`), queue))} />}
+        {currentTab === 'corner' && <BookCorner onReadingStatusChange={changeOwnedReadingStatus} onOpenCodex={() => setCurrentTab('codex')} owned={owned} onChange={saveOwned} completed={books} onLibrarySync={setBooks} queue={queue} onQueue={(list) => updateQueue(list.reduce((q, b, i) => saveToQueue(q, { title: b.title, author: b.author, genre: b.genre ?? '', reason: '' } as never, `corner-q-${Date.now()}-${i}`), queue))} />}
 
         {/* TAB 4: Archetype Codex & Field Guide */}
         <ReadingBadgeWatcher ctx={readingCtx} />

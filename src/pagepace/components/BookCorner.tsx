@@ -19,6 +19,7 @@ interface Props {
   onQueue?: (books: { title: string; author: string; genre?: string }[]) => void;
   onLibrarySync?: (library: BookEntry[]) => void;
   onOpenCodex?: () => void;
+  onReadingStatusChange?: (book: OwnedBook, status: 'reading' | 'want') => void;
 }
 
 const NUM_WORDS: Record<string, string> = { one: '1', two: '2', three: '3', four: '4', five: '5', six: '6', seven: '7', eight: '8', nine: '9', ten: '10' };
@@ -36,7 +37,7 @@ const genreColor = (g = '') => {
 };
 const fromMeta = (m: ApiBookMetadata) => ({ format: 'Physical' as const, title: m.title, author: m.author, totalPages: m.totalPages || 0, genre: m.genre, coverUrl: m.coverUrl, isbn: m.isbn });
 
-export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue = [], onQueue, onLibrarySync, onOpenCodex }) => {
+export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue = [], onQueue, onLibrarySync, onOpenCodex, onReadingStatusChange }) => {
   const [confirmSync, setConfirmSync] = useState(false);
   const [PER_SHELF, setPerShelf] = useState(20);
   useEffect(() => {
@@ -99,15 +100,15 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
   const [confirmDel, setConfirmDel] = useState(false);
 
   const { reads, dropped } = useReadingLists();
-  /** Status mirrors the Library: Done > In progress > Dropped > Want to read > Unread. */
+  /** Active reading intentions take priority, including when re-reading a finished book. */
   const statusOf = useMemo(() => {
     const m = new Map<string, string>();
     for (const o of owned) {
-      m.set(o.id, o.markedRead === true || (o.markedRead !== false && isOwnedRead(o, completed)) ? 'Read' : isOwnedRead(o, reads) ? 'Reading' : isOwnedRead(o, dropped) ? 'Dropped' : isOwnedRead(o, queue) ? 'Want to read' : 'Unread');
+      m.set(o.id, isOwnedRead(o, reads) ? 'Still reading' : isOwnedRead(o, queue) ? 'Want to read' : o.markedRead === true || (o.markedRead !== false && isOwnedRead(o, completed)) ? 'Read' : isOwnedRead(o, dropped) ? 'Dropped' : 'Unread');
     }
     return m;
   }, [owned, completed, reads, dropped, queue]);
-  const readSet = useMemo(() => new Set(owned.filter((o) => statusOf.get(o.id) === 'Read').map((o) => o.id)), [owned, statusOf]);
+  const readSet = useMemo(() => new Set(owned.filter((o) => o.markedRead === true || (o.markedRead !== false && isOwnedRead(o, completed))).map((o) => o.id)), [owned, completed]);
   const sorted = useMemo(() => [...owned].sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }) || a.author.localeCompare(b.author)), [owned]);
   const cases = toBookcases(sorted);
   const idx = Math.min(caseIdx, cases.length - 1);
@@ -376,13 +377,13 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
                 <h2 className="font-serif text-lg font-bold">{picked.title}</h2>
                 <p className="text-sm text-muted-foreground">{picked.author}</p>
                 <p className="text-xs text-muted-foreground mt-1">{[picked.genre, picked.totalPages ? `${picked.totalPages} pages` : ''].filter(Boolean).join(' · ')}</p>
-                <p className="text-xs mt-1 text-primary">{readSet.has(picked.id) ? 'Read ✓' : statusOf.get(picked.id) === 'Unread' ? 'Not read yet' : statusOf.get(picked.id)}</p>
+                <p className="text-xs mt-1 text-primary">{statusOf.get(picked.id) === 'Read' ? 'Read ✓' : statusOf.get(picked.id) === 'Unread' ? 'Not read yet' : statusOf.get(picked.id)}</p>
               </div>
               <button type="button" aria-label="Close" onClick={() => setPicked(null)}><X className="w-4 h-4" /></button>
             </div>
             <div className="grid grid-cols-2 gap-2" role="group" aria-label="Read status">
               {([['Read', true], ['Unread', false]] as const).map(([label, val]) => {
-                const on = readSet.has(picked.id) === val;
+                const on = statusOf.get(picked.id) === label;
                 return (
                   <button key={label} type="button" aria-pressed={on} onClick={() => {
                     const next = { ...picked, markedRead: val };
@@ -392,6 +393,17 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
                 );
               })}
             </div>
+            {onReadingStatusChange && <div className="grid grid-cols-2 gap-2" role="group" aria-label="Reading plans">
+              {([['Want to read', 'want'], ['Still reading', 'reading']] as const).map(([label, status]) => (
+                <Button key={status} variant={statusOf.get(picked.id) === label ? 'default' : 'outline'} aria-pressed={statusOf.get(picked.id) === label} className="min-w-0 text-xs" onClick={() => {
+                  try {
+                    onReadingStatusChange(picked, status);
+                    setPicked({ ...picked, markedRead: undefined });
+                    setNote(status === 'reading' ? 'Added to Currently Reading.' : 'Saved to Want to read.');
+                  } catch { setNote('Could not update the reading status. Please try again.'); }
+                }}>{label}</Button>
+              ))}
+            </div>}
             <label className="block text-sm">
               <span className="text-muted-foreground text-xs">Format</span>
               <select aria-label="Format" value={picked.format || 'Physical'} onChange={(e) => {
