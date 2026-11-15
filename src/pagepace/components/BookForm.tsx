@@ -61,7 +61,8 @@ interface BookFormProps {
   /** Called when "I own this book" is ticked on submit */
   /** Called when the book is saved as Want to read */
   onWantToRead?: (b: { title: string; author: string; genre?: string }) => void;
-  onOwn?: (b: { title: string; author: string; totalPages: number; genre?: string; coverUrl?: string; isbn?: string; format?: OwnedFormat }) => void;
+  isOwned?: (b: { title: string; author: string; isbn?: string }) => boolean;
+  onOwn?: (b: { title: string; author: string; totalPages: number; genre?: string; coverUrl?: string; isbn?: string; format?: OwnedFormat }, status: 'want' | 'reading' | 'finished') => void;
 }
 
 export const BookForm: React.FC<BookFormProps> = ({
@@ -72,6 +73,7 @@ export const BookForm: React.FC<BookFormProps> = ({
   initialBook,
   onOwn,
   onWantToRead,
+  isOwned,
 }) => {
   const [ownIt, setOwnIt] = useState(false);
   const [status, setStatus] = useState<'want' | 'reading' | 'finished'>(mode);
@@ -276,7 +278,8 @@ export const BookForm: React.FC<BookFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    if (ownIt) onOwn?.({ title: title.trim(), author: author.trim() || 'Unknown Author', totalPages: safePages, genre, coverUrl, isbn, format });
+    const trackedBook = { title: title.trim(), author: author.trim() || 'Unknown Author', totalPages: safePages, genre, coverUrl, isbn, format };
+    if (ownIt || isOwned?.(trackedBook)) onOwn?.(trackedBook, status);
 
     if (isWant) {
       onWantToRead?.({ title: title.trim(), author: author.trim() || 'Unknown Author', genre });
@@ -719,8 +722,8 @@ export const BookForm: React.FC<BookFormProps> = ({
 
       {onOwn && (
         <label className="flex items-center gap-2 text-sm text-stone-300 cursor-pointer select-none">
-          <input type="checkbox" checked={ownIt} onChange={(e) => setOwnIt(e.target.checked)} className="w-4 h-4 accent-amber-500" />
-          I own this book <span className="text-stone-500 text-xs">(adds it to My Library)</span>
+          <input type="checkbox" aria-label="I own this book" checked={ownIt || !!isOwned?.({ title, author, isbn })} disabled={!!isOwned?.({ title, author, isbn })} onChange={(e) => setOwnIt(e.target.checked)} className="w-4 h-4 accent-amber-500" />
+          I own this book <span className="text-stone-500 text-xs">{isOwned?.({ title, author, isbn }) ? '(already in My Library)' : '(adds it to My Library)'}</span>
         </label>
       )}
 

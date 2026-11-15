@@ -40,7 +40,7 @@ import { LibraryAchievementsGuide } from './components/LibraryAchievementBar';
 import { PaceSimulator } from './components/PaceSimulator';
 import { loadBirthday, loadTbrStarted, loadYearlyGoals, recordTbrStart, type ReadingContext } from './utils/readingAchievements';
 import { useReadingLists } from './hooks/useReadingLists';
-import { moveOwnedToReadingList } from './utils/ownedReading';
+import { moveOwnedToReadingList, syncTrackedOwnedBook } from './utils/ownedReading';
 import { getCurrentMonthKey } from './utils/goalUtils';
 import {
   Sparkles,
@@ -361,16 +361,24 @@ export default function App() {
                 {queuedStart && <div className="dark flex items-center justify-between gap-2 text-sm text-muted-foreground"><span className="min-w-0 break-words">Starting {queuedStart.title}</span><Button variant="ghost" size="sm" onClick={() => setQueuedStart(undefined)}>Cancel</Button></div>}
                 <BookForm
                   key={`${trackStatus}-${queuedStart?.id || ''}`}
-                  onWantToRead={(b) => updateQueue(saveToQueue(queue, { ...b, reason: '' } as any, crypto.randomUUID()))}
+                  onWantToRead={(b) => {
+                    const match = { ...b, id: '', totalPages: 0, addedAt: todayIso() };
+                    const next = moveOwnedToReadingList(match, 'want', currentReads, queue, todayIso(), crypto.randomUUID());
+                    updateQueue(next.queue);
+                    setReads(() => next.reads);
+                  }}
                   initialBook={queuedStart}
                   mode={trackStatus}
                   onBookCreated={handleBookCreated}
                   soundEnabled={soundEnabled}
-                  onOwn={(b) => saveOwned(addOwned(owned, [b], new Date().toLocaleDateString('en-CA')).list)}
+                  isOwned={(b) => !!findOwned(owned, b)}
+                  onOwn={(b, status) => saveOwned(syncTrackedOwnedBook(owned, b, status, todayIso()))}
                   onReadingStarted={(r) => {
-                    addCurrentRead(r);
+                    const match = { ...r, addedAt: todayIso() };
+                    const next = moveOwnedToReadingList(match, 'reading', currentReads, queue, todayIso(), r.id);
+                    setReads(() => next.reads.map((entry) => entry.id === r.id ? r : entry));
+                    updateQueue(next.queue);
                     if (queuedStart) {
-                      updateQueue(removeFromQueue(queue, queuedStart.id));
                       setQueuedStart(undefined);
                     }
                     window.scrollTo({ top: 0, behavior: 'smooth' });
