@@ -56,6 +56,7 @@ import {
   Award,
   Share2,
   FileSpreadsheet,
+  ChevronDown,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'pagepace_books_v1';
@@ -134,6 +135,13 @@ export default function App() {
     localStorage.setItem(OWNED_KEY, JSON.stringify(list));
   };
   const [currentTab, setCurrentTab] = useState<'track' | 'library' | 'year' | 'codex' | 'corner'>('track');
+  const [trackOpen, setTrackOpen] = useState(true);
+  useEffect(() => { if (window.innerWidth < 768) setTrackOpen(false); }, []);
+  const openTrack = () => {
+    setCurrentTab('track');
+    setTrackOpen(true);
+    requestAnimationFrame(() => document.getElementById('book-tracking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<BookEntry | null>(null);
   const [unlocked, setUnlocked] = useState<ArchetypeDefinition | null>(null);
@@ -200,6 +208,7 @@ export default function App() {
   const startQueuedBook = (book: QueuedBook) => {
     recordTbrStart(book.title);
     setBadgeTick((t) => t + 1);
+    setTrackOpen(true);
     setCurrentTab('track');
     setTrackStatus('reading');
     setQueuedStart(book);
@@ -348,16 +357,17 @@ export default function App() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Form Column */}
-              <div id="book-tracking-form" className="lg:col-span-7 bg-stone-900/70 border border-stone-800 rounded-2xl p-6 sm:p-8 backdrop-blur-sm space-y-6">
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-100">
-                    Track Books
-                  </h1>
-                  <p className="text-stone-400 text-xs sm:text-sm mt-1">
-                    Enter a book, then tick whether you want to read it, are still reading it, or finished it.
-                  </p>
-                </div>
-
+              <div id="book-tracking-form" className={`lg:col-span-7 bg-stone-900/70 border border-stone-800 rounded-2xl backdrop-blur-sm ${trackOpen ? "p-6 sm:p-8 space-y-6" : "p-4 sm:p-6"}`}>
+                <button type="button" onClick={() => setTrackOpen((o) => !o)} aria-expanded={trackOpen} aria-controls="track-books-body" className="w-full flex items-center justify-between gap-3 text-left">
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-100">Track Books</h1>
+                    <p className="text-stone-400 text-xs sm:text-sm mt-1">
+                      {trackOpen ? 'Enter a book, then tick whether you want to read it, are still reading it, or finished it.' : '+ Log a book'}
+                    </p>
+                  </div>
+                  <ChevronDown className={`w-6 h-6 shrink-0 text-stone-400 transition-transform duration-300 ${trackOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {trackOpen && <div id="track-books-body" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
                 {queuedStart && <div className="dark flex items-center justify-between gap-2 text-sm text-muted-foreground"><span className="min-w-0 break-words">Starting {queuedStart.title}</span><Button variant="ghost" size="sm" onClick={() => setQueuedStart(undefined)}>Cancel</Button></div>}
                 <BookForm
                   key={`${trackStatus}-${queuedStart?.id || ''}`}
@@ -385,6 +395,7 @@ export default function App() {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                 />
+                </div>}
               </div>
 
               {/* Side Column: Sample Books & Tips */}
@@ -480,7 +491,7 @@ export default function App() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCurrentTab('track')}
+                  onClick={openTrack}
                   className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs sm:text-sm transition-colors"
                 >
                   + Track New Book
@@ -506,7 +517,7 @@ export default function App() {
               onClearLibrary={handleClearLibrary}
               onRestoreBooks={handleRestoreBooks}
               soundEnabled={soundEnabled}
-              onAddBookClick={() => setCurrentTab('track')}
+              onAddBookClick={openTrack}
               onDataImported={handleDataImported}
               onOpenShareCard={() => setIsShareCardOpen(true)}
               onEditBook={handleEditBook}
@@ -540,7 +551,7 @@ export default function App() {
                 }}
                 onNavigateToTrack={() => {
                   setGoalsOpen(false);
-                  setCurrentTab('track');
+                  openTrack();
                 }}
                 soundEnabled={soundEnabled}
               />
