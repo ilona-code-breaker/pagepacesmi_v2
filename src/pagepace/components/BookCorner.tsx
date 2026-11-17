@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Library, Loader2, Plus, ScanBarcode, Search, Trash2, Upload, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Library, Loader2, Plus, ScanBarcode, Search, Trash2, Upload, Download, X } from 'lucide-react';
 import { AlternativeTitleField } from './book-details/AlternativeTitleField';
 import { Button } from '@/components/ui/button';
 import type { BookEntry } from '../types/book';
@@ -9,6 +9,7 @@ import { searchBooksUnified, type ApiBookMetadata } from '../services/bookApiSer
 import { useReadingLists } from '../hooks/useReadingLists';
 import type { QueuedBook } from '../utils/readingQueue';
 import { parseOwnedFile } from '../utils/ownedImport';
+import { exportOwnedCsv, exportOwnedXlsx } from '../utils/ownedExport';
 import { calculateElapsedDays, calculatePPD, getArchetypeByPPD } from '../utils/calculator';
 import { syncCornerLibrary, OWNED_FORMATS, BOOKCASE_SIZE, addOwned, isOwnedRead, findOwnedDuplicates, removeOwnedDuplicates, toBookcases, type OwnedBook } from '../utils/ownedBooks';
 
@@ -217,6 +218,14 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
             </label>
           </Button>
         </form>
+        {owned.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <Download className="w-4 h-4 text-muted-foreground" />
+            <span className="text-muted-foreground">Download my library ({owned.length} books):</span>
+            <Button type="button" size="sm" variant="outline" onClick={() => exportOwnedXlsx(owned, statusOf)}>Excel (.xlsx)</Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => exportOwnedCsv(owned, statusOf)}>CSV</Button>
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
           <label className="flex items-center gap-1.5"><input type="checkbox" checked={keepScanning} onChange={(e) => setKeepScanning(e.target.checked)} /> Scan my shelf (keep camera on after each book)</label>
           <span>Import: Excel or CSV with a Title column (Author, Pages, Genre, ISBN, Format optional)</span>

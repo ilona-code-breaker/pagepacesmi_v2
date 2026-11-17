@@ -1,7 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { BookEntry, MonthlyGoal } from '../types/book';
 import { exportPagePaceData, validateAndParseImport } from '../utils/dataPortability';
-import { downloadFullBackup, downloadSpreadsheet, isFullBackup, restoreBackup, LAST_BACKUP_KEY, FullBackup } from '../utils/fullBackup';
 import { CsvImportModal } from './CsvImportModal';
 import {
   Download,
@@ -37,20 +36,9 @@ export const DataPortabilityToolbar: React.FC<DataPortabilityToolbarProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
-  const [fullPending, setFullPending] = useState<FullBackup | null>(null);
-  const [lastBackup, setLastBackup] = useState<string | null>(() => { try { return localStorage.getItem(LAST_BACKUP_KEY); } catch { return null; } });
-  const daysSince = lastBackup ? Math.floor((Date.now() - new Date(lastBackup).getTime()) / 86400000) : null;
-  const handleSpreadsheet = () => {
-    downloadSpreadsheet();
-    setLastBackup(new Date().toISOString());
-    setSuccessToast('Downloaded a spreadsheet of all your books.');
-    setTimeout(() => setSuccessToast(null), 3000);
-  };
   const handleExport = () => {
-    void exportPagePaceData;
-    downloadFullBackup();
-    setLastBackup(new Date().toISOString());
-    setSuccessToast('Backup saved: Archive, My Library, Want to read, reading lists, goals and badges.');
+    exportPagePaceData(books, goals);
+    setSuccessToast(`Exported ${books.length} books to JSON file.`);
     setTimeout(() => setSuccessToast(null), 3000);
   };
 
@@ -61,10 +49,6 @@ export const DataPortabilityToolbar: React.FC<DataPortabilityToolbarProps> = ({
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
-      try {
-        const parsed = JSON.parse(content);
-        if (isFullBackup(parsed)) { setFullPending(parsed); if (fileInputRef.current) fileInputRef.current.value = ''; return; }
-      } catch { /* fall through */ }
       const result = validateAndParseImport(content);
 
       if (!result.valid || !result.data) {
@@ -123,17 +107,7 @@ export const DataPortabilityToolbar: React.FC<DataPortabilityToolbarProps> = ({
         title="Download your complete reading history as JSON"
       >
         <Download className="w-3.5 h-3.5 text-amber-400" />
-        <span>Save backup</span>
-      </button>
-
-      <button
-        type="button"
-        onClick={handleSpreadsheet}
-        className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-200 border border-stone-800 hover:border-stone-700 text-xs font-semibold transition-all shadow-sm active:scale-95"
-        title="Download all your book lists as an Excel spreadsheet"
-      >
-        <FileSpreadsheet className="w-3.5 h-3.5 text-amber-400" />
-        <span>Excel copy</span>
+        <span>Export Data</span>
       </button>
 
       {/* Import JSON Button */}
@@ -144,28 +118,8 @@ export const DataPortabilityToolbar: React.FC<DataPortabilityToolbarProps> = ({
         title="Import reading history from a PagePace JSON backup"
       >
         <Upload className="w-3.5 h-3.5 text-emerald-400" />
-        <span>Restore backup</span>
+        <span>Import JSON</span>
       </button>
-
-      <span className={`w-full text-[10px] ${daysSince == null || daysSince > 14 ? 'text-amber-400' : 'text-stone-500'}`}>
-        {daysSince == null ? 'No backup on this device yet — save one to keep a copy of everything.' : daysSince === 0 ? 'Last backup: today' : `Last backup: ${daysSince} day${daysSince === 1 ? '' : 's'} ago`}
-      </span>
-
-      {fullPending && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-stone-900 border border-amber-500/30 rounded-2xl p-6 space-y-4 text-left">
-            <h4 className="text-base font-bold text-stone-100">Restore this backup?</h4>
-            <p className="text-xs text-stone-300">
-              Saved on {new Date(fullPending.exportedAt).toLocaleString()}. It will replace your Archive, My Library, Want to read, reading lists, goals and badges with the copy in the file
-              {' '}({Object.keys(fullPending.data).length} parts). If you are signed in, it syncs to your account too.
-            </p>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setFullPending(null)} className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-400 hover:bg-stone-800">Cancel</button>
-              <button type="button" onClick={() => { restoreBackup(fullPending); setFullPending(null); setTimeout(() => window.location.reload(), 1500); }} className="px-4 py-2 rounded-xl bg-amber-500 text-stone-950 text-xs font-bold">Restore</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Import CSV Button */}
       <button
