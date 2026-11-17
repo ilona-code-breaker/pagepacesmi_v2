@@ -3,7 +3,7 @@ import type { OwnedBook } from './ownedBooks';
 export const OWNED_EXPORT_HEADERS = ['Title', 'Original Title', 'Author', 'Format', 'Pages', 'Genre', 'ISBN', 'Date Added', 'Status'];
 
 export function ownedRows(owned: OwnedBook[], statusOf: Map<string, string>): (string | number)[][] {
-  return owned.map((b) => [b.title, b.alternativeTitle ?? '', b.author ?? '', b.format ?? '', b.pages ?? '', b.genre ?? '', b.isbn ?? '', b.addedAt ?? '', statusOf.get(b.id) ?? '']);
+  return owned.map((b) => [b.title, b.alternativeTitle ?? '', b.author ?? '', b.format ?? '', b.totalPages || '', b.genre ?? '', b.isbn ?? '', b.addedAt ?? '', statusOf.get(b.id) ?? '']);
 }
 
 function save(blob: Blob, name: string) {
