@@ -221,7 +221,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
         {owned.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <Download className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Download my library ({owned.length} books):</span>
+            <span className="text-muted-foreground">Download my library ({owned.length} {owned.length === 1 ? "book" : "books"}):</span>
             <Button type="button" size="sm" variant="outline" onClick={() => exportOwnedXlsx(owned, statusOf)}>Excel (.xlsx)</Button>
             <Button type="button" size="sm" variant="outline" onClick={() => exportOwnedCsv(owned, statusOf)}>CSV</Button>
           </div>
