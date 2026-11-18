@@ -27,7 +27,6 @@ import {
   AlertCircle,
   TrendingUp,
   HardDrive,
-  Download,
   Info,
   ShieldCheck,
 } from 'lucide-react';
@@ -85,25 +84,6 @@ export const MonthlyGoalTracker: React.FC<MonthlyGoalTrackerProps> = ({
     } catch {
       // Ignore
     }
-  };
-
-  const handleExportDeviceData = () => {
-    const payload = {
-      app: 'PagePace',
-      version: '1.0-MVP',
-      exportedAt: new Date().toISOString(),
-      books,
-      goals,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `pagepace-device-backup-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const getPaceStatusBadge = () => {
@@ -169,15 +149,6 @@ export const MonthlyGoalTracker: React.FC<MonthlyGoalTrackerProps> = ({
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-          <button
-            type="button"
-            onClick={handleExportDeviceData}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 border border-stone-750 text-xs font-medium transition-colors"
-            title="Download a backup copy of your reading goals and books"
-          >
-            <Download className="w-3.5 h-3.5" />
-            Backup JSON
-          </button>
           <button
             type="button"
             onClick={() => setIsEditingGoal(true)}

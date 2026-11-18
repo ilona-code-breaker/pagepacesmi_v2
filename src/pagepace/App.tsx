@@ -17,7 +17,6 @@ import { MonthlyGoalTracker } from './components/MonthlyGoalTracker';
 import { MonthlyGoalWidget } from './components/MonthlyGoalWidget';
 import { YearlyGoalWidget } from './components/YearlyGoalWidget';
 import { ShareableArchetypeCardModal } from './components/ShareableArchetypeCardModal';
-import { DataPortabilityToolbar } from './components/DataPortabilityToolbar';
 import { CsvImportModal } from './components/CsvImportModal';
 import { todayIso } from './utils/readingStats';
 import { csvReadingToCurrent, csvToReadToQueue, dropMisfiledCsvBooks } from './utils/csvShelves';
@@ -660,16 +659,8 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-stone-800/80 py-8 text-center text-xs text-stone-500 space-y-4">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <div className="flex items-center justify-center gap-2 flex-wrap text-[11px] text-stone-400 font-mono">
-            <StorageBadge />
-          </div>
-
-          <DataPortabilityToolbar
-            books={books}
-            goals={goals}
-            onDataImported={handleDataImported}
-          />
+        <div className="flex items-center justify-center gap-2 flex-wrap text-[11px] text-stone-400 font-mono">
+          <StorageBadge />
         </div>
 
         <p className="font-serif">
