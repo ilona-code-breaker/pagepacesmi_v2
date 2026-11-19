@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Check, Plus, Trash2, CircleStop } from 'lucide-react';
+import { ChevronDown, BookOpen, Check, Plus, Trash2, CircleStop } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useReadingLists } from '../hooks/useReadingLists';
 export { addCurrentRead } from '../hooks/useReadingLists';
@@ -23,6 +23,8 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
   const { reads: allReads, setReads, drop, error } = useReadingLists();
   const reads = visibleIds ? allReads.filter((r) => visibleIds.includes(r.id)) : allReads;
   const [adding, setAdding] = useState(formOnly);
+  const [open, setOpen] = useState(false);
+  const expanded = libraryView || open || adding;
   const [form, setForm] = useState({ title: '', author: '', totalPages: '', currentPage: '', startDate: todayIso() });
   const today = todayIso();
 
@@ -100,9 +102,11 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
   return (
     <div className="p-4 sm:p-5 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-mono uppercase tracking-wider text-stone-400 font-semibold flex items-center gap-1.5">
-          <BookOpen className="w-4 h-4 text-amber-400" /> Currently Reading
-        </span>
+        <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={expanded} disabled={libraryView} className="min-w-0 text-xs font-mono uppercase tracking-wider text-stone-400 font-semibold flex items-center gap-1.5 text-left">
+          <BookOpen className="w-4 h-4 shrink-0 text-amber-400" /> Currently Reading
+          <span className="text-amber-400">{reads.length}</span>
+          {!libraryView && <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />}
+        </button>
         {!libraryView && <button
           type="button"
           onClick={() => setAdding((a) => !a)}
@@ -115,11 +119,11 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
       {adding && formEl}
       {error && <p role="alert" className="dark text-sm text-destructive">{error}</p>}
 
-      {reads.length === 0 && !adding && (
+      {expanded && reads.length === 0 && !adding && (
         <p className="text-xs text-stone-500">Add a book you're reading now to see your progress and when you'll likely finish.</p>
       )}
 
-      {reads.map((r) => {
+      {expanded && reads.map((r) => {
         const p = computeProgress(r, today);
         return (
           <div key={r.id} className="p-3 rounded-xl bg-stone-950/60 border border-stone-800 space-y-2.5">

@@ -347,13 +347,13 @@ export default function App() {
         {/* TAB 1: Track Book Form */}
         {currentTab === 'track' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-8 items-stretch">
-              <button type="button" onClick={() => setCurrentTab('year')} className="min-w-0 lg:col-span-7 text-left p-4 rounded-2xl bg-stone-900/60 border border-stone-800 hover:border-amber-500/40 transition-colors">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+              <button type="button" onClick={() => setCurrentTab('year')} className="min-w-0 text-left p-4 rounded-2xl bg-stone-900/60 border border-stone-800 hover:border-amber-500/40 transition-colors">
                 <div className="text-[11px] font-mono uppercase tracking-wider text-stone-500">Books read in {new Date().getFullYear()}</div>
                 <div className="text-3xl font-serif font-bold text-amber-400 mt-1">{statsBooks.filter((b) => (b.finishDate || '').startsWith(String(new Date().getFullYear()))).length}</div>
                 <div className="text-[11px] text-stone-500 mt-1">See goals & progress →</div>
               </button>
-              <div className="min-w-0 lg:col-span-5">
+              <div className="min-w-0">
                 <StreakWidget books={statsBooks} goals={goals} onOpenYear={() => setCurrentTab('year')} />
               </div>
             </div>
