@@ -9,6 +9,7 @@ interface NavbarProps {
   onToggleSound: () => void;
   libraryCount: number;
   onOpenShareCard?: () => void;
+  onAddBook: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -18,6 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleSound,
   libraryCount,
   onOpenShareCard,
+  onAddBook,
 }) => {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-stone-800 bg-[#0f1117]/90 backdrop-blur-md">
@@ -51,10 +53,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="sm:hidden flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => onTabChange('track')}
+              onClick={onAddBook}
               className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1 shadow-sm ${
-                currentTab === 'track'
-                  ? 'bg-amber-500 text-stone-950 shadow-amber-500/20'
+                false
+                  ? ''
                   : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500 hover:text-stone-950'
               }`}
             >
@@ -70,11 +72,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Desktop "+ Book" button */}
           <button
             type="button"
-            onClick={() => onTabChange('track')}
+            onClick={onAddBook}
             className={`hidden sm:flex px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all items-center gap-1.5 ${
-              currentTab === 'track'
-                ? 'bg-amber-500 text-stone-950 shadow-md'
-                : 'text-stone-300 hover:text-stone-100 hover:bg-stone-800/60'
+              'bg-amber-500 text-stone-950 shadow-md hover:bg-amber-400'
             }`}
           >
             <Plus className="w-4 h-4" />

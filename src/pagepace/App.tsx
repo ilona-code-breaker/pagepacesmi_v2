@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { StorageBadge } from './components/StorageBadge';
 import { withRereads, originalBook } from './utils/rereads';
 /**
@@ -55,7 +56,7 @@ import {
   Award,
   Share2,
   FileSpreadsheet,
-  ChevronDown,
+  X,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'pagepace_books_v1';
@@ -134,12 +135,15 @@ export default function App() {
     localStorage.setItem(OWNED_KEY, JSON.stringify(list));
   };
   const [currentTab, setCurrentTab] = useState<'track' | 'library' | 'year' | 'codex' | 'corner'>('track');
-  const [trackOpen, setTrackOpen] = useState(true);
-  useEffect(() => { if (window.innerWidth < 768) setTrackOpen(false); }, []);
+  const [trackOpen, setTrackOpen] = useState(false);
+  useEffect(() => {
+    if (!trackOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setTrackOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [trackOpen]);
   const openTrack = () => {
-    setCurrentTab('track');
     setTrackOpen(true);
-    requestAnimationFrame(() => document.getElementById('book-tracking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<BookEntry | null>(null);
@@ -212,7 +216,6 @@ export default function App() {
     setTrackStatus('reading');
     setQueuedStart(book);
     setSelectedBook(null);
-    requestAnimationFrame(() => document.getElementById('book-tracking-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
 
   const changeOwnedReadingStatus = (book: OwnedBook, status: 'reading' | 'want') => {
@@ -312,6 +315,7 @@ export default function App() {
         onToggleSound={() => setSoundEnabled((prev) => !prev)}
         libraryCount={books.length}
         onOpenShareCard={() => setIsShareCardOpen(true)}
+        onAddBook={openTrack}
       />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 space-y-10">
@@ -355,50 +359,8 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* Form Column */}
-              <div id="book-tracking-form" className={`lg:col-span-7 bg-stone-900/70 border border-stone-800 rounded-2xl backdrop-blur-sm ${trackOpen ? "p-6 sm:p-8 space-y-6" : "p-4 sm:p-6"}`}>
-                <button type="button" onClick={() => setTrackOpen((o) => !o)} aria-expanded={trackOpen} aria-controls="track-books-body" className="w-full flex items-center justify-between gap-3 text-left">
-                  <div>
-                    <h1 className="text-2xl sm:text-3xl font-serif font-bold text-stone-100">Track Books</h1>
-                    <p className="text-stone-400 text-xs sm:text-sm mt-1">
-                      {trackOpen ? 'Enter a book, then tick whether you want to read it, are still reading it, or finished it.' : '+ Log a book'}
-                    </p>
-                  </div>
-                  <ChevronDown className={`w-6 h-6 shrink-0 text-stone-400 transition-transform duration-300 ${trackOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {trackOpen && <div id="track-books-body" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                {queuedStart && <div className="dark flex items-center justify-between gap-2 text-sm text-muted-foreground"><span className="min-w-0 break-words">Starting {queuedStart.title}</span><Button variant="ghost" size="sm" onClick={() => setQueuedStart(undefined)}>Cancel</Button></div>}
-                <BookForm
-                  key={`${trackStatus}-${queuedStart?.id || ''}`}
-                  onWantToRead={(b) => {
-                    const match = { ...b, id: '', totalPages: 0, addedAt: todayIso() };
-                    const next = moveOwnedToReadingList(match, 'want', currentReads, queue, todayIso(), crypto.randomUUID());
-                    updateQueue(next.queue);
-                    setReads(() => next.reads);
-                  }}
-                  initialBook={queuedStart}
-                  mode={trackStatus}
-                  onBookCreated={handleBookCreated}
-                  soundEnabled={soundEnabled}
-                  ownedBooks={owned}
-                  isOwned={(b) => !!findOwned(owned, b)}
-                  onOwn={(b, status) => saveOwned(syncTrackedOwnedBook(owned, b, status, todayIso()))}
-                  onReadingStarted={(r) => {
-                    const match = { ...r, addedAt: todayIso() };
-                    const next = moveOwnedToReadingList(match, 'reading', currentReads, queue, todayIso(), r.id);
-                    setReads(() => next.reads.map((entry) => entry.id === r.id ? r : entry));
-                    updateQueue(next.queue);
-                    if (queuedStart) {
-                      setQueuedStart(undefined);
-                    }
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                />
-                </div>}
-              </div>
-
               {/* Side Column: Sample Books & Tips */}
-              <div className="lg:col-span-5 space-y-6">
+              <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6 items-start [&>*]:min-w-0">
                 <ReaderTypeCard books={books} today={new Date().toLocaleDateString('en-CA')} onOpenCollection={() => setCurrentTab('codex')} />
                 <CurrentlyReading onFinish={handleBookCreated} />
                 <Recommendations books={books} queue={queue} onSave={(book) => updateQueue(saveToQueue(queue, book, crypto.randomUUID()))} />
@@ -670,6 +632,49 @@ export default function App() {
           Designed with love for Bedtime Tasters, Book Sommeliers, Cozy Lounge Readers, Steady Cruisers, Momentum Builders, Speed Readers, and Narrative Comets alike.
         </p>
       </footer>
+      {trackOpen && createPortal(
+        <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-stone-950/80 backdrop-blur-sm" onClick={() => setTrackOpen(false)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="track-books-title" onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-2xl max-h-[92dvh] overflow-y-auto bg-stone-900 border border-stone-800 rounded-t-3xl sm:rounded-2xl p-5 sm:p-8 space-y-6 animate-in slide-in-from-bottom-8 sm:zoom-in-95 fade-in duration-300">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h1 id="track-books-title" className="text-2xl sm:text-3xl font-serif font-bold text-stone-100">Track Books</h1>
+                <p className="text-stone-400 text-xs sm:text-sm mt-1">Enter a book, then tick whether you want to read it, are still reading it, or finished it.</p>
+              </div>
+              <button type="button" aria-label="Close" onClick={() => setTrackOpen(false)} className="p-2 -m-2 rounded-full text-stone-400 hover:text-stone-100 hover:bg-stone-800"><X className="w-5 h-5" /></button>
+            </div>
+            {queuedStart && <div className="dark flex items-center justify-between gap-2 text-sm text-muted-foreground"><span className="min-w-0 break-words">Starting {queuedStart.title}</span><Button variant="ghost" size="sm" onClick={() => setQueuedStart(undefined)}>Cancel</Button></div>}
+                <BookForm
+                  key={`${trackStatus}-${queuedStart?.id || ''}`}
+                  onWantToRead={(b) => {
+                    const match = { ...b, id: '', totalPages: 0, addedAt: todayIso() };
+                    const next = moveOwnedToReadingList(match, 'want', currentReads, queue, todayIso(), crypto.randomUUID());
+                    updateQueue(next.queue);
+                    setReads(() => next.reads);
+                    setTrackOpen(false);
+                  }}
+                  initialBook={queuedStart}
+                  mode={trackStatus}
+                  onBookCreated={(b) => { setTrackOpen(false); handleBookCreated(b); }}
+                  soundEnabled={soundEnabled}
+                  ownedBooks={owned}
+                  isOwned={(b) => !!findOwned(owned, b)}
+                  onOwn={(b, status) => saveOwned(syncTrackedOwnedBook(owned, b, status, todayIso()))}
+                  onReadingStarted={(r) => {
+                    const match = { ...r, addedAt: todayIso() };
+                    const next = moveOwnedToReadingList(match, 'reading', currentReads, queue, todayIso(), r.id);
+                    setReads(() => next.reads.map((entry) => entry.id === r.id ? r : entry));
+                    updateQueue(next.queue);
+                    if (queuedStart) {
+                      setQueuedStart(undefined);
+                    }
+                    setTrackOpen(false);
+                  }}
+                />
+                
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

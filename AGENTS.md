@@ -38,3 +38,4 @@ use the editor.
 - Render genre legends outside the fixed-height Recharts canvas with a responsive grid so long labels never reduce or overlap the donut; chart and legend share CSS palette tokens.
 - Owned books (Book Corner) are a separate device-local collection; read/unread is derived from completed books (fuzzy ISBN/title/author/volume match) unless an imported list explicitly marked it read (markedRead), so it stays in sync.
 - Accounts are optional Google sign-in; src/pagepace/sync mirrors every pagepace_* browser-storage key to the per-user user_data table, matching books by title+author(+finish date), asking before adding device-only books on a first sign-in, and treating the account as the source afterwards, so the app keeps reading browser storage unchanged.
+- Track Books form is a single App-owned pop-up (portal) opened by openTrack from the navbar and other entry points, so logging works from any tab without leaving it.
