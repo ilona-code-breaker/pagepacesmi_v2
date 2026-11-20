@@ -26,6 +26,8 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
   selectedCount,
   onSelectAllToggle,
 }) => {
+  const [more, setMore] = React.useState(false);
+  const active = (filters.shelf !== 'all' ? 1 : 0) + (filters.genre !== 'all' ? 1 : 0) + (filters.archetype !== 'all' ? 1 : 0);
   const allSelected = selectedCount === visibleCount && visibleCount > 0;
 
   return (
@@ -78,6 +80,10 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
             </select>
           </label>
 
+          <button type="button" onClick={() => setMore((m) => !m)} aria-expanded={more} className="px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 border bg-stone-950 border-stone-800 text-stone-300 hover:text-stone-100">
+            <Filter className="w-3.5 h-3.5" />Filters{active > 0 ? ` (${active})` : ''} {more ? '▴' : '▾'}
+          </button>
+          {more && (<>
           <label className="flex flex-col items-start gap-1 min-w-0 sm:flex-row sm:items-center sm:gap-1.5 text-xs text-stone-500"><span className="flex items-center gap-1.5">
             <Tag className="w-3 h-3" />
             Genre:</span>
@@ -115,6 +121,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
             </select>
           </label>
 
+          </>)}
           {visibleCount > 0 && (
             <button
               type="button"
@@ -132,6 +139,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
         </div>
       </div>
 
+      {more && (<>
       {/* Quick shelf pills */}
       <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-stone-800/40 text-xs custom-scrollbar pb-0.5">
         <span className="text-[11px] text-stone-500 uppercase font-mono tracking-wider mr-1 shrink-0 flex items-center gap-1">
@@ -187,6 +195,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
           })}
         </div>
       )}
+      </>)}
     </div>
   );
 };

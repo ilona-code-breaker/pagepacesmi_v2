@@ -29,7 +29,6 @@ import { applyGenres, fetchGenres, isUnassigned } from './utils/genreFill';
 import { StreakWidget } from './components/StreakWidget';
 import { CurrentlyReading, addCurrentRead } from './components/CurrentlyReading';
 import { Recommendations } from './components/Recommendations';
-import { ReadingQueue } from './components/ReadingQueue';
 import { QUEUE_KEY, saveToQueue, removeFromQueue, type QueuedBook } from './utils/readingQueue';
 import { Button } from '@/components/ui/button';
 import { BookCorner } from './components/BookCorner';
@@ -365,56 +364,6 @@ export default function App() {
                 <CurrentlyReading onFinish={handleBookCreated} />
                 <Recommendations books={books} queue={queue} onSave={(book) => updateQueue(saveToQueue(queue, book, crypto.randomUUID()))} />
                 {queueError && <p role="alert" className="text-sm text-destructive">{queueError}</p>}
-                <ReadingQueue queue={queue} onRemove={removeQueuedBook} onStart={startQueuedBook} />
-                {/* Sample Library Quick Showcase */}
-                <div className="p-6 rounded-2xl bg-stone-900/50 border border-stone-800 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-mono uppercase tracking-wider text-stone-300 font-semibold flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-stone-400" />
-                      Explore Archetype Samples
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentTab('library')}
-                      className="text-xs text-amber-400 hover:underline flex items-center gap-1 font-medium"
-                    >
-                      All ({books.length}) <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    {books.slice(0, 4).map((b) => {
-                      const arch = ARCHETYPES[b.archetypeId] || ARCHETYPES['steady-cruiser'];
-                      return (
-                        <div
-                          key={b.id}
-                          onClick={() => setSelectedBook(b)}
-                          className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between group ${
-                            selectedBook?.id === b.id
-                              ? 'bg-stone-800 border-amber-500/50 shadow-md'
-                              : 'bg-stone-950/60 border-stone-800 hover:border-stone-700 hover:bg-stone-900/60'
-                          }`}
-                        >
-                          <div className="min-w-0 pr-2">
-                            <div className="text-xs font-serif font-bold text-stone-200 group-hover:text-amber-300 truncate">
-                              {b.title}
-                            </div>
-                            <div className="text-[11px] text-stone-400 flex items-center gap-1.5 mt-0.5">
-                              <span style={{ color: arch.accentHex }}>{arch.shortName}</span>
-                              <span>·</span>
-                              <span>{b.ppd.toFixed(1)} PPD</span>
-                              <span>·</span>
-                              <span>★ {b.rating.toFixed(1)}</span>
-                            </div>
-                          </div>
-                          <span className="text-xs text-amber-400 font-medium group-hover:translate-x-0.5 transition-transform">
-                            →
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -433,15 +382,7 @@ export default function App() {
                 </p>
               </div>
               <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setIsCsvModalOpen(true)}
-                  className="px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-850 text-stone-200 border border-stone-800 hover:border-stone-700 font-semibold text-xs sm:text-sm transition-colors flex items-center gap-1.5 shadow-sm"
-                  title="Import books from Goodreads CSV or custom spreadsheet"
-                >
-                  <FileSpreadsheet className="w-4 h-4 text-sky-400" />
-                  <span>Import CSV</span>
-                </button>
+                
                 <button
                   type="button"
                   onClick={() => setIsShareCardOpen(true)}

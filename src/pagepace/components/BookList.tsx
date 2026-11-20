@@ -72,7 +72,7 @@ export const BookList: React.FC<BookListProps> = ({
   onApplyGenres,
 }) => {
   const [filters, setFilters] = useState<LibraryFilterState>(DEFAULT_FILTERS);
-  const [status, setStatus] = useState<'all' | 'want' | 'reading' | 'done' | 'dropped'>('all');
+  const [status, setStatus] = useState<'all' | 'want' | 'reading' | 'done' | 'dropped'>('done');
   const { reads, dropped, removeDropped, error } = useReadingLists();
   const [showGenreChart, setShowGenreChart] = useState(false);
   const [editingBook, setEditingBook] = useState<BookEntry | null>(null);
@@ -178,7 +178,6 @@ export const BookList: React.FC<BookListProps> = ({
         showGenreChart={showGenreChart}
         onToggleGenreChart={() => setShowGenreChart((p) => !p)}
         onDataImported={onDataImported}
-        onOpenShareCard={onOpenShareCard}
         onClearLibraryClick={() => setIsClearConfirmOpen(true)}
       />
 
