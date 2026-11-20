@@ -22,6 +22,7 @@ interface Props {
   onLibrarySync?: (library: BookEntry[]) => void;
   onOpenCodex?: () => void;
   onReadingStatusChange?: (book: OwnedBook, status: 'reading' | 'want') => void;
+  onImportReading?: (books: OwnedBook[]) => void;
 }
 
 const NUM_WORDS: Record<string, string> = { one: '1', two: '2', three: '3', four: '4', five: '5', six: '6', seven: '7', eight: '8', nine: '9', ten: '10' };
@@ -39,7 +40,7 @@ const genreColor = (g = '') => {
 };
 const fromMeta = (m: ApiBookMetadata) => ({ format: 'Physical' as const, title: m.title, author: m.author, totalPages: m.totalPages || 0, genre: m.genre, coverUrl: m.coverUrl, isbn: m.isbn });
 
-export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue = [], onQueue, onLibrarySync, onOpenCodex, onReadingStatusChange }) => {
+export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue = [], onQueue, onLibrarySync, onOpenCodex, onReadingStatusChange, onImportReading }) => {
   const [confirmSync, setConfirmSync] = useState(false);
   const [PER_SHELF, setPerShelf] = useState(20);
   useEffect(() => {
@@ -174,8 +175,13 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
         return true;
       });
       if (tbr.length && onQueue) onQueue(tbr);
-      const reads = r.list.filter((o) => o.markedRead).length;
-      setNote(`Imported ${rows.length} rows: added ${r.added} new book${r.added === 1 ? '' : 's'}${readRows.length ? `, ${readRows.length} marked read` : ''}${tbr.length ? `, ${tbr.length} sent to Want to read` : ''}. ${reads ? '' : ''}`.trim());
+      // "Still reading" rows go to Currently Reading, linked to their owned copy
+      const readingBooks = rows.filter((x) => x.status === 'reading')
+        .map((x) => r.list.find((o) => isOwnedRead(o, [x as never])))
+        .filter((o, i, a): o is OwnedBook => !!o && a.indexOf(o) === i);
+      if (readingBooks.length) onImportReading?.(readingBooks);
+      const skipped = rows.length - r.added;
+      setNote(`Imported ${rows.length} rows: added ${r.added} new book${r.added === 1 ? '' : 's'}${readRows.length ? `, ${readRows.length} marked read` : ''}${readingBooks.length ? `, ${readingBooks.length} moved to Still reading` : ''}${tbr.length ? `, ${tbr.length} sent to Want to read` : ''}${skipped ? `. ${skipped} skipped as duplicate${skipped === 1 ? '' : 's'} or already on your shelves` : ''}.`);
     } catch {
       setNote("Couldn't read that file. Use .xlsx, .xls or .csv.");
     } finally {
@@ -183,7 +189,8 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
     }
   };
 
-  const unreadCount = owned.length - readSet.size;
+  const readingCount = owned.filter((o) => statusOf.get(o.id) === 'Still reading').length;
+  const unreadCount = owned.filter((o) => !readSet.has(o.id) && statusOf.get(o.id) !== 'Still reading').length;
 
   return (
     <div className="dark space-y-5 text-foreground">
@@ -192,8 +199,8 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
           <h1 className="font-serif text-3xl font-bold flex items-center gap-2"><Library className="w-7 h-7 text-primary" /> My Library</h1>
           <p className="text-sm text-muted-foreground">Your physical bookshelf, one spine per book.</p>
         </div>
-        <div className="grid grid-cols-3 gap-2 text-center">
-          {[['Books', owned.length], ['Read', readSet.size], ['Unread', unreadCount]].map(([l, v]) => (
+        <div className="grid grid-cols-4 gap-2 text-center">
+          {[['Books', owned.length], ['Read', readSet.size], ['Reading', readingCount], ['Unread', unreadCount]].map(([l, v]) => (
             <div key={l} className="rounded-xl border border-border bg-card/40 px-3 py-2">
               <div className="font-mono text-lg font-bold">{v}</div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{l}</div>

@@ -229,6 +229,14 @@ export default function App() {
     saveOwned(owned.map((o) => o.id === book.id ? { ...o, markedRead: undefined } : o));
   };
 
+  /** Bulk "Still reading" from a My Library import: fold all into one update so none are lost. */
+  const importOwnedReading = (list: OwnedBook[]) => {
+    let r = currentReads, q = queue;
+    for (const b of list) ({ reads: r, queue: q } = moveOwnedToReadingList(b, 'reading', r, q, todayIso(), crypto.randomUUID()));
+    setReads(() => r);
+    updateQueue(q);
+  };
+
   const handleBookCreated = (newBook: BookEntry) => {
     if (isNewUnlock(books, newBook) && ARCHETYPES[newBook.archetypeId]) {
       setUnlocked(ARCHETYPES[newBook.archetypeId]);
@@ -465,7 +473,7 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'corner' && <BookCorner onReadingStatusChange={changeOwnedReadingStatus} onOpenCodex={() => setCurrentTab('codex')} owned={owned} onChange={saveOwned} completed={books} onLibrarySync={setBooks} queue={queue} onQueue={(list) => updateQueue(list.reduce((q, b, i) => saveToQueue(q, { title: b.title, author: b.author, genre: b.genre ?? '', reason: '' } as never, `corner-q-${Date.now()}-${i}`), queue))} />}
+        {currentTab === 'corner' && <BookCorner onImportReading={importOwnedReading} onReadingStatusChange={changeOwnedReadingStatus} onOpenCodex={() => setCurrentTab('codex')} owned={owned} onChange={saveOwned} completed={books} onLibrarySync={setBooks} queue={queue} onQueue={(list) => updateQueue(list.reduce((q, b, i) => saveToQueue(q, { title: b.title, author: b.author, genre: b.genre ?? '', reason: '' } as never, `corner-q-${Date.now()}-${i}`), queue))} />}
 
         {/* TAB 4: Archetype Codex & Field Guide */}
         <ReadingBadgeWatcher ctx={readingCtx} />

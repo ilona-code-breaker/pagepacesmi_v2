@@ -21,3 +21,14 @@ describe('owned import status', () => {
     expect(rowsToOwned([{ Title: 'C' }], 'Sheet1')[0].status).toBeUndefined();
   });
 });
+
+import { statusOf as importStatus } from './ownedImport';
+import { describe as d2, it as i2, expect as e2 } from 'vitest';
+d2('still reading import status', () => {
+  i2('maps "Still reading" to reading, not unread', () => {
+    e2(importStatus('Still reading')).toBe('reading');
+    e2(importStatus('currently-reading')).toBe('reading');
+    e2(importStatus('Unread')).toBeUndefined();
+    e2(importStatus('Read')).toBe('read');
+  });
+});

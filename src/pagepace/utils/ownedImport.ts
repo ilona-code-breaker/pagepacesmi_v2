@@ -8,11 +8,12 @@ const pick = (row: Row, names: string[]) => {
 };
 
 /** Turn spreadsheet rows (any column order; headers like Title, Author, Pages, Genre, ISBN, Format) into owned books. */
-export type OwnedImportRow = Omit<OwnedBook, 'id' | 'addedAt'> & { status?: 'read' | 'tbr' };
+export type OwnedImportRow = Omit<OwnedBook, 'id' | 'addedAt'> & { status?: 'read' | 'tbr' | 'reading' };
 
 /** Status from a Status/Shelf column, falling back to the sheet name (e.g. sheets called "Read" and "TBR"). */
-export function statusOf(raw: string): 'read' | 'tbr' | undefined {
+export function statusOf(raw: string): 'read' | 'tbr' | 'reading' | undefined {
   const l = raw.toLowerCase();
+  if (/still.?reading|currently.?reading|in.?progress|^reading|skaitau|skaitoma/.test(l.trim())) return 'reading';
   if (/unread|not.?read|neskaity/.test(l)) return undefined; // owning an unread book ≠ wanting to read it
   if (/tbr|to.?read|want/.test(l)) return 'tbr';
   if (/^(read|done|finished|completed|perskaity|skaityta)/.test(l.trim())) return 'read';
