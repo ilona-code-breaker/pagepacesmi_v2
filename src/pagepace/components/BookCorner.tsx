@@ -277,16 +277,18 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
           {Array.from({ length: Math.max(1, Math.ceil(cases[idx].length / PER_SHELF)) }).map((_, row) => {
             const shelf = cases[idx].slice(row * PER_SHELF, row * PER_SHELF + PER_SHELF);
             return (
-              <div key={row} className="bookcase-shelf flex items-end gap-[3px] h-36 sm:h-44 px-1">
+              <div key={row} className="bookcase-shelf flex items-end gap-[2px] h-36 sm:h-44 px-2">
                 {shelf.map((b) => {
                   const pages = Math.max(80, Math.min(1200, b.totalPages || 300));
-                  const tall = 80 + ([...b.id].reduce((a, c) => a + c.charCodeAt(0), 0) % 16);
+                  const tall = 82 + ([...b.id].reduce((a, c) => a + c.charCodeAt(0), 0) % 14);
+                  const read = readSet.has(b.id);
                   return (
-                    <button key={b.id} type="button" title={`${b.title} — ${b.author} · ${b.totalPages || '?'} pages`} aria-label={`${b.title} by ${b.author}`}
+                    <button key={b.id} type="button" title={`${b.title} — ${b.author} · ${b.totalPages || '?'} pages`} aria-label={`${b.title} by ${b.author}${read ? ' (read)' : ''}`}
                       onClick={() => setPicked(b)}
-                      className="overflow-hidden rounded-t-sm transition-transform hover:-translate-y-1 focus-visible:-translate-y-1 flex items-center justify-center"
-                      style={{ flex: `${pages} 1 0`, minWidth: 14, maxWidth: `${Math.round(22 + pages / 30)}px`, height: `${tall}%`, background: genreColor(b.genre), opacity: readSet.has(b.id) ? 1 : 0.45, boxShadow: 'inset -2px 0 0 color-mix(in oklab, black 25%, transparent)' }}>
-                      <span className="text-[10px] sm:text-[11px] font-semibold leading-none whitespace-nowrap overflow-hidden text-ellipsis max-h-[92%] text-background" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{spineTitle(b.title)}</span>
+                      className={`book-spine relative overflow-hidden rounded-t-[3px] rounded-b-[1px] flex items-center justify-center ${read ? '' : 'book-spine-unread'}`}
+                      style={{ flex: `${pages} 1 0`, minWidth: 18, maxWidth: `${Math.round(24 + pages / 28)}px`, height: `${tall}%`, ['--spine' as string]: genreColor(b.genre) }}>
+                      {read && <span aria-hidden className="book-ribbon" />}
+                      <span className="book-spine-label text-[10px] sm:text-[11px] font-semibold leading-none whitespace-nowrap overflow-hidden text-ellipsis max-h-[78%]" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{spineTitle(b.title)}</span>
                     </button>
                   );
                 })}
@@ -294,7 +296,7 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
             );
           })}
         </div>
-        <p className="text-xs text-muted-foreground">Bright spines are books you've read; faded ones are waiting. Colours show genre; thicker spines are longer books. Tap a spine for details.</p>
+        <p className="text-xs text-muted-foreground">Spines with a gold ribbon are books you've read. Colours show genre; thicker spines are longer books. Tap a spine for details.</p>
       </section>
 
       {dupGroups.length > 0 && (
