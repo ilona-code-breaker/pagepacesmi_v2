@@ -483,8 +483,8 @@ export default function App() {
             </button>
           </div>
             </div>
-            <ReaderTypeCard books={books} today={new Date().toLocaleDateString('en-CA')} onOpenCollection={() => {}} />
             <ArchetypeCodex books={books} />
+            <ReaderTypeCard books={books} today={new Date().toLocaleDateString('en-CA')} onOpenCollection={() => {}} />
             <ReadingBadgesGuide ctx={readingCtx} onBirthday={setBirthday} />
             <LibraryAchievementsGuide />
 

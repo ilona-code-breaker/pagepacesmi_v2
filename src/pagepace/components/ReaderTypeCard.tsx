@@ -1,36 +1,37 @@
 import React from 'react';
 import type { BookEntry } from '../types/book';
-import { ARCHETYPE_ORDER, collectedArchetypes, currentReaderType } from '../utils/archetypeProgress';
+import { ARCHETYPES } from '../constants/archetypes';
+import { ARCHETYPE_ORDER, collectedArchetypes, currentReaderType, unlockHint } from '../utils/archetypeProgress';
 
-interface Props { books: BookEntry[]; today: string; onOpenCollection: () => void }
+interface Props { books: BookEntry[]; today: string; onOpenCollection?: () => void }
 
-export const ReaderTypeCard: React.FC<Props> = ({ books, today, onOpenCollection }) => {
+/** Reader type badges, styled like the Reading and Library badge guides. */
+export const ReaderTypeCard: React.FC<Props> = ({ books, today }) => {
   const type = currentReaderType(books, today);
-  const collected = collectedArchetypes(books).size;
-  const total = ARCHETYPE_ORDER.length;
+  const collected = collectedArchetypes(books);
   return (
-    <button type="button" onClick={onOpenCollection}
-      className="w-full text-left p-4 sm:p-5 rounded-2xl bg-stone-900/60 border border-stone-800 hover:border-stone-700 transition-colors space-y-3"
-      style={type ? { borderColor: type.archetype.accentHex + '55' } : undefined}>
-      <div className="flex items-center justify-between gap-2 text-[11px] font-mono uppercase tracking-wider text-stone-400">
-        <span>Your reader type</span>
-        <span>{collected}/{total} collected</span>
+    <div className="p-5 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-4">
+      <div className="flex items-center justify-between text-sm">
+        <span className="font-serif font-bold text-stone-100">Reader type badges</span>
+        <span className="font-mono text-amber-400">{collected.size} / {ARCHETYPE_ORDER.length} earned</span>
       </div>
-      {type ? (
-        <div className="flex items-center gap-3">
-          <span className="text-4xl" aria-hidden>{type.archetype.badgeEmoji}</span>
-          <div className="min-w-0">
-            <p className="font-serif text-lg font-bold" style={{ color: type.archetype.accentHex }}>{type.archetype.name}</p>
-            <p className="text-xs text-stone-300 italic">“{type.archetype.tagline}”</p>
-            <p className="text-[11px] text-stone-500 mt-0.5">{type.ppd} pages/day · {type.recent ? 'last 3 months' : 'all your books'}</p>
-          </div>
+      <p className="text-xs text-stone-400">
+        Earned by finishing a book at each reading pace.
+        {type && <> Your current type: <span style={{ color: type.archetype.accentHex }}>{type.archetype.badgeEmoji} {type.archetype.name}</span> · {type.ppd} pages/day.</>}
+      </p>
+      <details className="group rounded-xl border border-stone-800 bg-stone-950/30 p-3 space-y-2">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+          <div><div className="text-xs font-mono uppercase tracking-wider text-stone-300">Reading paces</div><p className="text-xs text-stone-400">One badge for each of the 7 reader types.</p></div>
+          <span className="flex shrink-0 items-center gap-2 text-xs font-mono text-amber-400">{collected.size}/{ARCHETYPE_ORDER.length}<span className="transition-transform group-open:rotate-180">▾</span></span>
+        </summary>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          {ARCHETYPE_ORDER.map((id) => { const a = ARCHETYPES[id]; const n = collected.get(id) ?? 0; const got = n > 0; return (
+            <div key={id} className={`p-2.5 rounded-xl border border-stone-800 bg-stone-950/60 ${got ? '' : 'opacity-50 grayscale'}`}>
+              <div className="text-sm font-bold text-stone-200">{got ? a.badgeEmoji : '🔒'} {a.name}</div>
+              <div className="text-[11px] text-stone-400">{got ? `${n} ${n === 1 ? 'book' : 'books'} · ${a.ppdRange}` : unlockHint(a)}</div>
+            </div>); })}
         </div>
-      ) : (
-        <p className="text-sm text-stone-300">Finish your first book to discover your reader type.</p>
-      )}
-      <div className="h-1.5 rounded-full bg-stone-800 overflow-hidden">
-        <div className="h-full bg-amber-400" style={{ width: `${(collected / total) * 100}%` }} />
-      </div>
-    </button>
+      </details>
+    </div>
   );
 };
