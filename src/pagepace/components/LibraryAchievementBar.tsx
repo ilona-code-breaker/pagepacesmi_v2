@@ -58,8 +58,11 @@ export function LibraryAchievementsGuide() {
         <span className="font-mono text-amber-400">{earned.length} / {LIBRARY_ACHIEVEMENTS.length} earned</span>
       </div>
       {groups.map(([kind, title, desc]) => (
-        <div key={kind} className="space-y-2">
-          <div><div className="text-xs font-mono uppercase tracking-wider text-stone-300">{title}</div><p className="text-xs text-stone-400">{desc}</p></div>
+        <details key={kind} className="group rounded-xl border border-stone-800 bg-stone-950/30 p-3 space-y-2">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+            <div><div className="text-xs font-mono uppercase tracking-wider text-stone-300">{title}</div><p className="text-xs text-stone-400">{desc}</p></div>
+            <span className="flex shrink-0 items-center gap-2 text-xs font-mono text-amber-400">{LIBRARY_ACHIEVEMENTS.filter((a) => a.kind === kind && earned.includes(a.id)).length}/{LIBRARY_ACHIEVEMENTS.filter((a) => a.kind === kind).length}<span className="transition-transform group-open:rotate-180">▾</span></span>
+          </summary>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {LIBRARY_ACHIEVEMENTS.filter((a) => a.kind === kind).map((a) => { const got = earned.includes(a.id); return (
               <div key={a.id} className={`p-2.5 rounded-xl border border-stone-800 bg-stone-950/60 ${got ? '' : 'opacity-50 grayscale'}`}>
@@ -67,7 +70,7 @@ export function LibraryAchievementsGuide() {
                 <div className="text-[11px] text-stone-400">{a.goal}</div>
               </div>); })}
           </div>
-        </div>
+        </details>
       ))}
     </div>
   );
