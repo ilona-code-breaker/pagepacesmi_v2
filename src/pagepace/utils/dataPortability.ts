@@ -6,6 +6,27 @@ export interface PagePaceExportPayload {
   exportDate: string;
   books: BookEntry[];
   goals: Record<string, MonthlyGoal>;
+  lists?: Record<string, unknown>;
+}
+
+// Reading lists beyond completed books that a full backup must carry.
+export const BACKUP_LIST_KEYS = ['pagepace_current_reads', 'pagepace_want_to_read_v1', 'pagepace_dropped_reads_v1', 'pagepace_yearly_goals_v1'] as const;
+
+function readLists(): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const k of BACKUP_LIST_KEYS) {
+    try { const v = localStorage.getItem(k); if (v !== null) out[k] = JSON.parse(v); } catch { /* skip */ }
+  }
+  return out;
+}
+
+export function restoreLists(lists?: Record<string, unknown>): boolean {
+  if (!lists) return false;
+  let wrote = false;
+  for (const k of BACKUP_LIST_KEYS) {
+    if (k in lists && lists[k] !== undefined) { localStorage.setItem(k, JSON.stringify(lists[k])); wrote = true; }
+  }
+  return wrote;
 }
 
 export function exportPagePaceData(
@@ -15,10 +36,11 @@ export function exportPagePaceData(
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
   const payload: PagePaceExportPayload = {
     appName: 'PagePace',
-    version: '1.0',
+    version: '2.0',
     exportDate: new Date().toISOString(),
     books,
     goals,
+    lists: readLists(),
   };
 
   const jsonString = JSON.stringify(payload, null, 2);
@@ -40,6 +62,7 @@ export interface ValidationResult {
   data?: {
     books: BookEntry[];
     goals: Record<string, MonthlyGoal>;
+    lists?: Record<string, unknown>;
   };
 }
 
@@ -56,6 +79,7 @@ export function validateAndParseImport(jsonContent: string): ValidationResult {
 
     let booksArray: any[] = [];
     let goalsObj: Record<string, MonthlyGoal> = {};
+    const lists: Record<string, unknown> | undefined = parsed && !Array.isArray(parsed) && parsed.lists && typeof parsed.lists === 'object' ? parsed.lists : undefined;
 
     // Support both full PagePace backup { books: [...], goals: {...} } and direct array of books [...]
     if (Array.isArray(parsed)) {
@@ -73,7 +97,7 @@ export function validateAndParseImport(jsonContent: string): ValidationResult {
     }
 
     // Validate books schema
-    if (booksArray.length === 0) {
+    if (booksArray.length === 0 && !lists) {
       return {
         valid: false,
         error: 'The imported file contains no books.',
@@ -134,6 +158,7 @@ export function validateAndParseImport(jsonContent: string): ValidationResult {
       data: {
         books: validatedBooks,
         goals: goalsObj,
+        ...(lists ? { lists } : {}),
       },
     };
   } catch (err: any) {

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { BookEntry, MonthlyGoal } from '../types/book';
-import { exportPagePaceData, validateAndParseImport } from '../utils/dataPortability';
+import { exportPagePaceData, validateAndParseImport, restoreLists } from '../utils/dataPortability';
 import { CsvImportModal } from './CsvImportModal';
 import {
   Download,
@@ -32,13 +32,14 @@ export const DataPortabilityToolbar: React.FC<DataPortabilityToolbarProps> = ({
     books: BookEntry[];
     goals: Record<string, MonthlyGoal>;
     fileName: string;
+    lists?: Record<string, unknown>;
   } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
   const handleExport = () => {
     exportPagePaceData(books, goals);
-    setSuccessToast(`Exported ${books.length} books to JSON file.`);
+    setSuccessToast(`Exported ${books.length} books plus In progress, Want to read and Dropped lists.`);
     setTimeout(() => setSuccessToast(null), 3000);
   };
 
@@ -62,6 +63,7 @@ export const DataPortabilityToolbar: React.FC<DataPortabilityToolbarProps> = ({
         books: result.data.books,
         goals: result.data.goals,
         fileName: file.name,
+        ...(result.data.lists ? { lists: result.data.lists } : {}),
       });
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
@@ -83,8 +85,11 @@ export const DataPortabilityToolbar: React.FC<DataPortabilityToolbarProps> = ({
       goals: pendingImport.goals,
     });
 
-    setSuccessToast(`Successfully imported ${pendingImport.books.length} books!`);
+    const restored = restoreLists(pendingImport.lists);
+    setSuccessToast(restored ? `Imported ${pendingImport.books.length} books plus In progress, Want to read and Dropped lists. Refreshing…` : `Successfully imported ${pendingImport.books.length} books!`);
     setPendingImport(null);
+    // Reading lists are loaded on start; reload after the account sync has had time to save.
+    if (restored) setTimeout(() => window.location.reload(), 2500);
     setTimeout(() => setSuccessToast(null), 3500);
   };
 
