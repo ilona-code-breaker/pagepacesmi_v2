@@ -467,8 +467,6 @@ export default function App() {
         <ReadingBadgeWatcher ctx={readingCtx} />
         {currentTab === 'codex' && (
           <div className="space-y-6">
-            <ReadingBadgesGuide ctx={readingCtx} onBirthday={setBirthday} />
-            <LibraryAchievementsGuide />
             <div className="space-y-3">
           {/* Quick Action Pill: Share Archetype Card */}
           <div className="flex items-center justify-between text-xs text-stone-400 px-1">
@@ -487,6 +485,8 @@ export default function App() {
             </div>
             <ReaderTypeCard books={books} today={new Date().toLocaleDateString('en-CA')} onOpenCollection={() => {}} />
             <ArchetypeCodex books={books} />
+            <ReadingBadgesGuide ctx={readingCtx} onBirthday={setBirthday} />
+            <LibraryAchievementsGuide />
 
             <PaceSimulator />
 

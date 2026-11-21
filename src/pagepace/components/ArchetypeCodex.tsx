@@ -70,11 +70,11 @@ export const ArchetypeCodex: React.FC<{ books?: BookEntry[] }> = ({ books = [] }
       </div>
 
       {/* 7 Archetypes as a collapsible list */}
-      <details className="group rounded-2xl bg-stone-900/60 border border-stone-800 p-4 sm:p-5">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+      <section className="rounded-2xl bg-stone-900/60 border border-stone-800 p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-2">
           <span className="font-serif font-bold text-stone-100">Reader type badges</span>
-          <span className="flex items-center gap-2 text-xs font-mono text-amber-400">{collected.size}/{archetypeList.length}<span className="transition-transform group-open:rotate-180">▾</span></span>
-        </summary>
+          <span className="flex items-center gap-2 text-xs font-mono text-amber-400">{collected.size}/{archetypeList.length}</span>
+        </div>
         <ul className="mt-3 divide-y divide-stone-800">
           {archetypeList.map((arch) => { const count = collected.get(arch.id) ?? 0; const locked = count === 0; return (
             <li key={arch.id} className={`flex items-start gap-3 py-3 ${locked ? 'opacity-60 grayscale' : ''}`}>
@@ -87,17 +87,16 @@ export const ArchetypeCodex: React.FC<{ books?: BookEntry[] }> = ({ books = [] }
                 </div>
                 <p className="text-xs italic text-stone-300">“{arch.tagline}”</p>
                 <p className="text-[11px] font-mono text-stone-400">{locked ? `🔒 Locked · ${unlockHint(arch)}` : `✓ Unlocked · ${count} ${count === 1 ? 'book' : 'books'}`}</p>
-                <details className="text-xs text-stone-400">
-                  <summary className="cursor-pointer text-stone-500">More about this type</summary>
+                <div className="text-xs text-stone-400">
                   <p className="mt-1 leading-relaxed">{arch.description}</p>
                   <p className="mt-1 italic text-stone-300">{arch.celebrationPhilosophy}</p>
                   <div className="flex flex-wrap gap-1.5 pt-1">{arch.strengths.map((str) => <span key={str} className="text-[11px] px-2 py-0.5 rounded-md bg-stone-950 border border-stone-800 text-stone-300 font-mono">{str}</span>)}</div>
-                </details>
+                </div>
               </div>
             </li>
           ); })}
         </ul>
-      </details>
+      </section>
 
     </div>
   );
