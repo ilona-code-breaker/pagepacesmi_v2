@@ -48,3 +48,34 @@ export function unlockHint(a: ArchetypeDefinition): string {
   if (a.minPpd < 1) return `Take it slow: spend ${minDays}+ days on a ${pages}-page book`;
   return `Finish a ${pages}-page book in ${minDays}–${maxDays} days`;
 }
+
+/** Next faster tier for a current read and the pages/day needed from today to finish within it. */
+export function nextTierPace(totalPages: number, pagesLeft: number, startDate: string, today: string, pace: number): { archetype: ArchetypeDefinition; pagesPerDay: number } | null {
+  if (!(totalPages > 0) || pagesLeft <= 0) return null;
+  const elapsed = Math.max(1, Math.round((Date.parse(today + 'T00:00:00Z') - Date.parse(startDate + 'T00:00:00Z')) / 86400000) + 1);
+  const faster = Object.values(ARCHETYPES).filter((a) => a.minPpd > pace).sort((a, b) => a.minPpd - b.minPpd);
+  for (const a of faster) {
+    const remainingDays = Math.floor(totalPages / a.minPpd) - elapsed + 1;
+    if (remainingDays >= 1) return { archetype: a, pagesPerDay: Math.ceil(pagesLeft / remainingDays) };
+  }
+  return null;
+}
+
+/** Reader type of each month of a year that has finished books (by finish date). */
+export function monthlySeasons(books: BookEntry[], year: number): { month: number; archetype: ArchetypeDefinition; ppd: number; count: number }[] {
+  const out: { month: number; archetype: ArchetypeDefinition; ppd: number; count: number }[] = [];
+  for (let m = 1; m <= 12; m++) {
+    const key = `${year}-${String(m).padStart(2, '0')}`;
+    const pool = books.filter((b) => (b.finishDate || '').startsWith(key));
+    if (!pool.length) continue;
+    const pages = pool.reduce((a, b) => a + (b.totalPages || 0), 0);
+    const days = pool.reduce((a, b) => a + Math.max(1, b.elapsedDays || 1), 0);
+    const ppd = Math.round((pages / days) * 10) / 10;
+    out.push({ month: m, archetype: getArchetypeByPPD(ppd), ppd, count: pool.length });
+  }
+  return out;
+}
+
+export function greeting(hour: number): string {
+  return hour < 5 ? 'Good night' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+}

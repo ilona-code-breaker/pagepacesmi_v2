@@ -5,7 +5,7 @@ import { useReadingLists } from '../hooks/useReadingLists';
 export { addCurrentRead } from '../hooks/useReadingLists';
 import { BookEntry } from '../types/book';
 import { CurrentRead, computeProgress } from '../utils/currentReading';
-import { projectedArchetype } from '../utils/archetypeProgress';
+import { projectedArchetype, nextTierPace } from '../utils/archetypeProgress';
 import { calculateElapsedDays, calculatePPD, getArchetypeByPPD } from '../utils/calculator';
 import { todayIso } from '../utils/readingStats';
 
@@ -156,6 +156,7 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
               <span>{p.pace} pages/day</span>
               {(() => { const a = projectedArchetype(p.pace); return a ? <span style={{ color: a.accentHex }}>At this pace: {a.badgeEmoji} {a.name}</span> : null; })()}
             </div>
+            {(() => { const n = nextTierPace(r.totalPages, p.pagesLeft, r.startDate, today, p.pace); return n ? <p className="text-[11px] text-stone-400">Read <strong className="text-stone-200">{n.pagesPerDay} pages/day</strong> to finish as <span style={{ color: n.archetype.accentHex }}>{n.archetype.badgeEmoji} {n.archetype.name}</span></p> : null; })()}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs text-stone-300">
                 {p.estimatedFinish

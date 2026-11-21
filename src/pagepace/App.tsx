@@ -24,7 +24,8 @@ import { todayIso } from './utils/readingStats';
 import { csvReadingToCurrent, csvToReadToQueue, dropMisfiledCsvBooks } from './utils/csvShelves';
 const loadCurrentReadsForImport = () => { try { const d = JSON.parse(localStorage.getItem('pagepace_current_reads') || '[]'); return Array.isArray(d) ? d : []; } catch { return []; } };
 import { ReaderTypeCard } from './components/ReaderTypeCard';
-import { isNewUnlock } from './utils/archetypeProgress';
+import { isNewUnlock, currentReaderType, greeting } from './utils/archetypeProgress';
+import { ReadingSeasons } from './components/ReadingSeasons';
 import type { ArchetypeDefinition } from './types/book';
 import { applyGenres, fetchGenres, isUnassigned } from './utils/genreFill';
 import { StreakWidget } from './components/StreakWidget';
@@ -332,6 +333,14 @@ export default function App() {
         {/* TAB 1: Track Book Form */}
         {currentTab === 'track' && (
           <div className="space-y-6">
+            {(() => { const t = currentReaderType(books, new Date().toLocaleDateString('en-CA')); return (
+              <button type="button" onClick={() => setCurrentTab('codex')} className="text-left">
+                <h1 className="text-xl sm:text-2xl font-serif font-bold text-stone-100">
+                  {greeting(new Date().getHours())}{t ? <>, <span style={{ color: t.archetype.accentHex }}>{t.archetype.name} {t.archetype.badgeEmoji}</span></> : ', reader'}
+                </h1>
+                {t && <p className="text-xs text-stone-400 italic mt-0.5">“{t.archetype.tagline}”</p>}
+              </button>
+            ); })()}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
               <button type="button" onClick={() => setCurrentTab('year')} className="min-w-0 text-left p-4 rounded-2xl bg-stone-900/60 border border-stone-800 hover:border-amber-500/40 transition-colors">
                 <div className="text-[11px] font-mono uppercase tracking-wider text-stone-500">Books read in {new Date().getFullYear()}</div>
@@ -418,6 +427,7 @@ export default function App() {
         )}
 
         {/* TAB: Year in Review & Streaks */}
+        {currentTab === 'year' && <ReadingSeasons books={statsBooks} />}
         {currentTab === 'year' && (
           <YearInReview
             books={statsBooks}
