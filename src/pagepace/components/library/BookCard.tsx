@@ -67,6 +67,7 @@ export const BookCard: React.FC<BookCardProps> = ({
           <span className="font-mono">{book.ppd.toFixed(1)} PPD</span>
           <span aria-hidden="true">·</span>
           <GenreBadge currentGenre={book.genre || 'Unassigned'} onGenreChange={(g) => onGenreChange?.(g)} />
+          <span className="px-1.5 py-0.5 rounded-md bg-stone-800 text-stone-300 text-[10px]">{({ Physical: '📖', 'E-Reader': '📱', Audiobook: '🎧', Hybrid: '🔀' } as Record<string, string>)[book.format || 'Physical']} {book.format || 'Physical'}</span>
         </div>
         <div className="flex items-center gap-1.5 text-stone-400 shrink-0">
           <span className="font-mono text-amber-400 font-bold">★ {book.rating.toFixed(1)}</span>

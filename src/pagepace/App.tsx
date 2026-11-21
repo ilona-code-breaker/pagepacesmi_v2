@@ -14,6 +14,7 @@ import { BookForm } from './components/BookForm';
 import { BookList } from './components/BookList';
 import { ArchetypeCodex } from './components/ArchetypeCodex';
 import { CompletionSummaryCard } from './components/CompletionSummaryCard';
+import { EditBookModal } from './components/EditBookModal';
 import { MonthlyGoalTracker } from './components/MonthlyGoalTracker';
 import { MonthlyGoalWidget } from './components/MonthlyGoalWidget';
 import { YearlyGoalWidget } from './components/YearlyGoalWidget';
@@ -146,6 +147,7 @@ export default function App() {
   };
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<BookEntry | null>(null);
+  const [certEditing, setCertEditing] = useState(false);
   const [unlocked, setUnlocked] = useState<ArchetypeDefinition | null>(null);
 
   const [isShareCardOpen, setIsShareCardOpen] = useState<boolean>(false);
@@ -245,7 +247,6 @@ export default function App() {
     setBooks((prev) => [newBook, ...prev]);
     setSelectedBook(newBook);
     // Scroll to completion card smoothly
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDeleteBook = (id: string) => {
@@ -327,29 +328,6 @@ export default function App() {
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 space-y-10">
         {/* Highlighted Completion Summary Card (When a book is active or just logged) */}
-        {selectedBook && (
-          <section aria-label="Book Completion Card" className="space-y-3">
-            <div className="flex items-center justify-between text-xs text-stone-400 px-1">
-              <span className="font-mono uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-semibold">
-                <Award className="w-4 h-4" />
-                Active Completion Summary
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedBook(null)}
-                className="hover:text-stone-200 text-stone-500 transition-colors"
-              >
-                Dismiss Certificate
-              </button>
-            </div>
-            <CompletionSummaryCard
-              book={selectedBook}
-              onClose={() => setSelectedBook(null)}
-              onEdit={handleEditBook}
-              onDelete={handleDeleteBook}
-            />
-          </section>
-        )}
 
         {/* TAB 1: Track Book Form */}
         {currentTab === 'track' && (
@@ -420,7 +398,6 @@ export default function App() {
               goals={goals}
               onSelectBook={(book) => {
                 setSelectedBook(originalBook(books, book));
-                window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onDeleteBook={handleDeleteBook}
               onDeleteBooks={handleDeleteBooks}
@@ -457,7 +434,6 @@ export default function App() {
                 onSelectBook={(book) => {
                   setGoalsOpen(false);
                   setSelectedBook(originalBook(books, book));
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 onNavigateToTrack={() => {
                   setGoalsOpen(false);
@@ -468,7 +444,6 @@ export default function App() {
             }
             onSelectBook={(book) => {
               setSelectedBook(originalBook(books, book));
-              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
         )}
@@ -581,6 +556,25 @@ export default function App() {
           Designed with love for Bedtime Tasters, Book Sommeliers, Cozy Lounge Readers, Steady Cruisers, Momentum Builders, Speed Readers, and Narrative Comets alike.
         </p>
       </footer>
+      {selectedBook && !certEditing && createPortal(
+        <div role="dialog" aria-modal="true" aria-label="Book completion certificate" className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm" onClick={() => setSelectedBook(null)}>
+          <div className="w-full sm:max-w-3xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-stone-950 border border-stone-800 p-3 sm:p-4 space-y-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-2 text-xs px-1">
+              <span className="font-mono uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-semibold"><Award className="w-4 h-4" />Completion Certificate</span>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setCertEditing(true)} className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold">Edit book</button>
+                <button type="button" aria-label="Close certificate" onClick={() => setSelectedBook(null)} className="px-2 py-1.5 rounded-lg text-stone-400 hover:text-stone-100 hover:bg-stone-800">✕</button>
+              </div>
+            </div>
+            <CompletionSummaryCard key={selectedBook.id} book={selectedBook} onClose={() => setSelectedBook(null)} onEdit={handleEditBook} onDelete={handleDeleteBook} />
+          </div>
+        </div>,
+        document.body,
+      )}
+      {selectedBook && certEditing && (
+        <EditBookModal book={selectedBook} isOpen onClose={() => setCertEditing(false)} onSave={(updated) => { handleEditBook(updated); setSelectedBook(updated); setCertEditing(false); }} />
+      )}
+
       {trackOpen && createPortal(
         <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-stone-950/80 backdrop-blur-sm" onClick={() => setTrackOpen(false)}>
           <div role="dialog" aria-modal="true" aria-labelledby="track-books-title" onClick={(e) => e.stopPropagation()} className="w-full sm:max-w-2xl max-h-[92dvh] overflow-y-auto bg-stone-900 border border-stone-800 rounded-t-3xl sm:rounded-2xl p-5 sm:p-8 space-y-6 animate-in slide-in-from-bottom-8 sm:zoom-in-95 fade-in duration-300">

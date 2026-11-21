@@ -218,6 +218,7 @@ export const DataPortabilityToolbar: React.FC<DataPortabilityToolbarProps> = ({
               <div className="font-mono text-[11px] text-stone-400 space-y-0.5">
                 <div>• New Books: <strong>{pendingImport.books.length}</strong></div>
                 <div>• Monthly Goals: <strong>{Object.keys(pendingImport.goals).length}</strong></div>
+                {(() => { const l = (pendingImport.lists || {}) as Record<string, unknown>; const n = (k: string) => (Array.isArray(l[k]) ? (l[k] as unknown[]).length : null); const rows: [string, number | null][] = [['In progress', n('pagepace_current_reads')], ['Want to read', n('pagepace_want_to_read_v1')], ['Dropped', n('pagepace_dropped_reads_v1')]]; return pendingImport.lists ? (<>{rows.map(([label, c]) => <div key={label}>• {label}: <strong>{c ?? 0}</strong></div>)}<div>• Yearly Goals: <strong>{l['pagepace_yearly_goals_v1'] ? 'included' : 'none'}</strong></div></>) : <div className="text-stone-500">• Older backup: In progress, Want to read and Dropped lists stay unchanged</div>; })()}
                 <div>• Current Books to be replaced: <strong>{books.length}</strong></div>
               </div>
             </div>

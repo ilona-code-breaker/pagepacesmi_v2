@@ -204,7 +204,7 @@ export const BookList: React.FC<BookListProps> = ({
       />
 
       {selectedIds.size > 0 && (
-        <SelectionBar count={selectedIds.size} onCancel={() => setSelectedIds(new Set())} onDelete={deleteSelected} />
+        <SelectionBar count={selectedIds.size} onCancel={() => setSelectedIds(new Set())} onDelete={deleteSelected} onSetFormat={(f) => { const sel = books.filter((b) => selectedIds.has(b.id)); sel.forEach((b) => onEditBook?.({ ...b, format: f })); setFlash(`Updated ${sel.length} book${sel.length === 1 ? '' : 's'} to ${f}.`); setTimeout(() => setFlash(null), 3000); setSelectedIds(new Set()); }} />
       )}
 
       {flash && (

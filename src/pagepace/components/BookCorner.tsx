@@ -335,7 +335,14 @@ export const BookCorner: React.FC<Props> = ({ owned, onChange, completed, queue 
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-serif text-xl font-bold">Books I own ({owned.length})</h2>
           {selected.size > 0 && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              {([['Physical', '📖'], ['E-Reader', '📱'], ['Audiobook', '🎧']] as const).map(([f, icon]) => (
+                <Button key={f} size="sm" variant="outline" onClick={() => {
+                  onChange(owned.map((o) => (selected.has(o.id) ? { ...o, format: f } : o)));
+                  setNote(`Updated ${selected.size} book${selected.size > 1 ? 's' : ''} to ${f}.`);
+                  setSelected(new Set()); setConfirmDel(false);
+                }}>{icon} {f}</Button>
+              ))}
               <Button size="sm" variant="ghost" onClick={() => { setSelected(new Set()); setConfirmDel(false); }}>Clear</Button>
               <Button size="sm" variant="destructive" onClick={() => {
                 if (!confirmDel) return setConfirmDel(true);

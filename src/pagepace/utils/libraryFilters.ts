@@ -18,6 +18,7 @@ export interface LibraryFilterState {
   archetype: ArchetypeId | 'all';
   genre: string | 'all';
   shelf: string | 'all';
+  format?: string | 'all';
   sortBy: SortKey;
 }
 
@@ -66,6 +67,7 @@ export function filterAndSortBooks(books: BookEntry[], f: LibraryFilterState): B
         !(b.genre?.toLowerCase() === genreLc || b.genres?.some((g) => g.toLowerCase() === genreLc))
       )
         return false;
+      if (f.format && f.format !== 'all' && (b.format || 'Physical') !== f.format) return false;
       if (f.shelf !== 'all' && !b.shelves?.some((s) => s.toLowerCase() === shelfLc)) return false;
       return true;
     })

@@ -27,7 +27,7 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
   onSelectAllToggle,
 }) => {
   const [more, setMore] = React.useState(false);
-  const active = (filters.shelf !== 'all' ? 1 : 0) + (filters.genre !== 'all' ? 1 : 0) + (filters.archetype !== 'all' ? 1 : 0);
+  const active = (filters.shelf !== 'all' ? 1 : 0) + (filters.genre !== 'all' ? 1 : 0) + (filters.archetype !== 'all' ? 1 : 0) + (filters.format && filters.format !== 'all' ? 1 : 0);
   const allSelected = selectedCount === visibleCount && visibleCount > 0;
 
   return (
@@ -121,6 +121,14 @@ export const LibraryFilters: React.FC<LibraryFiltersProps> = ({
             </select>
           </label>
 
+          <label className="flex flex-col items-start gap-1 min-w-0 sm:flex-row sm:items-center sm:gap-1.5 text-xs text-stone-500"><span className="flex items-center gap-1.5">
+            <Library className="w-3 h-3" />
+            Format:</span>
+            <select aria-label="Format filter" value={filters.format || 'all'} onChange={(e) => onChange({ format: e.target.value })} className={selectCls}>
+              <option value="all">All formats</option>
+              {['Physical', 'E-Reader', 'Audiobook', 'Hybrid'].map((f) => <option key={f} value={f}>{f}</option>)}
+            </select>
+          </label>
           </>)}
           {visibleCount > 0 && (
             <button
