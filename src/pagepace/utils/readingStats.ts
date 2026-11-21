@@ -70,7 +70,9 @@ export interface YearInReview {
   highestRated: BookEntry | null;
   fastest: BookEntry | null;
   longest: BookEntry | null;
-  booksPerMonth: number[]; // 12 entries, Jan..Dec
+  booksPerMonth: number[]; // 12 entries Jan..Dec, or one per year for all time
+  /** Years matching booksPerMonth when the review covers all time. */
+  periodYears?: number[];
   longestStreakInYear: number;
 }
 
@@ -93,21 +95,30 @@ export function yearsWithBooks(books: BookEntry[]): number[] {
   return Array.from(ys).sort((a, b) => b - a);
 }
 
+/** Year value meaning "all time" in the Progress year picker. */
+export const ALL_TIME = 0;
+
 export function buildYearInReview(all: BookEntry[], year: number): YearInReview {
-  const books = all.filter((b) => (b.finishDate || '').startsWith(String(year)));
+  const isAll = year === ALL_TIME;
+  const books = isAll ? all.filter((b) => /^\d{4}/.test(b.finishDate || '')) : all.filter((b) => (b.finishDate || '').startsWith(String(year)));
   const bookCount = books.length;
   const pageCount = books.reduce((s, b) => s + (b.totalPages || 0), 0);
   const rated = books.filter((b) => b.rating > 0);
   const averageRating = rated.length ? rated.reduce((s, b) => s + b.rating, 0) / rated.length : 0;
   const averagePpd = bookCount ? books.reduce((s, b) => s + b.ppd, 0) / bookCount : 0;
-  const booksPerMonth = Array(12).fill(0);
+  const periodYears = isAll ? yearsWithBooks(books).sort((a, b) => a - b) : undefined;
+  const booksPerMonth = periodYears ? periodYears.map(() => 0) : Array(12).fill(0);
   books.forEach((b) => {
+    if (periodYears) {
+      booksPerMonth[periodYears.indexOf(parseInt(b.finishDate.slice(0, 4), 10))]++;
+      return;
+    }
     const m = parseInt(b.finishDate.slice(5, 7), 10);
     if (m >= 1 && m <= 12) booksPerMonth[m - 1]++;
   });
   const by = (fn: (a: BookEntry, b: BookEntry) => number) => (bookCount ? [...books].sort(fn)[0] : null);
   const arch = topOf(books.map((b) => b.archetypeId));
-  const yearEnd = `${year}-12-31`;
+  const yearEnd = isAll ? todayIso() : `${year}-12-31`;
   return {
     year,
     books,
@@ -122,6 +133,7 @@ export function buildYearInReview(all: BookEntry[], year: number): YearInReview 
     fastest: by((a, b) => b.ppd - a.ppd),
     longest: by((a, b) => b.totalPages - a.totalPages),
     booksPerMonth,
+    ...(periodYears ? { periodYears } : {}),
     longestStreakInYear: computeStreaks(books, yearEnd).longest,
   };
 }

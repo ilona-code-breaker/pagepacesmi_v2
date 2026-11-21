@@ -3,7 +3,7 @@ import { BookOpen, Calendar, Gauge, Loader2, Share2, Star, Trophy, User } from '
 import { BookEntry, MonthlyGoal } from '../types/book';
 import { Target, X } from 'lucide-react';
 import { ARCHETYPES } from '../constants/archetypes';
-import { buildYearInReview, computeStreaks, yearsWithBooks } from '../utils/readingStats';
+import { ALL_TIME, buildYearInReview, computeStreaks, yearsWithBooks } from '../utils/readingStats';
 import { renderYearReviewImage, shareOrDownload } from '../utils/yearReviewCard';
 import { StreakWidget } from './StreakWidget';
 
@@ -24,17 +24,20 @@ export const YearInReview: React.FC<{
     return ys.includes(now) ? ys : [now, ...ys];
   }, [books]);
   const [year, setYear] = useState(years[0]);
+  const isAll = year === ALL_TIME;
   const review = useMemo(() => buildYearInReview(books, year), [books, year]);
   const streak = useMemo(() => computeStreaks(books), [books]);
   const [sharing, setSharing] = useState(false);
   const [shareNote, setShareNote] = useState('');
   const [month, setMonth] = useState<number | null>(null);
-  const monthBooks = month === null ? [] : review.books.filter((b) => parseInt(b.finishDate.slice(5, 7), 10) === month + 1);
+  const labels = review.periodYears ? review.periodYears.map(String) : MONTHS;
+  const monthBooks = month === null ? [] : review.books.filter((b) => (review.periodYears ? parseInt(b.finishDate.slice(0, 4), 10) === review.periodYears[month] : parseInt(b.finishDate.slice(5, 7), 10) === month + 1));
   const goalFor = (i: number) => {
+    if (isAll) return 0;
     const g = goals[`${year}-${String(i + 1).padStart(2, '0')}`];
     return g && g.targetType !== 'pages' && g.targetBooks > 0 ? g.targetBooks : 0;
   };
-  const maxMonth = Math.max(1, ...review.booksPerMonth, ...MONTHS.map((_, i) => goalFor(i)));
+  const maxMonth = Math.max(1, ...review.booksPerMonth, ...labels.map((_, i) => goalFor(i)));
   const arch = review.topArchetype ? ARCHETYPES[review.topArchetype.id] : null;
 
   const handleShare = async () => {
@@ -44,8 +47,8 @@ export const YearInReview: React.FC<{
       const blob = await renderYearReviewImage(review, streak);
       const res = await shareOrDownload(
         blob,
-        `pagepace-${year}-year-in-review.png`,
-        `My ${year} in books: ${review.bookCount} books, ${review.pageCount.toLocaleString()} pages 📚`
+        `pagepace-${isAll ? 'all-time' : year}-review.png`,
+        `My ${isAll ? 'reading life' : year} in books: ${review.bookCount} books, ${review.pageCount.toLocaleString()} pages 📚`
       );
       if (res === 'downloaded') setShareNote('Image saved — post it anywhere!');
     } finally {
@@ -105,10 +108,11 @@ export const YearInReview: React.FC<{
           )}
           <select
             value={year}
-            onChange={(e) => setYear(parseInt(e.target.value, 10))}
+            onChange={(e) => { setYear(parseInt(e.target.value, 10)); setMonth(null); }}
             className="px-3 py-2 rounded-xl bg-stone-950 border border-stone-800 text-stone-200 text-sm font-mono focus:outline-none focus:border-amber-500/50"
             aria-label="Choose year"
           >
+            <option value={ALL_TIME}>All time</option>
             {years.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -122,7 +126,7 @@ export const YearInReview: React.FC<{
             className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-sm flex items-center gap-1.5 disabled:opacity-40"
           >
             {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
-            Share my year
+            {isAll ? 'Share all time' : 'Share my year'}
           </button>
         </div>
       </div>
@@ -135,26 +139,26 @@ export const YearInReview: React.FC<{
 
       {review.bookCount === 0 ? (
         <div className="p-10 text-center rounded-2xl bg-stone-900/40 border border-stone-800 text-stone-400 text-sm">
-          No finished books in {year} yet.
+          No finished books {isAll ? 'yet' : `in ${year} yet`}.
         </div>
       ) : (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Stat icon={<BookOpen className="w-3 h-3" />} label="Books" value={String(review.bookCount)} />
-            <Stat icon={<Calendar className="w-3 h-3" />} label="Pages" value={review.pageCount.toLocaleString()} />
+            <Stat icon={<Calendar className="w-3 h-3" />} label={isAll ? 'Total pages' : 'Pages'} value={review.pageCount.toLocaleString()} />
             <Stat icon={<Star className="w-3 h-3" />} label="Avg rating" value={review.averageRating ? review.averageRating.toFixed(1) : '–'} />
             <Stat icon={<Gauge className="w-3 h-3" />} label="Avg pace" value={`${review.averagePpd.toFixed(0)} PPD`} />
           </div>
 
           <div className="p-5 rounded-2xl bg-stone-900/70 border border-stone-800 space-y-3">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-stone-500">Books per month <span className="normal-case tracking-normal text-stone-600">· dashed line = goal</span></div>
+            <div className="text-[11px] font-mono uppercase tracking-wider text-stone-500">{isAll ? 'Books per year' : <>Books per month <span className="normal-case tracking-normal text-stone-600">· dashed line = goal</span></>}</div>
             <div className="flex items-end gap-1.5 sm:gap-3 h-36">
               {review.booksPerMonth.map((n, i) => (
                 <button
                   type="button"
                   key={i}
                   disabled={!n}
-                  aria-label={`${MONTHS[i]}: ${n} books${goalFor(i) ? ` of ${goalFor(i)} goal` : ''}`}
+                  aria-label={`${labels[i]}: ${n} books${goalFor(i) ? ` of ${goalFor(i)} goal` : ''}`}
                   onClick={() => setMonth(month === i ? null : i)}
                   className={`flex-1 flex flex-col items-center gap-1.5 h-full justify-end ${n ? 'cursor-pointer' : 'cursor-default'} ${month === i ? 'opacity-100' : month !== null ? 'opacity-50' : ''}`}
                 >
@@ -174,14 +178,14 @@ export const YearInReview: React.FC<{
                       style={{ height: `${Math.max(4, (n / maxMonth) * 100)}%` }}
                     />
                   </div>
-                  <span className={`text-[10px] font-mono ${month === i ? 'text-amber-400' : 'text-stone-500'}`}>{MONTHS[i]}</span>
+                  <span className={`text-[10px] font-mono ${month === i ? 'text-amber-400' : 'text-stone-500'}`}>{labels[i]}</span>
                 </button>
               ))}
             </div>
             {month !== null && (
               <div className="pt-3 border-t border-stone-800 space-y-2">
                 <div className="text-[11px] font-mono uppercase tracking-wider text-amber-400">
-                  {MONTHS[month]} {year} · {monthBooks.length} {monthBooks.length === 1 ? 'book' : 'books'}
+                  {isAll ? labels[month] : `${MONTHS[month]} ${year}`} · {monthBooks.length} {monthBooks.length === 1 ? 'book' : 'books'}
                 </div>
                 {monthBooks.map((b) => (
                   <button

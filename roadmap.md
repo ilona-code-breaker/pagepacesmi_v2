@@ -26,3 +26,7 @@
 - [x] Add alternative titles to book details and shared matching.
 - [x] Link tracked books to an existing owned edition without adding duplicates.
 - [x] Verify translated-edition status changes and persistence.
+
+# Stats & dashboard
+- [x] All time option with total pages on Progress.
+- [x] Keep What to read next in place when Currently Reading expands.
