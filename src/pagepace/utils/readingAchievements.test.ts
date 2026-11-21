@@ -48,3 +48,13 @@ describe('weekly badges', () => {
     expect(earnedReadingBadges(ctx([bk(1, { startDate: '2026-03-03', finishDate: '2026-03-09' })]))).not.toContain('habit-week7');
   });
 });
+
+import { READING_BADGES as RB } from './readingAchievements';
+describe('new milestones', () => {
+  const mk = (n: number, format: any, totalPages = 300) => Array.from({ length: n }, (_, i) => ({ id: String(i), title: `B${i}`, author: 'A', totalPages, startDate: '2026-01-01', finishDate: '2026-01-02', elapsedDays: 2, ppd: 1, archetypeId: 'steady-cruiser', rating: 0, review: '', createdAt: 0, format })) as any;
+  const ctx = (books: any) => ({ books, originals: books, goals: {}, yearlyGoals: {}, tbrStarted: [], droppedCount: 0, owned: [] }) as any;
+  const get = (id: string) => RB.find((b) => b.id === id)!;
+  it('E-reader 100 needs 100 books', () => { expect(get('ereader-100').earned(ctx(mk(99, 'E-Reader')))).toBe(false); expect(get('ereader-100').earned(ctx(mk(100, 'E-Reader')))).toBe(true); });
+  it('audiobook 75 at 75', () => { expect(get('audio-75').earned(ctx(mk(75, 'Audiobook')))).toBe(true); });
+  it('tree badge at 10,000 physical pages', () => { expect(get('quirky-tree').earned(ctx(mk(33, 'Physical')))).toBe(false); expect(get('quirky-tree').earned(ctx(mk(34, 'Physical')))).toBe(true); });
+});

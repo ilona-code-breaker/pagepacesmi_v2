@@ -356,7 +356,6 @@ export default function App() {
               {/* Side Column: Sample Books & Tips */}
               <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6 items-start [&>*]:min-w-0">
                 <div className="space-y-6 min-w-0">
-                  <ReaderTypeCard books={books} today={new Date().toLocaleDateString('en-CA')} onOpenCollection={() => setCurrentTab('codex')} />
                   <Recommendations books={books} queue={queue} onSave={(book) => updateQueue(saveToQueue(queue, book, crypto.randomUUID()))} />
                   {queueError && <p role="alert" className="text-sm text-destructive">{queueError}</p>}
                 </div>
@@ -486,6 +485,7 @@ export default function App() {
             </button>
           </div>
             </div>
+            <ReaderTypeCard books={books} today={new Date().toLocaleDateString('en-CA')} onOpenCollection={() => {}} />
             <ArchetypeCodex books={books} />
 
             <PaceSimulator />

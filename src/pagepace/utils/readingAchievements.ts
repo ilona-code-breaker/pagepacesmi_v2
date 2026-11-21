@@ -21,7 +21,7 @@ export interface ReadingContext {
   birthday?: string; // MM-DD
   today?: string; // YYYY-MM-DD
 }
-export type ReadingKind = 'ereader' | 'audio' | 'physical' | 'hybrid' | 'mixed' | 'genre' | 'length' | 'pace' | 'habit' | 'series' | 'notes' | 'season' | 'tbr';
+export type ReadingKind = 'ereader' | 'audio' | 'physical' | 'hybrid' | 'mixed' | 'genre' | 'length' | 'pace' | 'habit' | 'series' | 'notes' | 'season' | 'tbr' | 'quirky';
 export interface ReadingBadge { id: string; emoji: string; name: string; kind: ReadingKind; goal: string; earned: (c: ReadingContext) => boolean }
 
 export const READING_GROUPS: [ReadingKind, string, string][] = [
@@ -38,6 +38,7 @@ export const READING_GROUPS: [ReadingKind, string, string][] = [
   ['notes', '✍️ Reviews & notes', 'Reviews, quotes and ratings.'],
   ['season', '🗓️ Seasons & dates', 'When you finish books.'],
   ['tbr', '🧹 Want to read', 'Your Want to read list and dropped books.'],
+  ['quirky', '🤪 Absurd milestones', 'Silly real-world comparisons, unlocked by how much you read.'],
 ];
 
 const fmtOf = (b: BookEntry) => b.format || 'Physical';
@@ -74,22 +75,39 @@ export function finishedSeries(c: ReadingContext): number {
   return n;
 }
 
+const physPages = (c: ReadingContext) => ofFmt(c, 'Physical').reduce((s, b) => s + pages(b), 0);
+const allPages = (c: ReadingContext) => c.books.reduce((s, b) => s + pages(b), 0);
+
 export const READING_BADGES: ReadingBadge[] = [
+  { id: 'quirky-tree', emoji: '🌲', name: "Lumberjack's Regret", kind: 'quirky', goal: 'Read 10,000 physical pages — roughly one whole tree of paper', earned: (c) => physPages(c) >= 10000 },
+  { id: 'quirky-forest', emoji: '🪓', name: 'Small Forest', kind: 'quirky', goal: 'Read 50,000 physical pages — about five trees', earned: (c) => physPages(c) >= 50000 },
+  { id: 'quirky-wallpaper', emoji: '🏠', name: 'Wallpapered Living Room', kind: 'quirky', goal: 'Read 15,000 pages — enough sheets to paper a living room', earned: (c) => allPages(c) >= 15000 },
+  { id: 'quirky-house', emoji: '🏡', name: 'Papered the Whole House', kind: 'quirky', goal: 'Read 60,000 pages — enough to wallpaper an entire house', earned: (c) => allPages(c) >= 60000 },
+  { id: 'quirky-floor', emoji: '⚠️', name: 'Structural Load Hazard', kind: 'quirky', goal: 'Finish 50 physical books — your floorboards are worried', earned: (c) => ofFmt(c, 'Physical').length >= 50 },
+  { id: 'quirky-airplane', emoji: '🔋', name: 'Airplane Mode Hermit', kind: 'quirky', goal: 'Finish 75 e-reader books — that’s a lot of ignored notifications', earned: (c) => ofFmt(c, 'E-Reader').length >= 75 },
+  { id: 'quirky-monk', emoji: '🤫', name: 'Silent Vow Breaker', kind: 'quirky', goal: 'Finish 50 audiobooks — more words than a monk hears in a decade', earned: (c) => ofFmt(c, 'Audiobook').length >= 50 },
+
   { id: 'ereader-1', emoji: '✨', name: 'Screen Glow', kind: 'ereader', goal: 'Finish your first e-reader book', earned: (c) => ofFmt(c, 'E-Reader').length >= 1 },
   count('ereader', 'E-Reader', 10, '🌿', 'Paperless Habit', 'e-reader books'),
   count('ereader', 'E-Reader', 25, '📱', 'Kindle Devotee', 'e-reader books'),
   count('ereader', 'E-Reader', 50, '🖋️', 'E-Ink Master', 'e-reader books'),
+  count('ereader', 'E-Reader', 75, '⚡', 'Glare-Free Guru', 'e-reader books'),
+  count('ereader', 'E-Reader', 100, '👑', 'Digital Sovereign', 'e-reader books'),
   bigFmt('ereader', 'E-Reader', 600, '🪶', 'Lightweight Epic', 'on an e-reader'),
   { id: 'audio-1', emoji: '🎧', name: 'First Listen', kind: 'audio', goal: 'Finish your first audiobook', earned: (c) => ofFmt(c, 'Audiobook').length >= 1 },
   count('audio', 'Audiobook', 5, '🚗', 'Commute Companion', 'audiobooks'),
   count('audio', 'Audiobook', 15, '👂', 'Ears Wide Open', 'audiobooks'),
   count('audio', 'Audiobook', 30, '🎙️', 'Audio Aficionado', 'audiobooks'),
   count('audio', 'Audiobook', 50, '🎭', "Narrator's Circle", 'audiobooks'),
+  count('audio', 'Audiobook', 75, '🏅', 'Golden Headphones', 'audiobooks'),
+  count('audio', 'Audiobook', 100, '🎼', 'Master Listener', 'audiobooks'),
   bigFmt('audio', 'Audiobook', 600, '🏃', 'Endurance Listener', 'as an audiobook'),
   { id: 'physical-1', emoji: '📄', name: 'Real Paper', kind: 'physical', goal: 'Finish your first physical book', earned: (c) => ofFmt(c, 'Physical').length >= 1 },
   count('physical', 'Physical', 10, '🖨️', 'Fresh Ink', 'physical books'),
   count('physical', 'Physical', 25, '📕', 'Spine Cracker', 'physical books'),
   count('physical', 'Physical', 50, '📜', 'Paper Purist', 'physical books'),
+  count('physical', 'Physical', 75, '📚', 'Bookshelf Builder', 'physical books'),
+  count('physical', 'Physical', 100, '🏰', 'Paper Citadel', 'physical books'),
   bigFmt('physical', 'Physical', 700, '🏋️', 'Heavy Lifter', 'in print'),
   { id: 'hybrid-1', emoji: '🚪', name: 'Two Doors, One Story', kind: 'hybrid', goal: 'Finish your first hybrid read', earned: (c) => ofFmt(c, 'Hybrid').length >= 1 },
   count('hybrid', 'Hybrid', 5, '🔄', 'Seamless Switcher', 'hybrid books'),
@@ -108,6 +126,9 @@ export const READING_BADGES: ReadingBadge[] = [
   { id: 'genre-new', emoji: '🚀', name: 'Comfort Zone Breaker', kind: 'genre', goal: 'Finish a book in a genre you had never read, after 10 books', earned: (c) => { const seen = new Set<string>(); return byFinish(c).some((b, i) => { const gs = genresOf(b); const fresh = i >= 10 && gs.length > 0 && gs.some((g) => !seen.has(g)); gs.forEach((g) => seen.add(g)); return fresh; }); } },
 
   { id: 'length-brick', emoji: '🧱', name: 'Brick Breaker', kind: 'length', goal: 'Finish a 600+ page book', earned: (c) => c.books.some((b) => pages(b) >= 600) },
+  { id: 'length-brick3', emoji: '🧱', name: 'Doorstopper Dynasty', kind: 'length', goal: 'Finish three 600+ page books', earned: (c) => c.originals.filter((b) => pages(b) >= 600).length >= 3 },
+  { id: 'length-800', emoji: '🏛️', name: 'The Colossus', kind: 'length', goal: 'Finish an 800+ page book', earned: (c) => c.books.some((b) => pages(b) >= 800) },
+  { id: 'length-1000', emoji: '🦖', name: 'Tome of the Ancients', kind: 'length', goal: 'Finish a 1,000+ page book', earned: (c) => c.books.some((b) => pages(b) >= 1000) },
   { id: 'length-snack', emoji: '🍪', name: 'Snack Reader', kind: 'length', goal: 'Finish 10 books under 200 pages', earned: (c) => c.books.filter((b) => pages(b) > 0 && pages(b) < 200).length >= 10 },
   ...([10000, 50000, 100000] as const).map((n, i): ReadingBadge => ({ id: `length-pages-${n}`, emoji: ['⛰️', '🏔️', '🗻'][i], name: ['Page Hill', 'Page Mountain', 'Page Summit'][i], kind: 'length', goal: `Read ${n.toLocaleString('en')} pages in total`, earned: (c) => c.books.reduce((s, b) => s + pages(b), 0) >= n })),
 
