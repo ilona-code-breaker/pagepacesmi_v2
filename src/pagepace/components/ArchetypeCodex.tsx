@@ -59,44 +59,64 @@ export const ArchetypeCodex: React.FC<{ books?: BookEntry[] }> = ({ books = [] }
         </p>
       </div>
 
-      {/* Collection progress */}
-      <div className="p-5 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-serif font-bold text-stone-100">Your collection</span>
-          <span className="font-mono text-amber-400">{collected.size} / {archetypeList.length} unlocked</span>
-        </div>
-        <div className="h-2 rounded-full bg-stone-800 overflow-hidden"><div className="h-full bg-amber-400" style={{ width: `${(collected.size / archetypeList.length) * 100}%` }} /></div>
-        <p className="text-xs text-stone-400">{collected.size === archetypeList.length ? 'You have collected every reader type!' : 'Each book you finish earns the type of its pace. Try a different pace to unlock the rest.'}</p>
-      </div>
-
-      {/* 7 Archetypes as a collapsible list */}
-      <section className="rounded-2xl bg-stone-900/60 border border-stone-800 p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-serif font-bold text-stone-100">Reader type badges</span>
-          <span className="flex items-center gap-2 text-xs font-mono text-amber-400">{collected.size}/{archetypeList.length}</span>
-        </div>
-        <ul className="mt-3 divide-y divide-stone-800">
-          {archetypeList.map((arch) => { const count = collected.get(arch.id) ?? 0; const locked = count === 0; return (
-            <li key={arch.id} className={`flex items-start gap-3 py-3 ${locked ? 'opacity-60 grayscale' : ''}`}>
-              <div className="shrink-0 p-2 rounded-xl bg-stone-950 border border-stone-800">{getArchetypeIcon(arch.id)}</div>
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="text-lg" aria-hidden>{arch.badgeEmoji}</span>
-                  <h3 className="font-serif font-bold text-stone-100">{arch.name}</h3>
-                  <span className="text-xs font-mono" style={{ color: arch.accentHex }}>{arch.ppdRange}</span>
+      {/* 7 Archetypes Showcase Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {archetypeList.map((arch) => { const count = collected.get(arch.id) ?? 0; const locked = count === 0; return (
+          <div
+            key={arch.id}
+            className={`relative p-6 rounded-2xl bg-stone-900/80 border transition-all space-y-4 flex flex-col justify-between ${locked ? 'border-stone-800 opacity-80' : 'border-stone-700'}`}
+            style={locked ? undefined : { borderColor: arch.accentHex + '88' }}
+          >
+            <div className={`text-[11px] font-mono font-semibold ${locked ? 'text-stone-400' : ''}`} style={locked ? undefined : { color: arch.accentHex }}>
+              {locked ? `Not read at this pace yet · ${unlockHint(arch)}` : `${count} ${count === 1 ? 'book' : 'books'} read at this pace`}
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-stone-950 border border-stone-800 shadow-sm">
+                    {getArchetypeIcon(arch.id)}
+                  </div>
+                  <div>
+                    <h3 className="text-base font-serif font-bold text-stone-100">{arch.name}</h3>
+                    <span className="text-xs font-mono font-semibold" style={{ color: arch.accentHex }}>
+                      {arch.ppdRange}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs italic text-stone-300">“{arch.tagline}”</p>
-                <p className="text-[11px] font-mono text-stone-400">{locked ? `🔒 Locked · ${unlockHint(arch)}` : `✓ Unlocked · ${count} ${count === 1 ? 'book' : 'books'}`}</p>
-                <div className="text-xs text-stone-400">
-                  <p className="mt-1 leading-relaxed">{arch.description}</p>
-                  <p className="mt-1 italic text-stone-300">{arch.celebrationPhilosophy}</p>
-                  <div className="flex flex-wrap gap-1.5 pt-1">{arch.strengths.map((str) => <span key={str} className="text-[11px] px-2 py-0.5 rounded-md bg-stone-950 border border-stone-800 text-stone-300 font-mono">{str}</span>)}</div>
-                </div>
+                <span className="text-2xl">{arch.badgeEmoji}</span>
               </div>
-            </li>
-          ); })}
-        </ul>
-      </section>
+
+              <p className="text-xs font-serif italic text-stone-300">
+                “{arch.tagline}”
+              </p>
+
+              <p className="text-xs text-stone-400 leading-relaxed">
+                {arch.description}
+              </p>
+            </div>
+
+            <div className="pt-3 border-t border-stone-800/80 space-y-2">
+              <div className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">
+                Reading Philosophy:
+              </div>
+              <p className="text-[11px] text-stone-300 italic leading-snug">
+                {arch.celebrationPhilosophy}
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {arch.strengths.map((str) => (
+                  <span
+                    key={str}
+                    className="text-[11px] px-2 py-0.5 rounded-md bg-stone-950 border border-stone-800 text-stone-300 font-mono"
+                  >
+                    {str}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        ); })}
+      </div>
 
     </div>
   );
