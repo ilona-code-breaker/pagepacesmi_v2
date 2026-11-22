@@ -18,10 +18,10 @@ export const isSample = (i: unknown) => !!i && typeof i === 'object' && String((
 /** Items in `local` that the account does not have yet. */
 export function newItems(local: unknown, remote: unknown): unknown[] {
   if (!Array.isArray(local)) return [];
-  local = local.filter((i) => !isSample(i));
-  if (!Array.isArray(remote)) return local as unknown[];
+  const own = (local as unknown[]).filter((i) => !isSample(i));
+  if (!Array.isArray(remote)) return own;
   const seen = new Set(remote.map(identity));
-  return dedupeList(local).filter((i) => !seen.has(identity(i)));
+  return dedupeList(own).filter((i) => !seen.has(identity(i)));
 }
 
 /** Keeps the first copy of each book. */
