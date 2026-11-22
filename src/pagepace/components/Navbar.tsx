@@ -1,6 +1,6 @@
 import { AccountButton } from './AccountButton';
 import React from 'react';
-import { BookOpen, Volume2, VolumeX, Plus, Compass, CalendarHeart, Library } from 'lucide-react';
+import { BookOpen, Volume2, VolumeX, Plus, Compass, Share2, CalendarHeart, Library } from 'lucide-react';
 
 interface NavbarProps {
   currentTab: 'track' | 'library' | 'year' | 'codex' | 'corner';
@@ -13,7 +13,7 @@ interface NavbarProps {
 }
 
 const tabClass = (active: boolean) =>
-  `flex-1 lg:flex-initial min-w-0 px-2 py-1.5 lg:px-3 lg:py-2 text-xs lg:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+  `flex-1 lg:flex-initial min-w-0 px-1 sm:px-2 py-1.5 lg:px-3 lg:py-2 text-xs lg:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap ${
     active ? 'bg-stone-800 text-stone-100 shadow-sm border border-stone-700' : 'text-stone-300 hover:text-stone-100 hover:bg-stone-800/60'
   }`;
 
@@ -54,26 +54,27 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Row 2 on phone/tablet: tabs; on desktop inline */}
         <nav className="flex items-center gap-1 lg:gap-1.5 w-full lg:w-auto lg:flex-1 lg:justify-center pt-1 lg:pt-0 border-t border-stone-800/60 lg:border-t-0">
           <button type="button" onClick={() => onTabChange('library')} className={tabClass(currentTab === 'library')}>
-            <BookOpen className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-stone-400 shrink-0" />
+            <BookOpen className="hidden min-[400px]:block w-3.5 h-3.5 lg:w-4 lg:h-4 text-stone-400 shrink-0" />
             <span>Archive</span>
             <span className="hidden min-[400px]:inline text-[10px] font-mono px-1.5 rounded-full bg-stone-900 border border-stone-800 text-stone-400">{libraryCount}</span>
           </button>
           <button type="button" onClick={() => onTabChange('year')} aria-label="Progress" title="Progress: goals, streaks and year in review" className={tabClass(currentTab === 'year')}>
-            <CalendarHeart className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-orange-400 shrink-0" />
-            <span className="hidden sm:inline">Progress</span>
+            <CalendarHeart className="hidden min-[400px]:block w-3.5 h-3.5 lg:w-4 lg:h-4 text-orange-400 shrink-0" />
+            <span>Progress</span>
           </button>
           <button type="button" onClick={() => onTabChange('corner')} aria-label="My Library" title="My Library" className={tabClass(currentTab === 'corner')}>
-            <Library className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-400 shrink-0" />
-            <span className="hidden sm:inline">Library</span>
+            <Library className="hidden min-[400px]:block w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-400 shrink-0" />
+            <span>Library</span>
           </button>
           <button type="button" onClick={() => onTabChange('codex')} className={tabClass(currentTab === 'codex')}>
-            <Compass className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-stone-400 shrink-0" />
+            <Compass className="hidden min-[400px]:block w-3.5 h-3.5 lg:w-4 lg:h-4 text-stone-400 shrink-0" />
             <span>Codex</span>
           </button>
           {onOpenShareCard && (
             <button type="button" onClick={onOpenShareCard} title="Share your Reading Archetype card"
-              className="shrink-0 whitespace-nowrap px-2.5 py-1.5 lg:px-3 lg:py-2 text-xs lg:text-sm font-semibold rounded-xl text-amber-400 hover:bg-amber-500/10 transition-all">
-              Share
+              className="shrink-0 whitespace-nowrap px-2.5 py-1 lg:px-3.5 lg:py-2 text-xs lg:text-sm font-bold rounded-full transition-all flex items-center gap-1 bg-amber-500/15 text-amber-300 border border-amber-500/50 hover:bg-amber-500 hover:text-stone-950">
+              <Share2 className="w-3.5 h-3.5 stroke-[2.5] hidden min-[400px]:inline lg:w-4 lg:h-4" />
+              <span>Share</span>
             </button>
           )}
           <button type="button" onClick={onToggleSound} className="lg:hidden p-2 rounded-xl text-stone-400 hover:bg-stone-800/60 shrink-0"
