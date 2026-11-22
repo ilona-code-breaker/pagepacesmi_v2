@@ -328,7 +328,7 @@ export const ShareableArchetypeCardModal: React.FC<ShareableArchetypeCardModalPr
           </div>
 
           {/* Action CTAs */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
               onClick={handleCopyCaption}
@@ -347,7 +347,7 @@ export const ShareableArchetypeCardModal: React.FC<ShareableArchetypeCardModalPr
               ) : (
                 <>
                   <Copy className="w-4 h-4 text-stone-400" />
-                  <span>Copy Summary</span>
+                  <span className="whitespace-nowrap">Copy summary</span>
                 </>
               )}
             </button>
@@ -359,17 +359,17 @@ export const ShareableArchetypeCardModal: React.FC<ShareableArchetypeCardModalPr
               className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95"
             >
               <Download className="w-4 h-4" />
-              <span>Download Card as Image</span>
+              <span className="whitespace-nowrap">Download image</span>
             </button>
           </div>
         </div>
 
         {/* Live Canvas Visual Preview Area */}
-        <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-stone-950/70 border border-stone-800/80 rounded-2xl overflow-hidden">
+        <div className="shrink-0 flex flex-col items-center justify-center p-3 sm:p-6 bg-stone-950/70 border border-stone-800/80 rounded-2xl overflow-hidden">
           <canvas
             ref={canvasRef}
-            className={`shadow-2xl rounded-xl border border-stone-800 max-w-full object-contain ${
-              aspectRatio === '9:16' ? 'max-h-[520px]' : 'max-h-[460px]'
+            className={`shadow-2xl rounded-xl border border-stone-800 h-auto object-contain ${
+              aspectRatio === '9:16' ? 'w-auto max-w-full max-h-[75vh]' : 'w-full max-w-[560px]'
             }`}
           />
           <div className="mt-3 text-[11px] text-stone-500 font-mono text-center">
@@ -379,7 +379,7 @@ export const ShareableArchetypeCardModal: React.FC<ShareableArchetypeCardModalPr
 
         {/* Social Caption Preview Box */}
         <div className="p-4 rounded-2xl bg-stone-950/50 border border-stone-800/80 space-y-2">
-          <div className="flex items-center justify-between text-xs text-stone-400">
+          <div className="flex flex-wrap items-center justify-between gap-1 text-xs text-stone-400">
             <span className="font-mono uppercase tracking-wider text-amber-400/90 font-semibold">
               Ready-to-Paste Social Caption
             </span>

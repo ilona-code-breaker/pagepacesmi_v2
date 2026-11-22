@@ -1,6 +1,6 @@
 import { AccountButton } from './AccountButton';
 import React from 'react';
-import { BookOpen, Volume2, VolumeX, Plus, Compass, Target, Share2, CalendarHeart, Library } from 'lucide-react';
+import { BookOpen, Volume2, VolumeX, Plus, Compass, CalendarHeart, Library } from 'lucide-react';
 
 interface NavbarProps {
   currentTab: 'track' | 'library' | 'year' | 'codex' | 'corner';
@@ -12,167 +12,85 @@ interface NavbarProps {
   onAddBook: () => void;
 }
 
+const tabClass = (active: boolean) =>
+  `flex-1 lg:flex-initial min-w-0 px-2 py-1.5 lg:px-3 lg:py-2 text-xs lg:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+    active ? 'bg-stone-800 text-stone-100 shadow-sm border border-stone-700' : 'text-stone-300 hover:text-stone-100 hover:bg-stone-800/60'
+  }`;
+
+const AddBookButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="shrink-0 whitespace-nowrap px-3.5 py-1.5 lg:py-2 text-xs lg:text-sm font-bold rounded-full transition-all flex items-center gap-1.5 bg-amber-500/15 text-amber-300 border border-amber-500/50 hover:bg-amber-500 hover:text-stone-950 shadow-sm shadow-amber-500/10"
+  >
+    <Plus className="w-4 h-4 stroke-[2.5]" />
+    <span>Add book</span>
+  </button>
+);
+
 export const Navbar: React.FC<NavbarProps> = ({
-  currentTab,
-  onTabChange,
-  soundEnabled,
-  onToggleSound,
-  libraryCount,
-  onOpenShareCard,
-  onAddBook,
+  currentTab, onTabChange, soundEnabled, onToggleSound, libraryCount, onOpenShareCard, onAddBook,
 }) => {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-stone-800 bg-[#0f1117]/90 backdrop-blur-md">
-      <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 sm:py-0 sm:h-16 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-0">
-        {/* Row 1 on mobile: Brand on left, "+ Book" on right */}
-        <div className="flex items-center justify-between w-full sm:w-auto">
-          {/* Brand */}
-          <div
-            onClick={() => onTabChange('track')}
-            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none group"
-          >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform shrink-0">
-              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-stone-950 stroke-[2.5]" />
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 lg:py-0 lg:h-16 flex flex-col lg:flex-row lg:items-center gap-2.5 lg:gap-4">
+        {/* Row 1: brand + actions (actions move right on desktop) */}
+        <div className="flex items-center justify-between gap-2 w-full lg:w-auto min-w-0">
+          <div onClick={() => onTabChange('track')} className="flex items-center gap-2.5 cursor-pointer select-none group min-w-0">
+            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform shrink-0">
+              <BookOpen className="w-4 h-4 lg:w-5 lg:h-5 text-stone-950 stroke-[2.5]" />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-serif font-black text-lg sm:text-xl tracking-tight text-stone-100 group-hover:text-amber-300 transition-colors">
-                  PagePace
-                </span>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.2 rounded font-semibold">
-                  Archetypes
-                </span>
-              </div>
-              <p className="text-[10px] text-stone-400 hidden sm:block">
-                Gamified Reading Velocity & Style Archetypes
-              </p>
+            <div className="min-w-0 flex items-center gap-1.5">
+              <span className="font-serif font-black text-lg lg:text-xl tracking-tight text-stone-100 group-hover:text-amber-300 transition-colors">PagePace</span>
+              <span className="hidden min-[400px]:inline text-[10px] font-mono uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 rounded font-semibold">Archetypes</span>
             </div>
           </div>
-
-          {/* "+ Book" on Mobile (Row 1 right side) */}
-          <div className="sm:hidden flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={onAddBook}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1 shadow-sm ${
-                false
-                  ? ''
-                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500 hover:text-stone-950'
-              }`}
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Add book</span>
-            </button>
+          <div className="lg:hidden flex items-center gap-1.5 shrink-0">
+            <AddBookButton onClick={onAddBook} />
+            <AccountButton />
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        {/* On mobile: row 2 underneath the "+ Book" break; on desktop: aligned inline with brand */}
-        <nav className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 w-full sm:w-auto pt-1 sm:pt-0 border-t border-stone-800/60 sm:border-t-0">
-          {/* Desktop "+ Book" button */}
-          <button
-            type="button"
-            onClick={onAddBook}
-            className={`hidden sm:flex px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all items-center gap-1.5 ${
-              'bg-amber-500 text-stone-950 shadow-md hover:bg-amber-400'
-            }`}
-          >
-            <Plus className="w-4 h-4" />
-            <span>Track Book</span>
-          </button>
-
-          {/* Library Tab */}
-          <button
-            type="button"
-            onClick={() => onTabChange('library')}
-            className={`flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              currentTab === 'library'
-                ? 'bg-stone-800 text-stone-100 shadow-sm border border-stone-700'
-                : 'text-stone-300 hover:text-stone-100 hover:bg-stone-800/60'
-            }`}
-          >
-            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-400" />
+        {/* Row 2 on phone/tablet: tabs; on desktop inline */}
+        <nav className="flex items-center gap-1 lg:gap-1.5 w-full lg:w-auto lg:flex-1 lg:justify-center pt-1 lg:pt-0 border-t border-stone-800/60 lg:border-t-0">
+          <button type="button" onClick={() => onTabChange('library')} className={tabClass(currentTab === 'library')}>
+            <BookOpen className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-stone-400 shrink-0" />
             <span>Archive</span>
-            <span className="text-[10px] sm:text-[11px] font-mono px-1.5 py-0.2 rounded-full bg-stone-900 border border-stone-800 text-stone-400">
-              {libraryCount}
-            </span>
+            <span className="hidden min-[400px]:inline text-[10px] font-mono px-1.5 rounded-full bg-stone-900 border border-stone-800 text-stone-400">{libraryCount}</span>
           </button>
-
-          {/* Year in Review Tab */}
-          <button
-            type="button"
-            onClick={() => onTabChange('year')}
-            aria-label="Progress: goals, streaks and year in review"
-            title="Progress: goals, streaks and year in review"
-            className={`flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              currentTab === 'year'
-                ? 'bg-stone-800 text-stone-100 shadow-sm border border-stone-700'
-                : 'text-stone-300 hover:text-stone-100 hover:bg-stone-800/60'
-            }`}
-          >
-            <CalendarHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-400" />
+          <button type="button" onClick={() => onTabChange('year')} aria-label="Progress" title="Progress: goals, streaks and year in review" className={tabClass(currentTab === 'year')}>
+            <CalendarHeart className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-orange-400 shrink-0" />
             <span className="hidden sm:inline">Progress</span>
           </button>
-
-          {/* Book Corner Tab */}
-          <button
-            type="button"
-            onClick={() => onTabChange('corner')}
-            aria-label="My Library"
-            title="My Library"
-            className={`flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              currentTab === 'corner'
-                ? 'bg-stone-800 text-stone-100 shadow-sm border border-stone-700'
-                : 'text-stone-300 hover:text-stone-100 hover:bg-stone-800/60'
-            }`}
-          >
-            <Library className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
+          <button type="button" onClick={() => onTabChange('corner')} aria-label="My Library" title="My Library" className={tabClass(currentTab === 'corner')}>
+            <Library className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-amber-400 shrink-0" />
             <span className="hidden sm:inline">Library</span>
           </button>
-
-          {/* Codex Tab */}
-          <button
-            type="button"
-            onClick={() => onTabChange('codex')}
-            className={`flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              currentTab === 'codex'
-                ? 'bg-stone-800 text-stone-100 shadow-sm border border-stone-700'
-                : 'text-stone-300 hover:text-stone-100 hover:bg-stone-800/60'
-            }`}
-          >
-            <Compass className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-400" />
+          <button type="button" onClick={() => onTabChange('codex')} className={tabClass(currentTab === 'codex')}>
+            <Compass className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-stone-400 shrink-0" />
             <span>Codex</span>
           </button>
-
-          {/* Share Archetype Card Button */}
           {onOpenShareCard && (
-            <button
-              type="button"
-              onClick={onOpenShareCard}
-              className="px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-all flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
-              title="Share your overall Reading Archetype Persona card"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Share Card</span>
+            <button type="button" onClick={onOpenShareCard} title="Share your Reading Archetype card"
+              className="shrink-0 whitespace-nowrap px-2.5 py-1.5 lg:px-3 lg:py-2 text-xs lg:text-sm font-semibold rounded-xl text-amber-400 hover:bg-amber-500/10 transition-all">
+              Share
             </button>
           )}
-
-          <AccountButton />
-
-          {/* Sound Toggle */}
-          <button
-            type="button"
-            onClick={onToggleSound}
-            className="p-2 sm:p-2 rounded-xl text-stone-400 hover:text-stone-200 hover:bg-stone-800/60 transition-colors shrink-0"
-            title={soundEnabled ? 'Mute celebratory sound' : 'Enable celebratory sound'}
-          >
-            {soundEnabled ? (
-              <Volume2 className="w-4 h-4 text-amber-400" />
-            ) : (
-              <VolumeX className="w-4 h-4 text-stone-500" />
-            )}
+          <button type="button" onClick={onToggleSound} className="lg:hidden p-2 rounded-xl text-stone-400 hover:bg-stone-800/60 shrink-0"
+            title={soundEnabled ? 'Mute celebratory sound' : 'Enable celebratory sound'}>
+            {soundEnabled ? <Volume2 className="w-4 h-4 text-amber-400" /> : <VolumeX className="w-4 h-4 text-stone-500" />}
           </button>
         </nav>
+
+        {/* Desktop right-side actions */}
+        <div className="hidden lg:flex items-center gap-2 shrink-0">
+          <AddBookButton onClick={onAddBook} />
+          <AccountButton />
+          <button type="button" onClick={onToggleSound} className="p-2 rounded-xl text-stone-400 hover:text-stone-200 hover:bg-stone-800/60 shrink-0"
+            title={soundEnabled ? 'Mute celebratory sound' : 'Enable celebratory sound'}>
+            {soundEnabled ? <Volume2 className="w-4 h-4 text-amber-400" /> : <VolumeX className="w-4 h-4 text-stone-500" />}
+          </button>
+        </div>
       </div>
     </header>
   );

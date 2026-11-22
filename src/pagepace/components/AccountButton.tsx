@@ -45,9 +45,9 @@ export function AccountButton() {
       <button type="button" onClick={() => setOpen((o) => !o)} title={email ? `Synced as ${email}` : 'Not synced — sign in to use on all devices'}
         className={email
           ? 'flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-stone-300 hover:bg-stone-800/60 border border-stone-800 text-xs font-semibold transition-colors'
-          : 'flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-amber-500 text-stone-950 hover:bg-amber-400 text-xs sm:text-sm font-semibold transition-colors'}>
+          : 'flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1.5 lg:px-3 lg:py-2 rounded-full bg-stone-800/80 border border-stone-700 text-stone-200 hover:bg-stone-700 text-xs lg:text-sm font-semibold transition-colors'}>
         {email ? (<><Cloud className="w-4 h-4 text-amber-400" /><span className="hidden sm:inline max-w-[8rem] truncate">{email.split('@')[0]}</span></>)
-          : (<><LogIn className="w-4 h-4" /><span>Sign in</span></>)}
+          : (<><LogIn className="w-4 h-4" /><span className="hidden min-[360px]:inline">Sign in</span></>)}
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-stone-800 bg-stone-950 p-3 shadow-xl z-50 text-sm">
