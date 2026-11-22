@@ -30,3 +30,8 @@
 # Stats & dashboard
 - [x] All time option with total pages on Progress.
 - [x] Keep What to read next in place when Currently Reading expands.
+
+# Onboarding
+- [x] Clear Sign in button in the top bar.
+- [x] Only 2 demo books, marked SAMPLE, never synced to accounts.
+- [x] Progress label next to its icon on wider screens.

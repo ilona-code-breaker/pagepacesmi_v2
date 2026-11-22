@@ -111,6 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <CalendarHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-400" />
+            <span className="hidden sm:inline">Progress</span>
           </button>
 
           {/* Book Corner Tab */}

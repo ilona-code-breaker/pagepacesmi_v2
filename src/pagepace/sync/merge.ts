@@ -12,10 +12,14 @@ export function identity(item: unknown): string {
   return 'json:' + JSON.stringify(item);
 }
 
+/** Demo books shipped to new visitors; never moved into an account. */
+export const isSample = (i: unknown) => !!i && typeof i === 'object' && String((i as { id?: unknown }).id ?? '').startsWith('sample-');
+
 /** Items in `local` that the account does not have yet. */
 export function newItems(local: unknown, remote: unknown): unknown[] {
   if (!Array.isArray(local)) return [];
-  if (!Array.isArray(remote)) return local;
+  local = local.filter((i) => !isSample(i));
+  if (!Array.isArray(remote)) return local as unknown[];
   const seen = new Set(remote.map(identity));
   return dedupeList(local).filter((i) => !seen.has(identity(i)));
 }
