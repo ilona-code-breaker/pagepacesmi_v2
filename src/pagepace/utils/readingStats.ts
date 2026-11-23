@@ -36,8 +36,22 @@ export interface StreakInfo {
   totalReadingDays: number;
 }
 
-export function computeStreaks(books: BookEntry[], today: string = todayIso()): StreakInfo {
+/** Days covered by books still being read (start..today) once at least one page is logged. */
+export function activeReadingDays(reads: { startDate: string; currentPage: number }[], today: string = todayIso()): Set<number> {
+  const days = new Set<number>();
+  const t = toDayIndex(today);
+  if (t === null) return days;
+  for (const r of reads) {
+    const s = toDayIndex(r.startDate);
+    if (s === null || !(r.currentPage > 0) || s > t) continue;
+    for (let d = Math.max(s, t - 3650); d <= t; d++) days.add(d);
+  }
+  return days;
+}
+
+export function computeStreaks(books: BookEntry[], today: string = todayIso(), extraDays?: Set<number>): StreakInfo {
   const days = readingDays(books);
+  extraDays?.forEach((d) => days.add(d));
   const sorted = Array.from(days).sort((a, b) => a - b);
   let longest = 0;
   let run = 0;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, BookOpen, Check, Plus, Trash2, CircleStop } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { RatingInput } from './RatingInput';
 import { useReadingLists } from '../hooks/useReadingLists';
 export { addCurrentRead } from '../hooks/useReadingLists';
 import { BookEntry } from '../types/book';
@@ -27,6 +28,7 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
   const expanded = libraryView || open || adding;
   const [form, setForm] = useState({ title: '', author: '', totalPages: '', currentPage: '', startDate: todayIso() });
   const today = todayIso();
+  const [finishing, setFinishing] = useState<{ id: string; rating: number; review: string } | null>(null);
 
 
   const update = (id: string, patch: Partial<CurrentRead>) =>
@@ -52,7 +54,7 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
     onAdded?.();
   };
 
-  const finish = (r: CurrentRead) => {
+  const finish = (r: CurrentRead, rating = 0, review = '') => {
     const elapsedDays = calculateElapsedDays(r.startDate, today);
     const ppd = calculatePPD(r.totalPages, elapsedDays);
     onFinish({
@@ -73,8 +75,8 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
       elapsedDays,
       ppd,
       archetypeId: getArchetypeByPPD(ppd).id,
-      rating: 0,
-      review: '',
+      rating,
+      review,
       createdAt: Date.now(),
     });
     setReads((rs) => rs.filter((x) => x.id !== r.id));
@@ -153,6 +155,11 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
                 />
                 / {r.totalPages} <span className="text-amber-400 font-semibold">({p.percent}%)</span>
               </label>
+              <span className="flex items-center gap-1">
+                {[10, 25, 50].map((n) => (
+                  <button key={n} type="button" aria-label={`Add ${n} pages to ${r.title}`} onClick={() => update(r.id, { currentPage: Math.min(r.totalPages, r.currentPage + n) })} className="px-2 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30">+{n}</button>
+                ))}
+              </span>
               <span>{p.pace} pages/day</span>
               {(() => { const a = projectedArchetype(p.pace); return a ? <span style={{ color: a.accentHex }}>At this pace: {a.badgeEmoji} {a.name}</span> : null; })()}
             </div>
@@ -165,11 +172,22 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
                     : <>Estimated finish: <strong className="text-emerald-400">{fmt(p.estimatedFinish)}</strong> ({p.daysLeft} {p.daysLeft === 1 ? 'day' : 'days'})</>
                   : 'Update your page to get an estimate'}
               </span>
-              <button type="button" onClick={() => finish(r)} className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold">
+              <button type="button" onClick={() => setFinishing({ id: r.id, rating: 0, review: '' })} className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold">
                 <Check className="w-3.5 h-3.5" /> Finished today
               </button>
               <Button variant="secondary" size="sm" className="dark" aria-label={`Mark ${r.title} as Dropped`} onClick={() => drop(r.id)}><CircleStop />Dropped</Button>
             </div>
+            {finishing?.id === r.id && (
+              <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/30 space-y-2">
+                <p className="text-sm font-serif font-bold text-emerald-300">🎉 You finished it! How was it?</p>
+                <RatingInput value={finishing.rating} onChange={(v: number) => setFinishing({ ...finishing, rating: v })} />
+                <textarea className={input} rows={2} placeholder="Final thoughts or a favourite quote (optional)" value={finishing.review} onChange={(e) => setFinishing({ ...finishing, review: e.target.value })} />
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" size="sm" className="dark" onClick={() => setFinishing(null)}>Cancel</Button>
+                  <button type="button" onClick={() => { finish(r, finishing.rating, finishing.review.trim()); setFinishing(null); }} className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-stone-950 text-xs font-semibold">Save & celebrate</button>
+                </div>
+              </div>
+            )}
           </div>
         );
       })}

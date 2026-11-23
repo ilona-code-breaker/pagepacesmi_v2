@@ -1,11 +1,13 @@
 import React, { useMemo } from 'react';
 import { CalendarCheck, Flame, Trophy } from 'lucide-react';
 import { BookEntry, MonthlyGoal } from '../types/book';
-import { computeStreaks } from '../utils/readingStats';
+import { activeReadingDays, computeStreaks } from '../utils/readingStats';
+import { useReadingLists } from '../hooks/useReadingLists';
 import { weeklyGoalInfo } from '../utils/weeklyGoal';
 
 export const StreakWidget: React.FC<{ books: BookEntry[]; goals?: Record<string, MonthlyGoal>; onOpenYear?: () => void }> = ({ books, goals, onOpenYear }) => {
-  const s = useMemo(() => computeStreaks(books), [books]);
+  const { reads } = useReadingLists();
+  const s = useMemo(() => computeStreaks(books, undefined, activeReadingDays(reads)), [books, reads]);
   const w = useMemo(() => (goals ? weeklyGoalInfo(books, goals) : null), [books, goals]);
   const t = w?.thisWeek;
   return (
