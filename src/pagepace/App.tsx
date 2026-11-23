@@ -460,6 +460,14 @@ export default function App() {
             }}
           />
         )}
+        {currentTab === 'year' && (
+          <div className="space-y-6 mt-6">
+            <h2 className="text-sm font-mono uppercase tracking-wider text-stone-300 font-semibold px-1">🏆 Badges & Achievements</h2>
+            <ReaderTypeCard books={books} today={new Date().toLocaleDateString('en-CA')} onOpenCollection={() => {}} />
+            <ReadingBadgesGuide ctx={readingCtx} onBirthday={setBirthday} />
+            <LibraryAchievementsGuide />
+          </div>
+        )}
 
         {currentTab === 'corner' && <BookCorner onImportReading={importOwnedReading} onReadingStatusChange={changeOwnedReadingStatus} onOpenCodex={() => setCurrentTab('codex')} owned={owned} onChange={saveOwned} completed={books} onLibrarySync={setBooks} queue={queue} onQueue={(list) => updateQueue(list.reduce((q, b, i) => saveToQueue(q, { title: b.title, author: b.author, genre: b.genre ?? '', reason: '' } as never, `corner-q-${Date.now()}-${i}`), queue))} />}
 
@@ -484,9 +492,6 @@ export default function App() {
           </div>
             </div>
             <ArchetypeCodex books={books} />
-            <ReaderTypeCard books={books} today={new Date().toLocaleDateString('en-CA')} onOpenCollection={() => {}} />
-            <ReadingBadgesGuide ctx={readingCtx} onBirthday={setBirthday} />
-            <LibraryAchievementsGuide />
 
             <PaceSimulator />
 
