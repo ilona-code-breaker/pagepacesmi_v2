@@ -1,7 +1,7 @@
 import { findOwned, type OwnedBook, type OwnedFormat } from '../utils/ownedBooks';
 import { AlternativeTitleField } from './book-details/AlternativeTitleField';
 import React, { useState, useEffect, useRef } from 'react';
-import type { CurrentRead } from '../utils/currentReading';
+import { defaultUnitForFormat, type CurrentRead, type ProgressUnit } from '../utils/currentReading';
 import type { QueuedBook } from '../utils/readingQueue';
 import { todayIso } from '../utils/readingStats';
 import confetti from 'canvas-confetti';
@@ -84,6 +84,13 @@ export const BookForm: React.FC<BookFormProps> = ({
   const isWant = status === 'want';
   const isFinished = status === 'finished';
   const [currentPage, setCurrentPage] = useState<number | ''>(initialBook ? 0 : '');
+  const [progressUnit, setProgressUnit] = useState<ProgressUnit>('pages');
+  const [percentRead, setPercentRead] = useState<number | ''>(0);
+  const [totalHours, setTotalHours] = useState<number | ''>('');
+  const [totalMins, setTotalMins] = useState<number | ''>('');
+  const [currentHours, setCurrentHours] = useState<number | ''>('');
+  const [currentMins, setCurrentMins] = useState<number | ''>('');
+  const [durationError, setDurationError] = useState('');
   // Today's date in YYYY-MM-DD
   const todayStr = new Date().toISOString().split('T')[0];
   // 5 days ago
@@ -298,13 +305,33 @@ export const BookForm: React.FC<BookFormProps> = ({
     }
 
     if (isReading) {
+      const totalMin = Math.max(0, (Number(totalHours) || 0) * 60 + (Number(totalMins) || 0));
+      if (progressUnit === 'audiobook' && totalMin <= 0) {
+        setDurationError('Enter the audiobook length (hours or minutes).');
+        return;
+      }
+      const curMin = Math.min(totalMin, Math.max(0, (Number(currentHours) || 0) * 60 + (Number(currentMins) || 0)));
+      const pct = Math.min(100, Math.max(0, Number(percentRead) || 0));
+      const effectivePages =
+        progressUnit === 'audiobook' && !hasUserCustomizedPages && !autoFilledBadge
+          ? Math.max(1, Math.round(totalMin * 0.5))
+          : safePages;
+      const syncedPage =
+        progressUnit === 'audiobook'
+          ? Math.round((curMin / totalMin) * effectivePages)
+          : progressUnit === 'percent'
+          ? Math.round((pct / 100) * effectivePages)
+          : Math.min(effectivePages, Math.max(0, Number(currentPage) || 0));
       onReadingStarted?.({
         id: 'read-' + Date.now(),
         title: title.trim(),
         ...bookLink,
         author: author.trim() || 'Unknown Author',
-        totalPages: safePages,
-        currentPage: Math.min(safePages, Math.max(0, Number(currentPage) || 0)),
+        totalPages: effectivePages,
+        currentPage: syncedPage,
+        progressUnit,
+        ...(progressUnit === 'audiobook' ? { totalMinutes: totalMin, currentMinutes: curMin } : {}),
+        ...(progressUnit === 'percent' ? { percentRead: pct } : {}),
         startDate,
         genre,
         format,
@@ -318,6 +345,9 @@ export const BookForm: React.FC<BookFormProps> = ({
       setAlternativeTitle(''); setLinkedOwnedId(''); setOwnIt(false);
       setAuthor('');
       setCurrentPage('');
+      setPercentRead(0);
+      setTotalHours(''); setTotalMins(''); setCurrentHours(''); setCurrentMins('');
+      setDurationError('');
       setCoverUrl(undefined);
       setIsbn(undefined);
       setAutoFilledBadge(null);
@@ -582,40 +612,94 @@ export const BookForm: React.FC<BookFormProps> = ({
         </div>
       </div>
 
-      {/* Pages & Dates (The Core Logic Formula Inputs) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Total Page Count (With Custom Override Enforcement) */}
+      {/* Progress Unit Selector for Still Reading */}
+      {isReading && (
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-stone-300">
-              Total Pages <span className="text-amber-500">*</span>
-            </label>
-            {hasUserCustomizedPages && (
-              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
-                User Custom Override
-              </span>
-            )}
-          </div>
-          <input
-            type="number"
-            required
-            min={1}
-            max={20000}
-            value={totalPages}
-            onChange={(e) => handlePageCountChange(e.target.value)}
-            placeholder="512"
-            className={`w-full px-3.5 py-2.5 rounded-xl bg-stone-900 border text-stone-100 font-mono text-sm focus:outline-none transition-colors ${
-              hasUserCustomizedPages
-                ? 'border-emerald-500/40 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30'
-                : 'border-stone-800 focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30'
-            }`}
-          />
-          <div className="text-[11px] text-stone-500">
-            {hasUserCustomizedPages
-              ? 'Your exact input overrides standard edition pages.'
-              : 'Auto-fills standard paperback/hardcover edition.'}
+          <label className="text-xs font-medium text-stone-300">Track progress by</label>
+          <div className="grid grid-cols-3 gap-1 p-1 bg-stone-900 border border-stone-800 rounded-xl" role="group" aria-label="Track progress by">
+            {([['pages', 'Pages'], ['percent', '% Percent'], ['audiobook', 'Hours & Mins']] as const).map(([u, label]) => (
+              <button
+                key={u}
+                type="button"
+                onClick={() => { setProgressUnit(u); setDurationError(''); }}
+                className={`py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  progressUnit === u
+                    ? 'bg-amber-500/20 text-amber-200 border border-amber-500/40'
+                    : 'text-stone-400 hover:text-stone-200 border border-transparent'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
+      )}
+
+      {/* Pages & Dates (The Core Logic Formula Inputs) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {isReading && progressUnit === 'audiobook' ? (
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-stone-300">
+              Total Length <span className="text-amber-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                min={0}
+                max={500}
+                aria-label="Total hours"
+                value={totalHours}
+                onChange={(e) => { setTotalHours(e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value, 10) || 0)); setDurationError(''); }}
+                placeholder="11 hrs"
+                className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 font-mono text-sm focus:outline-none focus:border-amber-500/60"
+              />
+              <input
+                type="number"
+                min={0}
+                max={59}
+                aria-label="Total minutes"
+                value={totalMins}
+                onChange={(e) => { setTotalMins(e.target.value === '' ? '' : Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0))); setDurationError(''); }}
+                placeholder="30 mins"
+                className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 font-mono text-sm focus:outline-none focus:border-amber-500/60"
+              />
+            </div>
+            {durationError && <p role="alert" className="text-[11px] text-rose-400">{durationError}</p>}
+          </div>
+        ) : (
+          /* Total Page Count (With Custom Override Enforcement) */
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-stone-300">
+                Total Pages <span className="text-amber-500">*</span>
+              </label>
+              {hasUserCustomizedPages && (
+                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                  User Custom Override
+                </span>
+              )}
+            </div>
+            <input
+              type="number"
+              required
+              min={1}
+              max={20000}
+              value={totalPages}
+              onChange={(e) => handlePageCountChange(e.target.value)}
+              placeholder="512"
+              className={`w-full px-3.5 py-2.5 rounded-xl bg-stone-900 border text-stone-100 font-mono text-sm focus:outline-none transition-colors ${
+                hasUserCustomizedPages
+                  ? 'border-emerald-500/40 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30'
+                  : 'border-stone-800 focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30'
+              }`}
+            />
+            <div className="text-[11px] text-stone-500">
+              {hasUserCustomizedPages
+                ? 'Your exact input overrides standard edition pages.'
+                : 'Auto-fills standard paperback/hardcover edition.'}
+            </div>
+          </div>
+        )}
 
         {!isWant && <div className="space-y-1.5">
           <label className="text-xs font-medium text-stone-300 flex items-center gap-1.5">
@@ -632,18 +716,71 @@ export const BookForm: React.FC<BookFormProps> = ({
         </div>}
 
         {isWant ? null : isReading ? (
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-stone-300">Current Page</label>
-            <input
-              type="number"
-              min={0}
-              max={safePages}
-              value={currentPage}
-              onChange={(e) => setCurrentPage(e.target.value === '' ? '' : parseInt(e.target.value, 10) || 0)}
-              placeholder="0"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 font-mono text-sm focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-colors"
-            />
-          </div>
+          progressUnit === 'audiobook' ? (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-stone-300">Current Progress</label>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  max={500}
+                  aria-label="Current hours"
+                  value={currentHours}
+                  onChange={(e) => setCurrentHours(e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value, 10) || 0))}
+                  placeholder="0 hrs"
+                  className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 font-mono text-sm focus:outline-none focus:border-amber-500/60"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  max={59}
+                  aria-label="Current minutes"
+                  value={currentMins}
+                  onChange={(e) => setCurrentMins(e.target.value === '' ? '' : Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                  placeholder="0 mins"
+                  className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 font-mono text-sm focus:outline-none focus:border-amber-500/60"
+                />
+              </div>
+            </div>
+          ) : progressUnit === 'percent' ? (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-stone-300">Current Progress (%)</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  aria-label="Current percent"
+                  value={percentRead}
+                  onChange={(e) => setPercentRead(e.target.value === '' ? '' : Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)))}
+                  placeholder="0"
+                  className="w-20 px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 font-mono text-sm focus:outline-none focus:border-amber-500/60"
+                />
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  aria-label="Progress percentage slider"
+                  value={Number(percentRead) || 0}
+                  onChange={(e) => setPercentRead(parseInt(e.target.value, 10) || 0)}
+                  className="flex-1 accent-amber-500"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-stone-300">Current Page</label>
+              <input
+                type="number"
+                min={0}
+                max={safePages}
+                value={currentPage}
+                onChange={(e) => setCurrentPage(e.target.value === '' ? '' : parseInt(e.target.value, 10) || 0)}
+                placeholder="0"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 font-mono text-sm focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-colors"
+              />
+            </div>
+          )
         ) : (
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-stone-300 flex items-center gap-1.5">
@@ -686,7 +823,7 @@ export const BookForm: React.FC<BookFormProps> = ({
               <button
                 key={fmt}
                 type="button"
-                onClick={() => setFormat(fmt)}
+                onClick={() => { setFormat(fmt); setProgressUnit(defaultUnitForFormat(fmt)); setDurationError(''); }}
                 className={`py-1.5 text-xs font-medium rounded-lg transition-colors ${
                   format === fmt
                     ? 'bg-stone-800 text-stone-100 shadow-sm'

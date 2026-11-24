@@ -1,4 +1,5 @@
 import { ArchetypeId, BookEntry } from '../types/book';
+import { hasLoggedProgress, type ProgressUnit } from './currentReading';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -36,14 +37,17 @@ export interface StreakInfo {
   totalReadingDays: number;
 }
 
-/** Days covered by books still being read (start..today) once at least one page is logged. */
-export function activeReadingDays(reads: { startDate: string; currentPage: number }[], today: string = todayIso()): Set<number> {
+/** Days covered by books still being read (start..today) once any progress (pages, %, or minutes) is logged. */
+export function activeReadingDays(
+  reads: { startDate: string; currentPage: number; progressUnit?: ProgressUnit; currentMinutes?: number; percentRead?: number }[],
+  today: string = todayIso(),
+): Set<number> {
   const days = new Set<number>();
   const t = toDayIndex(today);
   if (t === null) return days;
   for (const r of reads) {
     const s = toDayIndex(r.startDate);
-    if (s === null || !(r.currentPage > 0) || s > t) continue;
+    if (s === null || !hasLoggedProgress(r) || s > t) continue;
     for (let d = Math.max(s, t - 3650); d <= t; d++) days.add(d);
   }
   return days;
