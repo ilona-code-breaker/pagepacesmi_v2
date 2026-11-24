@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { mergeValue, newItems, dedupeList, stripSamples } from './merge';
 
 const PREFIX = 'pagepace_';
-const BOOKS_KEY = 'pagepace_books';
+const BOOKS_KEY = 'pagepace_books_v1';
 const OWNER = 'pagepace-sync-owner'; // user id this device's data belongs to (no prefix: never synced)
 const DIRTY = 'pagepace-sync-dirty';
 const SKIP = new Set<string>();
