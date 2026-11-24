@@ -1,8 +1,9 @@
 // Mirrors every pagepace_* browser-storage key to the signed-in account.
 import { supabase } from '@/integrations/supabase/client';
-import { mergeValue, newItems, dedupeList } from './merge';
+import { mergeValue, newItems, dedupeList, stripSamples } from './merge';
 
 const PREFIX = 'pagepace_';
+const BOOKS_KEY = 'pagepace_books';
 const OWNER = 'pagepace-sync-owner'; // user id this device's data belongs to (no prefix: never synced)
 const DIRTY = 'pagepace-sync-dirty';
 const SKIP = new Set<string>();
@@ -15,7 +16,7 @@ const parse = (s: string | null) => { if (s === null) return undefined; try { re
 
 async function push() {
   if (!userId) return;
-  const rows = localKeys().filter((k) => !SKIP.has(k)).map((key) => ({ user_id: userId!, key, value: parse(localStorage.getItem(key)) ?? null, updated_at: new Date().toISOString() }));
+  const rows = localKeys().filter((k) => !SKIP.has(k)).map((key) => ({ user_id: userId!, key, value: stripSamples(parse(localStorage.getItem(key))) ?? null, updated_at: new Date().toISOString() }));
   if (!rows.length) return;
   const { error } = await supabase.from('user_data').upsert(rows);
   if (!error) localStorage.removeItem(DIRTY);
@@ -65,13 +66,29 @@ export async function startSync(uid: string): Promise<SyncStart> {
   if (!firstTime) {
     if (localStorage.getItem(DIRTY)) { await push(); return { reload: false }; }
     let changed = false;
-    for (const [k, v] of remote) changed = writeLocal(k, v) || changed;
+    let cleanedRemote = false;
+    for (const [k, v] of remote) {
+      const clean = stripSamples(v);
+      if (canon(clean) !== canon(v)) cleanedRemote = true;
+      changed = writeLocal(k, clean) || changed;
+    }
+    if (cleanedRemote) await push();
     // Never reload more than once per tab session, even if something keeps differing.
     if (changed && sessionStorage.getItem('pagepace-sync-reloaded')) return { reload: false };
     if (changed) sessionStorage.setItem('pagepace-sync-reloaded', '1');
     return { reload: changed };
   }
-  if (remote.size === 0) { localStorage.setItem(OWNER, uid); await push(); return { reload: false }; }
+  if (remote.size === 0) {
+    let changed = false;
+    for (const key of localKeys()) {
+      const val = parse(localStorage.getItem(key));
+      if (Array.isArray(val)) changed = writeLocal(key, stripSamples(val)) || changed;
+    }
+    if (localStorage.getItem(BOOKS_KEY) === null) changed = writeLocal(BOOKS_KEY, []) || changed;
+    localStorage.setItem(OWNER, uid);
+    await push();
+    return { reload: changed };
+  }
   const count = localKeys().reduce((n, k) => n + newItems(parse(localStorage.getItem(k)), remote.get(k)).length, 0);
   pendingRemote = remote;
   if (count > 0) return { reload: false, askAbout: count };
@@ -84,8 +101,9 @@ export async function finishFirstSync(addNew: boolean): Promise<boolean> {
   if (!remote || !userId) return false;
   pendingRemote = null;
   let changed = false;
-  for (const key of new Set<string>([...localKeys(), ...remote.keys()])) {
-    changed = writeLocal(key, mergeValue(parse(localStorage.getItem(key)), remote.get(key), addNew)) || changed;
+  for (const key of new Set<string>([...localKeys(), ...remote.keys(), BOOKS_KEY])) {
+    const merged = mergeValue(parse(localStorage.getItem(key)), remote.get(key), addNew);
+    changed = writeLocal(key, merged === undefined && key === BOOKS_KEY ? [] : merged) || changed;
   }
   localStorage.setItem(OWNER, userId);
   await push();

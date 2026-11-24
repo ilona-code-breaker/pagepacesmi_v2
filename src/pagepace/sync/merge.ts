@@ -15,6 +15,11 @@ export function identity(item: unknown): string {
 /** Demo books shipped to new visitors; never moved into an account. */
 export const isSample = (i: unknown) => !!i && typeof i === 'object' && String((i as { id?: unknown }).id ?? '').startsWith('sample-');
 
+/** Removes demo/sample items from any array value; non-arrays pass through unchanged. */
+export function stripSamples<T>(value: T): T {
+  return (Array.isArray(value) ? value.filter((i) => !isSample(i)) : value) as T;
+}
+
 /** Items in `local` that the account does not have yet. */
 export function newItems(local: unknown, remote: unknown): unknown[] {
   if (!Array.isArray(local)) return [];
@@ -32,8 +37,14 @@ export function dedupeList<T>(list: T[]): T[] {
 
 /** Lists: account copy plus (optionally) device-only books. Anything else: account wins. */
 export function mergeValue(local: unknown, remote: unknown, addNew = true): unknown {
-  if (remote === undefined) return local;
-  if (local === undefined) return remote;
-  if (Array.isArray(local) && Array.isArray(remote)) return addNew ? [...dedupeList(remote), ...newItems(local, remote)] : dedupeList(remote);
+  if (remote === undefined) {
+    if (Array.isArray(local)) return addNew ? dedupeList(stripSamples(local)) : [];
+    return local;
+  }
+  if (local === undefined) return stripSamples(remote);
+  if (Array.isArray(local) && Array.isArray(remote)) {
+    const cleanRemote = dedupeList(stripSamples(remote));
+    return addNew ? [...cleanRemote, ...newItems(local, cleanRemote)] : cleanRemote;
+  }
   return remote;
 }
