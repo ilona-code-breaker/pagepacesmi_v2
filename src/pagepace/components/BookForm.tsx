@@ -333,6 +333,9 @@ export const BookForm: React.FC<BookFormProps> = ({
         ...(progressUnit === 'audiobook' ? { totalMinutes: totalMin, currentMinutes: curMin } : {}),
         ...(progressUnit === 'percent' ? { percentRead: pct } : {}),
         startDate,
+        ...((progressUnit === 'audiobook' ? curMin > 0 : progressUnit === 'percent' ? pct > 0 : syncedPage > 0)
+          ? { lastProgressDate: todayIso() }
+          : {}),
         genre,
         format,
         coverUrl,

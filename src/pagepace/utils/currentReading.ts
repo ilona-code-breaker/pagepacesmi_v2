@@ -15,6 +15,8 @@ export interface CurrentRead {
   currentMinutes?: number;
   percentRead?: number;
   startDate: string; // YYYY-MM-DD
+  /** Last calendar date (YYYY-MM-DD) progress was logged or incremented. */
+  lastProgressDate?: string;
   genre?: string;
   format?: 'Physical' | 'E-Reader' | 'Audiobook' | 'Hybrid';
   coverUrl?: string;

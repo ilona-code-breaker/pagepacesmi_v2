@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildYearInReview, computeStreaks } from '../readingStats';
+import { buildYearInReview, computeStreaks, MAX_BOOK_SPAN_DAYS } from '../readingStats';
 import { filterAndSortBooks, DEFAULT_FILTERS } from '../libraryFilters';
 import { extractIsbnFromBarcode } from '../../components/BarcodeScannerModal';
 import { BookEntry } from '../../types/book';
@@ -43,6 +43,11 @@ describe('reading streaks', () => {
       '2026-11-06'
     );
     expect(s.current).toBe(6);
+  });
+  it('caps a single multi-year finished book span to MAX_BOOK_SPAN_DAYS', () => {
+    const s = computeStreaks([book({ startDate: '2021-05-01', finishDate: '2026-11-23' })], '2026-11-23');
+    expect(s.current).toBe(MAX_BOOK_SPAN_DAYS);
+    expect(s.longest).toBe(MAX_BOOK_SPAN_DAYS);
   });
 });
 

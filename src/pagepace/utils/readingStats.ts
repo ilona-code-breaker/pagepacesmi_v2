@@ -3,6 +3,9 @@ import { hasLoggedProgress, type ProgressUnit } from './currentReading';
 
 const DAY = 24 * 60 * 60 * 1000;
 
+/** Max continuous streak days a single book span can contribute (prevents multi-year gaps from inflating streaks). */
+export const MAX_BOOK_SPAN_DAYS = 30;
+
 export const toDayIndex = (iso: string): number | null => {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
   if (!m) return null;
@@ -24,8 +27,8 @@ export function readingDays(books: BookEntry[]): Set<number> {
     const start = s ?? f!;
     const end = f ?? s!;
     const [lo, hi] = start <= end ? [start, end] : [end, start];
-    // Guard against absurd ranges from bad imports
-    for (let d = lo; d <= hi && d - lo < 3650; d++) days.add(d);
+    const cappedStart = Math.max(lo, hi - MAX_BOOK_SPAN_DAYS + 1);
+    for (let d = cappedStart; d <= hi; d++) days.add(d);
   }
   return days;
 }
@@ -37,9 +40,16 @@ export interface StreakInfo {
   totalReadingDays: number;
 }
 
-/** Days covered by books still being read (start..today) once any progress (pages, %, or minutes) is logged. */
+/** Days covered by active reads updated within the recent 2-day window (today or yesterday), capped per book. */
 export function activeReadingDays(
-  reads: { startDate: string; currentPage: number; progressUnit?: ProgressUnit; currentMinutes?: number; percentRead?: number }[],
+  reads: {
+    startDate: string;
+    lastProgressDate?: string;
+    currentPage: number;
+    progressUnit?: ProgressUnit;
+    currentMinutes?: number;
+    percentRead?: number;
+  }[],
   today: string = todayIso(),
 ): Set<number> {
   const days = new Set<number>();
@@ -48,7 +58,12 @@ export function activeReadingDays(
   for (const r of reads) {
     const s = toDayIndex(r.startDate);
     if (s === null || !hasLoggedProgress(r) || s > t) continue;
-    for (let d = Math.max(s, t - 3650); d <= t; d++) days.add(d);
+    const lastActive = toDayIndex(r.lastProgressDate ?? r.startDate);
+    if (lastActive === null || lastActive < t - 1) continue;
+    const end = Math.min(lastActive, t);
+    if (s > end) continue;
+    const start = Math.max(s, end - MAX_BOOK_SPAN_DAYS + 1);
+    for (let d = start; d <= end; d++) days.add(d);
   }
   return days;
 }

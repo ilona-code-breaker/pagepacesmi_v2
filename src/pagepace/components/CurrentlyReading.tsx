@@ -50,13 +50,13 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
     const totalMin = Math.max(1, r.totalMinutes || 1);
     const clamped = Math.min(totalMin, Math.max(0, Math.round(nextMins)));
     const syncedPage = Math.round((clamped / totalMin) * Math.max(1, r.totalPages || 1));
-    update(r.id, { currentMinutes: clamped, currentPage: syncedPage });
+    update(r.id, { currentMinutes: clamped, currentPage: syncedPage, ...(clamped > 0 ? { lastProgressDate: today } : {}) });
   };
 
   const updatePercent = (r: CurrentRead, nextPct: number) => {
     const clamped = Math.min(100, Math.max(0, Math.round(nextPct)));
     const syncedPage = Math.round((clamped / 100) * Math.max(1, r.totalPages || 1));
-    update(r.id, { percentRead: clamped, currentPage: syncedPage });
+    update(r.id, { percentRead: clamped, currentPage: syncedPage, ...(clamped > 0 ? { lastProgressDate: today } : {}) });
   };
 
   const add = (e: React.FormEvent) => {
@@ -78,6 +78,7 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
         currentMinutes: curMin,
         format: 'Audiobook',
         startDate: form.startDate || today,
+        ...(curMin > 0 ? { lastProgressDate: today } : {}),
       }, ...rs]);
     } else if (form.unit === 'percent') {
       const totalPages = parseInt(form.totalPages, 10) || 300;
@@ -92,18 +93,21 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
         percentRead: pct,
         format: 'E-Reader',
         startDate: form.startDate || today,
+        ...(pct > 0 ? { lastProgressDate: today } : {}),
       }, ...rs]);
     } else {
       const totalPages = parseInt(form.totalPages, 10);
       if (!totalPages) return;
+      const curPage = Math.min(totalPages, parseInt(form.currentPage, 10) || 0);
       setReads((rs) => [{
         id: crypto.randomUUID(),
         title: form.title.trim(),
         author: form.author.trim() || 'Unknown Author',
         totalPages,
-        currentPage: Math.min(totalPages, parseInt(form.currentPage, 10) || 0),
+        currentPage: curPage,
         progressUnit: 'pages',
         startDate: form.startDate || today,
+        ...(curPage > 0 ? { lastProgressDate: today } : {}),
       }, ...rs]);
     }
     setForm({ title: '', author: '', unit: 'pages', totalPages: '', currentPage: '', percentRead: '', totalHours: '', totalMins: '', currentHours: '', currentMins: '', startDate: today });
@@ -287,14 +291,17 @@ export const CurrentlyReading: React.FC<{ onFinish: (book: BookEntry) => void; f
                       min={0}
                       max={r.totalPages}
                       value={r.currentPage}
-                      onChange={(e) => update(r.id, { currentPage: Math.min(r.totalPages, Math.max(0, parseInt(e.target.value, 10) || 0)) })}
+                      onChange={(e) => {
+                        const nextPage = Math.min(r.totalPages, Math.max(0, parseInt(e.target.value, 10) || 0));
+                        update(r.id, { currentPage: nextPage, ...(nextPage > 0 ? { lastProgressDate: today } : {}) });
+                      }}
                       className="w-16 px-2 py-1 rounded-md bg-stone-900 border border-stone-800 text-stone-100"
                     />
                     / {r.totalPages} <span className="text-amber-400 font-semibold">({p.percent}%)</span>
                   </label>
                   <span className="flex items-center gap-1">
                     {[10, 25, 50].map((n) => (
-                      <button key={n} type="button" aria-label={`Add ${n} pages to ${r.title}`} onClick={() => update(r.id, { currentPage: Math.min(r.totalPages, r.currentPage + n) })} className="px-2 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30">+{n}</button>
+                      <button key={n} type="button" aria-label={`Add ${n} pages to ${r.title}`} onClick={() => update(r.id, { currentPage: Math.min(r.totalPages, r.currentPage + n), lastProgressDate: today })} className="px-2 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30">+{n}</button>
                     ))}
                   </span>
                   <span>{p.pace} pages/day</span>
