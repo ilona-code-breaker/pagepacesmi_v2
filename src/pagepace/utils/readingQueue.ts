@@ -9,13 +9,33 @@ export interface QueuedBook {
   author: string;
   genre?: string;
   reason?: string;
+  totalPages?: number;
+  coverUrl?: string;
+  isbn?: string;
+  format?: 'Physical' | 'E-Reader' | 'Audiobook' | 'Hybrid';
+  publisher?: string;
+  publishedYear?: number;
 }
 
 export const QUEUE_KEY = 'pagepace_want_to_read_v1';
 
 export function saveToQueue(queue: QueuedBook[], book: Recommendation, id: string): QueuedBook[] {
   if (queue.some((item) => normalizeTitle(item.title) === normalizeTitle(book.title))) return queue;
-  return [...queue, { id, title: book.title, author: book.author, genre: book.genre, reason: book.reason }];
+  return [
+    ...queue,
+    {
+      id,
+      title: book.title,
+      author: book.author,
+      genre: book.genre,
+      reason: book.reason,
+      ...(book.totalPages ? { totalPages: book.totalPages } : {}),
+      ...(book.coverUrl ? { coverUrl: book.coverUrl } : {}),
+      ...(book.isbn ? { isbn: book.isbn } : {}),
+      ...(book.publisher ? { publisher: book.publisher } : {}),
+      ...(book.publishedYear ? { publishedYear: book.publishedYear } : {}),
+    },
+  ];
 }
 
 export function removeFromQueue(queue: QueuedBook[], id: string) {

@@ -28,6 +28,7 @@ import {
   extractCleanIsbn,
   ApiBookMetadata,
 } from '../services/bookApiService';
+import { pickBestMetadataMatch } from '../utils/bookEnrich';
 import {
   BookOpen,
   Calendar,
@@ -61,7 +62,19 @@ interface BookFormProps {
   initialBook?: QueuedBook;
   /** Called when "I own this book" is ticked on submit */
   /** Called when the book is saved as Want to read */
-  onWantToRead?: (b: { title: string; author: string; genre?: string; alternativeTitle?: string; ownedBookId?: string }) => void;
+  onWantToRead?: (b: {
+    title: string;
+    author: string;
+    genre?: string;
+    totalPages?: number;
+    coverUrl?: string;
+    isbn?: string;
+    format?: OwnedFormat;
+    publisher?: string;
+    publishedYear?: number;
+    alternativeTitle?: string;
+    ownedBookId?: string;
+  }) => void;
   ownedBooks?: OwnedBook[];
   isOwned?: (b: { title: string; author: string; isbn?: string; alternativeTitle?: string; ownedBookId?: string }) => boolean;
   onOwn?: (b: { title: string; author: string; totalPages: number; genre?: string; coverUrl?: string; isbn?: string; format?: OwnedFormat; alternativeTitle?: string; ownedBookId?: string }, status: 'want' | 'reading' | 'finished') => void;
@@ -84,7 +97,9 @@ export const BookForm: React.FC<BookFormProps> = ({
   const isWant = status === 'want';
   const isFinished = status === 'finished';
   const [currentPage, setCurrentPage] = useState<number | ''>(initialBook ? 0 : '');
-  const [progressUnit, setProgressUnit] = useState<ProgressUnit>('pages');
+  const [progressUnit, setProgressUnit] = useState<ProgressUnit>(
+    initialBook?.format ? defaultUnitForFormat(initialBook.format) : 'pages'
+  );
   const [percentRead, setPercentRead] = useState<number | ''>(0);
   const [totalHours, setTotalHours] = useState<number | ''>('');
   const [totalMins, setTotalMins] = useState<number | ''>('');
@@ -102,23 +117,26 @@ export const BookForm: React.FC<BookFormProps> = ({
   const [alternativeTitle, setAlternativeTitle] = useState(initialBook?.alternativeTitle || '');
   const [linkedOwnedId, setLinkedOwnedId] = useState(initialBook?.ownedBookId || '');
   const [ownedSearch, setOwnedSearch] = useState('');
-  const [totalPages, setTotalPages] = useState<number | ''>(initialBook ? initialMatch?.totalPages || '' : 384);
+  const [totalPages, setTotalPages] = useState<number | ''>(
+    initialBook ? initialBook.totalPages || initialMatch?.totalPages || '' : 384
+  );
   const [startDate, setStartDate] = useState(initialBook ? todayIso() : defaultStart);
   const [finishDate, setFinishDate] = useState(todayStr);
   const [rating, setRating] = useState<number>(4.4);
   const [review, setReview] = useState('');
   const [genre, setGenre] = useState<string>(initialBook ? normalizeGenre(initialBook.genre || initialMatch?.genre || '') || 'Unassigned' : 'Fantasy');
-  const [format, setFormat] = useState<'Physical' | 'E-Reader' | 'Audiobook' | 'Hybrid'>('Physical');
-  const [coverUrl, setCoverUrl] = useState<string | undefined>(undefined);
-  const [isbn, setIsbn] = useState<string | undefined>(undefined);
+  const [format, setFormat] = useState<'Physical' | 'E-Reader' | 'Audiobook' | 'Hybrid'>(initialBook?.format || 'Physical');
+  const [coverUrl, setCoverUrl] = useState<string | undefined>(initialBook?.coverUrl);
+  const [isbn, setIsbn] = useState<string | undefined>(initialBook?.isbn);
   const linkedOwned = ownedBooks.find((book) => book.id === linkedOwnedId);
   const ownedMatch = linkedOwned ?? findOwned(ownedBooks, { title, author, alternativeTitle, isbn });
   const bookLink = { alternativeTitle: alternativeTitle.trim() || (ownedMatch && ownedMatch.title !== title.trim() ? ownedMatch.title : undefined), ownedBookId: ownedMatch?.id };
-  const [publisher, setPublisher] = useState<string | undefined>(undefined);
-  const [publishedYear, setPublishedYear] = useState<number | undefined>(undefined);
+  const [publisher, setPublisher] = useState<string | undefined>(initialBook?.publisher);
+  const [publishedYear, setPublishedYear] = useState<number | undefined>(initialBook?.publishedYear);
 
   // Track if user explicitly entered an exact page count (must override auto-filled values)
   const [hasUserCustomizedPages, setHasUserCustomizedPages] = useState<boolean>(false);
+  const userCustomizedPagesRef = useRef(false);
   const [combinedSuggestions, setCombinedSuggestions] = useState<ApiBookMetadata[]>([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [isSearchingApi, setIsSearchingApi] = useState<boolean>(false);
@@ -130,7 +148,63 @@ export const BookForm: React.FC<BookFormProps> = ({
     coverUrl?: string;
     source: string;
     isCustomPagesUsed: boolean;
-  } | null>(null);
+  } | null>(
+    initialBook && (initialBook.totalPages || initialBook.coverUrl)
+      ? {
+          bookTitle: initialBook.title,
+          author: initialBook.author,
+          standardPages: initialBook.totalPages || initialMatch?.totalPages || 0,
+          genre: normalizeGenre(initialBook.genre || initialMatch?.genre || '') || 'Unassigned',
+          coverUrl: initialBook.coverUrl,
+          source: 'Saved Library Metadata',
+          isCustomPagesUsed: false,
+        }
+      : null
+  );
+
+  // Graceful fallback: if opening an older queued book missing pages or cover, look it up via the same APIs
+  useEffect(() => {
+    if (!initialBook || (initialBook.totalPages && initialBook.coverUrl)) return;
+    let cancelled = false;
+    setIsSearchingApi(true);
+    searchBooksUnified(`${initialBook.title} ${initialBook.author}`)
+      .then((apiResults) => {
+        if (cancelled) return;
+        const match = pickBestMetadataMatch(apiResults, initialBook.title, initialBook.author);
+        if (!match) return;
+        if (!userCustomizedPagesRef.current && !initialBook.totalPages && match.totalPages) {
+          setTotalPages(match.totalPages);
+        }
+        if (!initialBook.coverUrl && match.coverUrl) setCoverUrl(match.coverUrl);
+        if (!initialBook.isbn && match.isbn) setIsbn(match.isbn);
+        if (!initialBook.publisher && match.publisher) setPublisher(match.publisher);
+        if (!initialBook.publishedYear && match.publishedYear) setPublishedYear(match.publishedYear);
+        if ((!initialBook.genre || initialBook.genre === 'Unassigned') && match.genre && match.genre !== 'Unassigned') {
+          setGenre(normalizeGenre(match.genre) || 'Unassigned');
+        }
+        const sourceName =
+          match.source === 'google_books'
+            ? 'Google Books API'
+            : match.source === 'open_library'
+            ? 'Open Library API'
+            : 'PagePace Literary Knowledge Base';
+        setAutoFilledBadge({
+          bookTitle: initialBook.title,
+          author: initialBook.author,
+          standardPages: initialBook.totalPages || match.totalPages,
+          genre: normalizeGenre(initialBook.genre || match.genre || '') || 'Unassigned',
+          coverUrl: initialBook.coverUrl || match.coverUrl,
+          source: sourceName,
+          isCustomPagesUsed: userCustomizedPagesRef.current,
+        });
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setIsSearchingApi(false);
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialBook?.id]);
 
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -279,6 +353,7 @@ export const BookForm: React.FC<BookFormProps> = ({
 
   const handlePageCountChange = (val: string) => {
     setHasUserCustomizedPages(true); // User explicitly provided page count!
+    userCustomizedPagesRef.current = true;
     if (val === '') {
       setTotalPages('');
     } else {
@@ -298,7 +373,18 @@ export const BookForm: React.FC<BookFormProps> = ({
     if (ownIt || isOwned?.(trackedBook)) onOwn?.(trackedBook, status);
 
     if (isWant) {
-      onWantToRead?.({ title: title.trim(), author: author.trim() || 'Unknown Author', genre, ...bookLink });
+      onWantToRead?.({
+        title: title.trim(),
+        author: author.trim() || 'Unknown Author',
+        genre,
+        totalPages: typeof totalPages === 'number' && totalPages > 0 ? totalPages : undefined,
+        coverUrl,
+        isbn,
+        format,
+        publisher,
+        publishedYear,
+        ...bookLink,
+      });
       if (soundEnabled) playCelebrationChime();
       setAlternativeTitle(''); setLinkedOwnedId(''); setOwnIt(false); setTitle(''); setAuthor(''); setCoverUrl(undefined); setIsbn(undefined); setAutoFilledBadge(null);
       return;

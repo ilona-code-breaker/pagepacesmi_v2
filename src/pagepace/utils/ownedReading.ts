@@ -19,7 +19,23 @@ export function moveOwnedToReadingList(book: OwnedBook, status: 'reading' | 'wan
   if (status === 'want') {
     return {
       reads: reads.filter((r) => !matches(r)),
-      queue: queue.some(matches) ? queue : [...queue, { id, title: book.title, author: book.author, genre: book.genre, ...(book.alternativeTitle ? { alternativeTitle: book.alternativeTitle } : {}), ...(book.ownedBookId || book.id ? { ownedBookId: book.ownedBookId || book.id } : {}) }],
+      queue: queue.some(matches)
+        ? queue
+        : [
+            ...queue,
+            {
+              id,
+              title: book.title,
+              author: book.author,
+              genre: book.genre,
+              ...(book.totalPages ? { totalPages: book.totalPages } : {}),
+              ...(book.coverUrl ? { coverUrl: book.coverUrl } : {}),
+              ...(book.isbn ? { isbn: book.isbn } : {}),
+              ...(book.format ? { format: book.format } : {}),
+              ...(book.alternativeTitle ? { alternativeTitle: book.alternativeTitle } : {}),
+              ...(book.ownedBookId || book.id ? { ownedBookId: book.ownedBookId || book.id } : {}),
+            },
+          ],
     };
   }
   const existing = reads.find(matches);

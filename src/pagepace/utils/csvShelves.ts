@@ -11,7 +11,16 @@ export function csvToReadToQueue(rows: NormalizedCsvRow[], queue: QueuedBook[], 
     const k = normalizeTitle(r.title);
     if (!k || seen.has(k)) return;
     seen.add(k);
-    added.push({ id: makeId(i), title: r.title, author: r.author, genre: r.genre || undefined });
+    added.push({
+      id: makeId(i),
+      title: r.title,
+      author: r.author,
+      genre: r.genre || undefined,
+      ...(r.totalPages ? { totalPages: r.totalPages } : {}),
+      ...(r.isbn ? { isbn: r.isbn } : {}),
+      ...(r.publisher ? { publisher: r.publisher } : {}),
+      ...(r.publishedYear ? { publishedYear: r.publishedYear } : {}),
+    });
   });
   return [...queue, ...added];
 }

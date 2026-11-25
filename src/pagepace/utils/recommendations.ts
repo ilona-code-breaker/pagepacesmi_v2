@@ -12,6 +12,11 @@ export interface Recommendation {
   genre?: string;
   reason: string;
   basedOn: 'year' | 'recent';
+  totalPages?: number;
+  coverUrl?: string;
+  isbn?: string;
+  publisher?: string;
+  publishedYear?: number;
 }
 
 export const normalizeTitle = (title: string) => String(title || '').toLowerCase().split(/[:(]/)[0].replace(/^(the|a|an)\s+/, '').replace(/[^a-z0-9]/g, '');

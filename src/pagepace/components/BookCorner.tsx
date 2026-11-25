@@ -18,7 +18,7 @@ interface Props {
   onChange: (list: OwnedBook[]) => void;
   completed: BookEntry[];
   queue?: QueuedBook[];
-  onQueue?: (books: { title: string; author: string; genre?: string }[]) => void;
+  onQueue?: (books: { title: string; author: string; genre?: string; totalPages?: number; coverUrl?: string; isbn?: string }[]) => void;
   onLibrarySync?: (library: BookEntry[]) => void;
   onOpenCodex?: () => void;
   onReadingStatusChange?: (book: OwnedBook, status: 'reading' | 'want') => void;

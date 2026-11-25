@@ -356,7 +356,12 @@ export default function App() {
               {/* Side Column: Sample Books & Tips */}
               <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6 items-start [&>*]:min-w-0">
                 <div className="space-y-6 min-w-0">
-                  <Recommendations books={books} queue={queue} onSave={(book) => updateQueue(saveToQueue(queue, book, crypto.randomUUID()))} />
+                  <Recommendations
+                    books={books}
+                    queue={queue}
+                    onSave={(book) => updateQueue(saveToQueue(queue, book, crypto.randomUUID()))}
+                    onStartReading={startQueuedBook}
+                  />
                   {queueError && <p role="alert" className="text-sm text-destructive">{queueError}</p>}
                 </div>
                 <div className="min-w-0">
@@ -469,7 +474,7 @@ export default function App() {
           </div>
         )}
 
-        {currentTab === 'corner' && <BookCorner onImportReading={importOwnedReading} onReadingStatusChange={changeOwnedReadingStatus} onOpenCodex={() => setCurrentTab('codex')} owned={owned} onChange={saveOwned} completed={books} onLibrarySync={setBooks} queue={queue} onQueue={(list) => updateQueue(list.reduce((q, b, i) => saveToQueue(q, { title: b.title, author: b.author, genre: b.genre ?? '', reason: '' } as never, `corner-q-${Date.now()}-${i}`), queue))} />}
+        {currentTab === 'corner' && <BookCorner onImportReading={importOwnedReading} onReadingStatusChange={changeOwnedReadingStatus} onOpenCodex={() => setCurrentTab('codex')} owned={owned} onChange={saveOwned} completed={books} onLibrarySync={setBooks} queue={queue} onQueue={(list) => updateQueue(list.reduce((q, b, i) => saveToQueue(q, { title: b.title, author: b.author, genre: b.genre ?? '', reason: '', totalPages: b.totalPages, coverUrl: b.coverUrl, isbn: b.isbn } as never, `corner-q-${Date.now()}-${i}`), queue))} />}
 
         {/* TAB 4: Archetype Codex & Field Guide */}
         <ReadingBadgeWatcher ctx={readingCtx} />
@@ -608,15 +613,31 @@ export default function App() {
                 <BookForm
                   key={`${trackStatus}-${queuedStart?.id || ''}`}
                   onWantToRead={(b) => {
-                    const match = { ...b, id: '', totalPages: 0, addedAt: todayIso() };
+                    const match = { ...b, id: '', totalPages: b.totalPages || 0, addedAt: todayIso() };
                     const next = moveOwnedToReadingList(match, 'want', currentReads, queue, todayIso(), crypto.randomUUID());
-                    updateQueue(next.queue);
+                    const enrichedQueue = next.queue.map((q) =>
+                      q.title === b.title && q.author === b.author
+                        ? {
+                            ...q,
+                            ...(b.publisher ? { publisher: b.publisher } : {}),
+                            ...(b.publishedYear ? { publishedYear: b.publishedYear } : {}),
+                          }
+                        : q
+                    );
+                    updateQueue(enrichedQueue);
                     setReads(() => next.reads);
                     setTrackOpen(false);
                   }}
                   initialBook={queuedStart}
                   mode={trackStatus}
-                  onBookCreated={(b) => { setTrackOpen(false); handleBookCreated(b); }}
+                  onBookCreated={(b) => {
+                    setTrackOpen(false);
+                    if (queuedStart) {
+                      removeQueuedBook(queuedStart.id);
+                      setQueuedStart(undefined);
+                    }
+                    handleBookCreated(b);
+                  }}
                   soundEnabled={soundEnabled}
                   ownedBooks={owned}
                   isOwned={(b) => !!findOwned(owned, b)}

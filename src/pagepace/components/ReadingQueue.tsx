@@ -33,7 +33,25 @@ export function ReadingQueue({ queue, onStart, onRemove, fullShelf = false }: {
         {queue.map((book) => (
           <li key={book.id} className="py-3 space-y-2">
             <div className="flex items-start justify-between gap-2">
-              <div className="flex min-w-0 items-start gap-2"><input type="checkbox" className="mt-1" aria-label={`Select ${book.title}`} checked={selected.has(book.id)} onChange={() => toggle(book.id)} /><div className="min-w-0"><p className="text-sm font-semibold text-foreground break-words">{book.title}</p><p className="text-xs text-muted-foreground break-words">{book.author}</p></div></div>
+              <div className="flex min-w-0 items-start gap-2.5">
+                <input type="checkbox" className="mt-1 shrink-0" aria-label={`Select ${book.title}`} checked={selected.has(book.id)} onChange={() => toggle(book.id)} />
+                {book.coverUrl ? (
+                  <img src={book.coverUrl} alt={book.title} className="w-10 h-14 object-cover rounded border border-border shrink-0 shadow-sm" />
+                ) : (
+                  <div className="w-10 h-14 rounded bg-muted/40 border border-border flex items-center justify-center text-muted-foreground shrink-0">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground break-words">{book.title}</p>
+                  <p className="text-xs text-muted-foreground break-words">{book.author}</p>
+                  {(book.totalPages || book.genre) && (
+                    <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                      {book.totalPages ? `${book.totalPages} pages` : ''}{book.totalPages && book.genre ? ' · ' : ''}{book.genre || ''}
+                    </p>
+                  )}
+                </div>
+              </div>
               <Button variant="ghost" size="icon" aria-label={`Remove ${book.title} from Want to read`} title="Remove from Want to read" onClick={() => onRemove(book.id)} className="shrink-0 text-muted-foreground"><Trash2 /></Button>
             </div>
             <Button variant="secondary" size="sm" onClick={() => onStart(book)} aria-label={`Start reading ${book.title}`}><BookOpen />Start reading</Button>
