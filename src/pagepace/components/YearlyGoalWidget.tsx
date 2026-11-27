@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CalendarHeart, Trophy, Pencil, Check } from 'lucide-react';
 import type { BookEntry } from '../types/book';
+import { Button } from '@/components/ui/button';
 import { DEFAULT_YEARLY_GOAL, YEARLY_GOALS_KEY, expectedByNow, yearProgress, type YearlyGoal } from '../utils/yearlyGoal';
 
 function load(): Record<string, YearlyGoal> {
@@ -12,7 +13,7 @@ export const YearlyGoalWidget: React.FC<{ books: BookEntry[] }> = ({ books }) =>
   const [goals, setGoals] = useState<Record<string, YearlyGoal>>(load);
   const [editing, setEditing] = useState(false);
   const goal = goals[year] ?? DEFAULT_YEARLY_GOAL;
-  const [draft, setDraft] = useState(goal);
+  const [draft, setDraft] = useState({ books: String(goal.books), pages: String(goal.pages) });
   useEffect(() => { localStorage.setItem(YEARLY_GOALS_KEY, JSON.stringify(goals)); }, [goals]);
 
   const p = yearProgress(books, year);
@@ -21,7 +22,8 @@ export const YearlyGoalWidget: React.FC<{ books: BookEntry[] }> = ({ books }) =>
   const met = p.books >= goal.books;
   const diff = p.books - expectedByNow(goal.books);
 
-  const save = () => { setGoals((g) => ({ ...g, [year]: { books: Math.max(1, draft.books || 1), pages: Math.max(0, draft.pages || 0) } })); setEditing(false); };
+  const canSave = draft.books.trim() !== '' && Number.isInteger(Number(draft.books)) && Number(draft.books) > 0 && Number.isInteger(Number(draft.pages)) && Number(draft.pages) >= 0;
+  const save = () => { if (!canSave) return; setGoals((g) => ({ ...g, [year]: { books: Number(draft.books), pages: Number(draft.pages) } })); setEditing(false); };
 
   return (
     <div className="p-4 rounded-2xl bg-stone-900/60 border border-stone-800 flex flex-col justify-center gap-3 h-full">
@@ -32,13 +34,13 @@ export const YearlyGoalWidget: React.FC<{ books: BookEntry[] }> = ({ books }) =>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-mono uppercase tracking-wider text-stone-400 font-semibold">{year} Reading Goal</span>
-            {!editing && <button onClick={() => { setDraft(goal); setEditing(true); }} className="text-xs text-amber-400 flex items-center gap-1"><Pencil className="w-3 h-3" />Edit</button>}
+            {!editing && <button onClick={() => { setDraft({ books: String(goal.books), pages: String(goal.pages) }); setEditing(true); }} className="text-xs text-amber-400 flex items-center gap-1"><Pencil className="w-3 h-3" />Edit</button>}
           </div>
           {editing ? (
             <div className="mt-2 flex flex-wrap items-end gap-2 text-xs font-mono">
-              <label className="flex flex-col text-stone-400">Books<input type="number" min={1} value={draft.books} onChange={(e) => setDraft({ ...draft, books: +e.target.value })} className="w-20 rounded bg-stone-950 border border-stone-700 px-2 py-1 text-stone-100" /></label>
-              <label className="flex flex-col text-stone-400">Pages<input type="number" min={0} value={draft.pages} onChange={(e) => setDraft({ ...draft, pages: +e.target.value })} className="w-24 rounded bg-stone-950 border border-stone-700 px-2 py-1 text-stone-100" /></label>
-              <button onClick={save} className="rounded bg-amber-500 px-2 py-1 text-stone-950 flex items-center gap-1"><Check className="w-3 h-3" />Save</button>
+              <label className="flex flex-col text-stone-400">Books<input type="number" min={1} value={draft.books} onChange={(e) => setDraft({ ...draft, books: e.target.value })} className="w-20 rounded bg-stone-950 border border-stone-700 px-2 py-1 text-stone-100" /></label>
+              <label className="flex flex-col text-stone-400">Pages<input type="number" min={0} value={draft.pages} onChange={(e) => setDraft({ ...draft, pages: e.target.value })} className="w-24 rounded bg-stone-950 border border-stone-700 px-2 py-1 text-stone-100" /></label>
+              <Button onClick={save} disabled={!canSave} className="h-auto rounded bg-amber-500 px-2 py-1 text-stone-950 flex items-center gap-1"><Check className="w-3 h-3" />Save</Button>
               <button onClick={() => setEditing(false)} className="px-2 py-1 text-stone-400">Cancel</button>
             </div>
           ) : (

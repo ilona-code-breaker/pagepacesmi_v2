@@ -27,12 +27,15 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
   onClose,
 }) => {
   const [targetType, setTargetType] = useState<'books' | 'pages' | 'both'>(goal.targetType);
-  const [targetBooks, setTargetBooks] = useState<number>(goal.targetBooks || 3);
-  const [targetPages, setTargetPages] = useState<number>(goal.targetPages || 1000);
+  const [targetBooks, setTargetBooks] = useState<string>(String(goal.targetBooks || 3));
+  const [targetPages, setTargetPages] = useState<string>(String(goal.targetPages || 1000));
   const [intention, setIntention] = useState<string>(goal.intention || '');
 
   const bookPresets = [1, 2, 3, 4, 5, 6, 8];
   const pagePresets = [300, 500, 800, 1000, 1200, 1500, 2000];
+  const booksValid = targetBooks.trim() !== '' && Number.isInteger(Number(targetBooks)) && Number(targetBooks) >= 1 && Number(targetBooks) <= 50;
+  const pagesValid = targetPages.trim() !== '' && Number.isInteger(Number(targetPages)) && Number(targetPages) >= 50 && Number(targetPages) <= 20000 && Number(targetPages) % 50 === 0;
+  const canSave = (targetType === 'pages' || booksValid) && (targetType === 'books' || pagesValid);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
@@ -42,11 +45,12 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canSave) return;
     onSave({
       monthKey,
       targetType,
-      targetBooks: Math.max(1, targetBooks),
-      targetPages: Math.max(10, targetPages),
+      targetBooks: booksValid ? Number(targetBooks) : goal.targetBooks,
+      targetPages: pagesValid ? Number(targetPages) : goal.targetPages,
       intention: intention.trim(),
     });
   };
@@ -137,16 +141,17 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
                   Target Finished Books
                 </label>
                 <span className="font-mono text-sm font-bold text-amber-400">
-                  {targetBooks} {targetBooks === 1 ? 'book' : 'books'}
+                  {targetBooks || '—'} {Number(targetBooks) === 1 ? 'book' : 'books'}
                 </span>
               </div>
               <input
                 aria-label="Target finished books"
                 type="number"
+                required
                 min={1}
                 max={50}
                 value={targetBooks}
-                onChange={(e) => setTargetBooks(parseInt(e.target.value, 10) || 1)}
+                onChange={(e) => setTargetBooks(e.target.value)}
                 className="w-full px-3.5 py-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 font-mono text-sm focus:outline-none focus:border-amber-500/50"
               />
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -155,9 +160,9 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
                   <Button variant="ghost"
                     key={num}
                     type="button"
-                    onClick={() => setTargetBooks(num)}
+                    onClick={() => setTargetBooks(String(num))}
                     className={`text-xs px-2.5 py-1 rounded-md font-mono transition-colors ${
-                      targetBooks === num
+                      Number(targetBooks) === num
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
                         : 'bg-stone-800 text-stone-400 hover:text-stone-200'
                     }`}
@@ -178,17 +183,18 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
                   Target Pages Read
                 </label>
                 <span className="font-mono text-sm font-bold text-amber-400">
-                  {targetPages.toLocaleString()} pages
+                  {targetPages === '' ? '—' : Number(targetPages).toLocaleString()} pages
                 </span>
               </div>
               <input
                 aria-label="Target pages read"
                 type="number"
+                required
                 min={50}
                 max={20000}
                 step={50}
                 value={targetPages}
-                onChange={(e) => setTargetPages(parseInt(e.target.value, 10) || 100)}
+                onChange={(e) => setTargetPages(e.target.value)}
                 className="w-full px-3.5 py-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-100 font-mono text-sm focus:outline-none focus:border-amber-500/50"
               />
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -197,9 +203,9 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
                   <Button variant="ghost"
                     key={pg}
                     type="button"
-                    onClick={() => setTargetPages(pg)}
+                    onClick={() => setTargetPages(String(pg))}
                     className={`text-xs px-2 py-1 rounded-md font-mono transition-colors ${
-                      targetPages === pg
+                      Number(targetPages) === pg
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
                         : 'bg-stone-800 text-stone-400 hover:text-stone-200'
                     }`}
@@ -232,8 +238,8 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               type="button"
               onClick={() => {
                 setTargetType('both');
-                setTargetBooks(3);
-                setTargetPages(1000);
+                setTargetBooks('3');
+                setTargetPages('1000');
                 setIntention('Consistent daily reading & joyful book exploration');
               }}
               className="text-xs text-stone-500 hover:text-stone-300 flex items-center gap-1"
@@ -251,6 +257,7 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               </Button>
               <Button
                 type="submit"
+                disabled={!canSave}
                 className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95"
               >
                 <Check className="w-4 h-4" />
