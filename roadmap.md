@@ -37,6 +37,7 @@
 - [x] Progress label next to its icon on wider screens.
 
 # Goal editing cleanup
-- [ ] Replace outdated MVP/device goal wording with account-aware storage wording.
-- [ ] Remove live telemetry from monthly goal setup.
-- [ ] Open the monthly goal editor directly from Edit Goal and verify save/reopen.
+- [x] Replace outdated MVP/device goal wording with account-aware storage wording.
+- [x] Remove live telemetry from monthly goal setup.
+- [x] Remove archetype quick presets from monthly goal setup.
+- [x] Open the monthly goal editor directly from Edit Goal and verify save/reopen.
