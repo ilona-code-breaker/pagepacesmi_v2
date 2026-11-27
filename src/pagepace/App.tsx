@@ -16,6 +16,7 @@ import { ArchetypeCodex } from './components/ArchetypeCodex';
 import { CompletionSummaryCard } from './components/CompletionSummaryCard';
 import { EditBookModal } from './components/EditBookModal';
 import { MonthlyGoalTracker } from './components/MonthlyGoalTracker';
+import { GoalEditModal } from './components/GoalEditModal';
 import { MonthlyGoalWidget } from './components/MonthlyGoalWidget';
 import { YearlyGoalWidget } from './components/YearlyGoalWidget';
 import { ShareableArchetypeCardModal } from './components/ShareableArchetypeCardModal';
@@ -147,6 +148,7 @@ export default function App() {
     setTrackOpen(true);
   };
   const [goalsOpen, setGoalsOpen] = useState(false);
+  const [editingGoalMonth, setEditingGoalMonth] = useState<string | null>(null);
   const [selectedBook, setSelectedBook] = useState<BookEntry | null>(null);
   const [certEditing, setCertEditing] = useState(false);
   const [unlocked, setUnlocked] = useState<ArchetypeDefinition | null>(null);
@@ -439,7 +441,7 @@ export default function App() {
             goalsOpen={goalsOpen}
             goalsSummary={
               <>
-                <MonthlyGoalWidget books={statsBooks} goals={goals} onViewGoals={() => setGoalsOpen(true)} />
+                <MonthlyGoalWidget books={statsBooks} goals={goals} onViewGoals={() => setEditingGoalMonth(getCurrentMonthKey())} />
                 <YearlyGoalWidget books={statsBooks} />
               </>
             }
@@ -527,6 +529,17 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {editingGoalMonth && createPortal(
+        <GoalEditModal
+          key={editingGoalMonth}
+          monthKey={editingGoalMonth}
+          goal={goals[editingGoalMonth] ?? { monthKey: editingGoalMonth, targetType: 'both', targetBooks: 3, targetPages: 1000 }}
+          onSave={(updated) => { handleUpdateGoal(updated); setEditingGoalMonth(null); }}
+          onClose={() => setEditingGoalMonth(null)}
+        />,
+        document.body,
+      )}
 
       {/* Shareable Reading Archetype Card Modal */}
       <ShareableArchetypeCardModal

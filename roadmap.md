@@ -35,3 +35,8 @@
 - [x] Clear Sign in button in the top bar.
 - [x] Only 2 demo books, marked SAMPLE, never synced to accounts.
 - [x] Progress label next to its icon on wider screens.
+
+# Goal editing cleanup
+- [ ] Replace outdated MVP/device goal wording with account-aware storage wording.
+- [ ] Remove live telemetry from monthly goal setup.
+- [ ] Open the monthly goal editor directly from Edit Goal and verify save/reopen.

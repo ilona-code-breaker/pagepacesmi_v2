@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MonthlyGoal } from '../types/book';
 import { formatMonthLabel } from '../utils/goalUtils';
-import { VelocityTelemetryBar } from './VelocityTelemetryBar';
+import { StorageBadge } from './StorageBadge';
+import { Button } from '@/components/ui/button';
 import {
   Target,
   BookOpen,
@@ -9,8 +10,6 @@ import {
   Sparkles,
   X,
   Check,
-  HardDrive,
-  Info,
   Zap,
   Compass,
   Wine,
@@ -42,8 +41,11 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
   const bookPresets = [1, 2, 3, 4, 5, 6, 8];
   const pagePresets = [300, 500, 800, 1000, 1200, 1500, 2000];
 
-  // Projected required velocity based on 30-day month
-  const projectedPpd = Math.max(0.1, Math.round(((targetPages || 300) / 30) * 10) / 10);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   const handleApplyArchetypePreset = (
     type: 'books' | 'pages' | 'both',
@@ -69,51 +71,35 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-stone-900 border border-stone-800 rounded-2xl shadow-2xl p-6 sm:p-7 space-y-6 overflow-hidden max-h-[90vh] overflow-y-auto">
+    <div className="dark fixed inset-0 z-[70] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby="monthly-goal-title" onClick={(event) => event.stopPropagation()} className="relative w-full max-w-lg bg-card text-card-foreground border border-border rounded-2xl shadow-2xl p-6 sm:p-7 space-y-6 overflow-hidden max-h-[90dvh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-amber-400 font-semibold">
               <Target className="w-4 h-4" />
-              Device Reading Target
+              Monthly Reading Goal
             </div>
-            <h3 className="text-xl font-serif font-bold text-stone-100">
+            <h3 id="monthly-goal-title" className="text-xl font-serif font-bold text-foreground">
               Set Your Goal for {formatMonthLabel(monthKey)}
             </h3>
             <p className="text-xs text-stone-400">
               Customize your monthly target to fit your current reading pace and schedule.
             </p>
           </div>
-          <button
+          <Button
             type="button"
             onClick={onClose}
+            aria-label="Close goal editor"
             className="p-1.5 rounded-xl text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors"
           >
             <X className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
 
-        {/* Clear MVP Local Storage Notice */}
-        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs">
-          <HardDrive className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-          <div className="space-y-0.5">
-            <span className="font-semibold text-amber-300">
-              MVP Local Storage Notice
-            </span>
-            <p className="text-stone-300 leading-relaxed font-sans">
-              Your goals are saved directly to this device's browser (<code className="text-amber-400 font-mono text-[11px]">localStorage</code>).
-              No login, cloud account, or password required for this MVP.
-            </p>
-          </div>
+        <div className="text-[11px] text-muted-foreground">
+          <StorageBadge />
         </div>
-
-        {/* Live Velocity & Archetype Telemetry Bar for Goal */}
-        <VelocityTelemetryBar
-          ppd={projectedPpd}
-          elapsedDays={30}
-          totalPages={targetPages}
-        />
 
         {/* Archetype Goal Quick Templates (All 7 Tiers) */}
         <div className="space-y-2">
@@ -123,7 +109,7 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {/* 1. Bedtime Taster */}
-            <button
+            <Button
               type="button"
               onClick={() =>
                 handleApplyArchetypePreset(
@@ -141,10 +127,10 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               <div className="text-[10px] text-stone-400 mt-0.5 font-mono">
                 300 pgs (~10 PPD)
               </div>
-            </button>
+            </Button>
 
             {/* 2. Book Sommelier */}
-            <button
+            <Button
               type="button"
               onClick={() =>
                 handleApplyArchetypePreset(
@@ -162,10 +148,10 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               <div className="text-[10px] text-stone-400 mt-0.5 font-mono">
                 2 bks · 600 pgs (~20 PPD)
               </div>
-            </button>
+            </Button>
 
             {/* 3. Cozy Lounge Reader */}
-            <button
+            <Button
               type="button"
               onClick={() =>
                 handleApplyArchetypePreset(
@@ -183,10 +169,10 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               <div className="text-[10px] text-stone-400 mt-0.5 font-mono">
                 3 bks · 1,050 pgs (~35 PPD)
               </div>
-            </button>
+            </Button>
 
             {/* 4. Steady Cruiser */}
-            <button
+            <Button
               type="button"
               onClick={() =>
                 handleApplyArchetypePreset(
@@ -204,10 +190,10 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               <div className="text-[10px] text-stone-400 mt-0.5 font-mono">
                 4 bks · 1,500 pgs (~50 PPD)
               </div>
-            </button>
+            </Button>
 
             {/* 5. Momentum Builder */}
-            <button
+            <Button
               type="button"
               onClick={() =>
                 handleApplyArchetypePreset(
@@ -225,10 +211,10 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               <div className="text-[10px] text-stone-400 mt-0.5 font-mono">
                 5 bks · 2,250 pgs (~75 PPD)
               </div>
-            </button>
+            </Button>
 
             {/* 6. Speed Reader */}
-            <button
+            <Button
               type="button"
               onClick={() =>
                 handleApplyArchetypePreset(
@@ -246,10 +232,10 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               <div className="text-[10px] text-stone-400 mt-0.5 font-mono">
                 7 bks · 3,150 pgs (~105 PPD)
               </div>
-            </button>
+            </Button>
 
             {/* 7. Narrative Comet */}
-            <button
+            <Button
               type="button"
               onClick={() =>
                 handleApplyArchetypePreset(
@@ -267,7 +253,7 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               <div className="text-[10px] text-stone-400 mt-0.5 font-mono">
                 10 books · 4,200 pages (~140 PPD)
               </div>
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -278,7 +264,7 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               Goal Measurement Focus
             </label>
             <div className="grid grid-cols-3 gap-1.5 p-1 bg-stone-950 rounded-xl border border-stone-800">
-              <button
+              <Button
                 type="button"
                 onClick={() => setTargetType('books')}
                 className={`py-2 px-3 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
@@ -289,8 +275,8 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               >
                 <BookOpen className="w-3.5 h-3.5 text-amber-400" />
                 Number of Books
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={() => setTargetType('pages')}
                 className={`py-2 px-3 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
@@ -301,8 +287,8 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               >
                 <Layers className="w-3.5 h-3.5 text-amber-400" />
                 Total Pages
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={() => setTargetType('both')}
                 className={`py-2 px-3 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
@@ -313,7 +299,7 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               >
                 <Target className="w-3.5 h-3.5 text-amber-400" />
                 Both (Dual)
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -340,7 +326,7 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[11px] text-stone-500 mr-1">Presets:</span>
                 {bookPresets.map((num) => (
-                  <button
+                  <Button
                     key={num}
                     type="button"
                     onClick={() => setTargetBooks(num)}
@@ -351,7 +337,7 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
                     }`}
                   >
                     {num}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -381,7 +367,7 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[11px] text-stone-500 mr-1">Presets:</span>
                 {pagePresets.map((pg) => (
-                  <button
+                  <Button
                     key={pg}
                     type="button"
                     onClick={() => setTargetPages(pg)}
@@ -392,7 +378,7 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
                     }`}
                   >
                     {pg}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -415,7 +401,7 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-3 border-t border-stone-800">
-            <button
+            <Button
               type="button"
               onClick={() => {
                 setTargetType('both');
@@ -426,23 +412,23 @@ export const GoalEditModal: React.FC<GoalEditModalProps> = ({
               className="text-xs text-stone-500 hover:text-stone-300 flex items-center gap-1"
             >
               <RotateCcw className="w-3 h-3" /> Reset Defaults
-            </button>
+            </Button>
 
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 type="button"
                 onClick={onClose}
                 className="px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95"
               >
                 <Check className="w-4 h-4" />
-                Save Goal to Device
-              </button>
+                Save Goal
+              </Button>
             </div>
           </div>
         </form>

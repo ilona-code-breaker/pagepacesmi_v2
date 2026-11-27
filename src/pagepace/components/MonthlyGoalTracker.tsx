@@ -10,6 +10,7 @@ import {
 } from '../utils/goalUtils';
 import { ARCHETYPES } from '../constants/archetypes';
 import { GoalEditModal } from './GoalEditModal';
+import { StorageBadge } from './StorageBadge';
 import {
   ChevronLeft,
   ChevronRight,
@@ -26,7 +27,6 @@ import {
   CheckCircle2,
   AlertCircle,
   TrendingUp,
-  HardDrive,
   Info,
   ShieldCheck,
 } from 'lucide-react';
@@ -127,37 +127,8 @@ export const MonthlyGoalTracker: React.FC<MonthlyGoalTrackerProps> = ({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* MVP Device Storage Notification Banner */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs shadow-sm">
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 mt-0.5 sm:mt-0">
-            <HardDrive className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-amber-300">
-                MVP Local Storage Notice
-              </span>
-              <span className="text-[10px] font-mono text-stone-400 bg-stone-900 px-1.5 py-0.2 rounded border border-stone-800">
-                Client-Side MVP
-              </span>
-            </div>
-            <p className="text-stone-300 mt-0.5 leading-relaxed font-sans">
-              Your reading goals, velocity history, and archetype records are stored securely on this device's browser (<code className="text-amber-400 font-mono text-[11px]">localStorage</code>). No cloud account or login required.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-          <button
-            type="button"
-            onClick={() => setIsEditingGoal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition-all shadow-sm active:scale-95"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            Set Device Goal
-          </button>
-        </div>
+      <div className="text-xs text-muted-foreground">
+        <StorageBadge />
       </div>
 
       {/* Month Navigation & Target Controls */}
@@ -254,7 +225,7 @@ export const MonthlyGoalTracker: React.FC<MonthlyGoalTrackerProps> = ({
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs sm:text-sm font-semibold transition-colors"
           >
             <Edit3 className="w-3.5 h-3.5" />
-            Edit Device Goal
+            Edit Goal
           </button>
         </div>
       </div>
@@ -276,9 +247,6 @@ export const MonthlyGoalTracker: React.FC<MonthlyGoalTrackerProps> = ({
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-stone-400">
                 <Target className="w-4 h-4 text-amber-400" />
                 Monthly Target Fulfillment
-                <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 font-semibold">
-                  Device Local
-                </span>
               </div>
               <h3 className="text-xl sm:text-2xl font-serif font-bold text-stone-100 mt-1">
                 Progress Overview
@@ -316,7 +284,7 @@ export const MonthlyGoalTracker: React.FC<MonthlyGoalTrackerProps> = ({
                   <span>0 books</span>
                   <span>
                     {progress.booksRead >= progress.targetBooks
-                      ? 'Goal achieved on device!'
+                      ? 'Goal achieved!'
                       : `${progress.targetBooks - progress.booksRead} book${progress.targetBooks - progress.booksRead === 1 ? '' : 's'} remaining`}
                   </span>
                   <span>{progress.targetBooks} books</span>
@@ -351,7 +319,7 @@ export const MonthlyGoalTracker: React.FC<MonthlyGoalTrackerProps> = ({
                   <span>0 pages</span>
                   <span>
                     {progress.pagesRead >= progress.targetPages
-                      ? 'Target surpassed on device!'
+                      ? 'Target surpassed!'
                       : `${(progress.targetPages - progress.pagesRead).toLocaleString()} pages remaining`}
                   </span>
                   <span>{progress.targetPages.toLocaleString()} pages</span>

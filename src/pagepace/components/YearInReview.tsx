@@ -103,7 +103,7 @@ export const YearInReview: React.FC<{
               className="px-3.5 py-2 rounded-xl bg-stone-900 border border-stone-800 hover:border-amber-500/40 text-stone-200 font-semibold text-sm flex items-center gap-1.5"
             >
               <Target className="w-4 h-4 text-amber-400" />
-              Edit goals
+              Monthly overview
             </button>
           )}
           <select
